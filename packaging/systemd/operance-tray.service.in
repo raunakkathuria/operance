@@ -1,0 +1,14 @@
+[Unit]
+Description=Operance tray app
+After=graphical-session.target dbus.service
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+WorkingDirectory=__REPO_ROOT__
+ExecStart=__PYTHON_BIN__ -m operance.cli --tray-run
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target

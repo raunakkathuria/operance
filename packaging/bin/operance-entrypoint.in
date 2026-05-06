@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+python_bin="__PYTHON_BIN__"
+install_root="__INSTALL_ROOT__"
+site_packages="${install_root}/site-packages"
+
+if [[ -n "${PYTHONPATH:-}" ]]; then
+    export PYTHONPATH="${site_packages}:${PYTHONPATH}"
+else
+    export PYTHONPATH="${site_packages}"
+fi
+
+exec "${python_bin}" -m operance.cli "$@"

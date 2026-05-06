@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.12"
+          - "3.13"
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install package and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Run unit tests
+        run: python -m pytest
+
+      - name: Run minimal CLI smoke checks
+        run: |
+          python -m operance.cli --print-config > /dev/null
+          python -m operance.cli --supported-commands > /dev/null
+
+  packaging-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install package and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Run packaging and release dry-run smoke checks
+        run: |
+          bash scripts/render_packaged_assets.sh --dry-run > /dev/null
+          bash scripts/build_package_artifacts.sh --rpm --dry-run > /dev/null
+          bash scripts/run_installed_beta_smoke.sh --dry-run > /dev/null
+          bash scripts/run_fedora_release_smoke.sh --dry-run > /dev/null
+          bash scripts/run_fedora_alpha_gate.sh --dry-run > /dev/null

@@ -1,0 +1,13 @@
+[Unit]
+Description=Operance tray app
+After=graphical-session.target dbus.service
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=__ENTRYPOINT__ --tray-run
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,33 @@
+Name:           operance
+Version:        __VERSION__
+Release:        1%{?dist}
+Summary:        Local-first voice control runtime for KDE/Wayland
+License:        LicenseRef-Operance
+BuildArch:      noarch
+Source0:        operance-packaged-assets-__VERSION__.tar.gz
+
+%description
+Repo-local RPM packaging scaffold for the Operance base runtime, tray, and voice-loop assets.
+
+%prep
+%autosetup -c -T
+tar -xzf %{SOURCE0}
+
+%install
+install -Dpm0755 packaged-assets/bin/operance %{buildroot}__ENTRYPOINT__
+install -Dpm0644 packaged-assets/etc/operance/voice-loop.args.example %{buildroot}%{_sysconfdir}/operance/voice-loop.args.example
+install -Dpm0644 packaged-assets/applications/operance.desktop %{buildroot}%{_datadir}/applications/operance.desktop
+install -Dpm0644 packaged-assets/lib/operance/pyproject.toml %{buildroot}%{_prefix}/lib/operance/pyproject.toml
+install -Dpm0755 packaged-assets/lib/operance/voice-loop-launcher %{buildroot}%{_prefix}/lib/operance/voice-loop-launcher
+install -d %{buildroot}%{_prefix}/lib/operance/site-packages/operance
+cp -a packaged-assets/lib/operance/site-packages/operance/. %{buildroot}%{_prefix}/lib/operance/site-packages/operance/
+install -Dpm0644 packaged-assets/systemd/operance-tray.service %{buildroot}%{_userunitdir}/operance-tray.service
+install -Dpm0644 packaged-assets/systemd/operance-voice-loop.service %{buildroot}%{_userunitdir}/operance-voice-loop.service
+
+%files
+__ENTRYPOINT__
+%{_sysconfdir}/operance/voice-loop.args.example
+%{_datadir}/applications/operance.desktop
+%{_prefix}/lib/operance
+%{_userunitdir}/operance-tray.service
+%{_userunitdir}/operance-voice-loop.service

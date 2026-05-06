@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Operance
+Comment=Turn intent into action
+Exec=__ENTRYPOINT__ --tray-run
+Terminal=false
+Categories=Utility;
+StartupNotify=true

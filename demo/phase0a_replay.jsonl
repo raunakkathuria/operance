@@ -1,0 +1,5 @@
+{"transcript":"open firefox","expected_response":"Launched firefox","expected_status":"success"}
+{"transcript":"what time is it","expected_response":"It is 09:41","expected_status":"success"}
+{"transcript":"what is my battery level","expected_response":"Battery is 87%","expected_status":"success"}
+{"transcript":"show files modified today","expected_response":"Found 2 recent files","expected_status":"success"}
+{"transcript":"install updates","expected_response":"I did not understand that command.","expected_status":"unmatched"}

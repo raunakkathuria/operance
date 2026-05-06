@@ -1,0 +1,9 @@
+Package: operance
+Version: __VERSION__
+Section: utils
+Priority: optional
+Architecture: all
+Maintainer: Operance
+Depends: python3 (>= 3.12)
+Description: Local-first voice control runtime for KDE/Wayland
+ Repo-local Debian packaging scaffold for the Operance base runtime, tray, and voice-loop assets.

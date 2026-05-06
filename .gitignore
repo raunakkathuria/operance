@@ -1,0 +1,33 @@
+# Local runtime state
+.venv/
+.operance/
+dist/
+build/
+
+# Python caches and coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+
+# Editor and OS noise
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Local Codex and agent state
+.codex
+.agents

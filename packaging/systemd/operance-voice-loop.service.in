@@ -1,0 +1,14 @@
+[Unit]
+Description=Operance continuous voice loop
+After=graphical-session.target dbus.service
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+WorkingDirectory=__REPO_ROOT__
+ExecStart=/bin/bash __REPO_ROOT__/scripts/run_voice_loop.sh
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target

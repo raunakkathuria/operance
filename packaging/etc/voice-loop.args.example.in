@@ -1,0 +1,10 @@
+# One Operance CLI token per line.
+# Copy this file to /etc/operance/voice-loop.args and uncomment or edit the values you need.
+#
+# --wakeword-model
+# auto
+# /path/to/operance.onnx
+--wakeword-threshold
+0.6
+# --voice-loop-max-commands
+# 2

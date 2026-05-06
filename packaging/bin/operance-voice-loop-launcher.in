@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+entrypoint="__ENTRYPOINT__"
+args_file=""
+default_user_args_file="${XDG_CONFIG_HOME:-${HOME}/.config}/operance/voice-loop.args"
+default_system_args_file="/etc/operance/voice-loop.args"
+extra_args=()
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --args-file)
+            shift
+            if [[ $# -eq 0 ]]; then
+                echo "--args-file requires a path" >&2
+                exit 1
+            fi
+            args_file="$1"
+            ;;
+        --)
+            shift
+            extra_args=("$@")
+            break
+            ;;
+        *)
+            echo "Unknown argument: $1" >&2
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+command=("${entrypoint}" "--voice-loop")
+if [[ -z "${args_file}" ]]; then
+    if [[ -f "${default_user_args_file}" ]]; then
+        args_file="${default_user_args_file}"
+    elif [[ -f "${default_system_args_file}" ]]; then
+        args_file="${default_system_args_file}"
+    fi
+fi
+if [[ -f "${args_file}" ]]; then
+    while IFS= read -r extra_arg || [[ -n "${extra_arg}" ]]; do
+        if [[ -z "${extra_arg}" ]] || [[ "${extra_arg}" == \#* ]]; then
+            continue
+        fi
+        command+=("${extra_arg}")
+    done < "${args_file}"
+fi
+for extra_arg in "${extra_args[@]}"; do
+    command+=("${extra_arg}")
+done
+
+exec "${command[@]}"

@@ -1,0 +1,13 @@
+[Unit]
+Description=Operance continuous voice loop
+After=graphical-session.target dbus.service
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/lib/operance/voice-loop-launcher
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target
