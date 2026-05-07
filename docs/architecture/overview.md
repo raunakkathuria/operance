@@ -45,6 +45,11 @@ Representative modules:
 - `voice/`
 - `ui/setup.py`
 
+`doctor.py`, `supported_commands.py`, and `ui/setup.py` should assemble shared
+state and call the active provider for host-specific readiness, remediation, and
+verification policy. They should not grow new Linux, Windows, or macOS branches
+for provider-owned concerns.
+
 ## 3. Platform providers
 
 Platform providers live under `src/operance/platforms/`.
@@ -55,6 +60,7 @@ the portable core:
 - selecting the right adapter set for the current host
 - building platform-specific `--doctor` checks
 - supplying platform-specific setup-step metadata
+- probing platform services, sessions, and transport readiness
 - generating platform-specific setup actions, blocked recommendations, and next steps
 - defining tool blockers and remediation hints for live command availability
 - defining the current release-verified tool subset for that platform target

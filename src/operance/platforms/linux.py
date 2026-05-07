@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
-from datetime import UTC, datetime
 from pathlib import Path
 import shlex
 import shutil
@@ -151,45 +150,47 @@ class LinuxKdeWaylandPlatformProvider:
         return build_linux_adapter_set(desktop_dir=config.paths.desktop_dir)
 
     def build_environment_checks(self) -> list[dict[str, object]]:
-        from .. import doctor as doctor_module
-
         session_type = os.environ.get("XDG_SESSION_TYPE")
         desktop_session = os.environ.get("XDG_CURRENT_DESKTOP")
         systemctl_path = shutil.which("systemctl")
-        tray_service_enabled_status, tray_service_enabled_detail = doctor_module._probe_systemctl_user_service_state(
+        tray_service_path = _tray_user_service_path()
+        voice_loop_service_path = _voice_loop_user_service_path()
+        voice_loop_config_path = _voice_loop_config_path()
+        sysfs_battery_available = _has_battery_sysfs()
+        tray_service_enabled_status, tray_service_enabled_detail = _probe_systemctl_user_service_state(
             "is-enabled",
             "operance-tray.service",
             systemctl_path=systemctl_path,
         )
-        tray_service_active_status, tray_service_active_detail = doctor_module._probe_systemctl_user_service_state(
+        tray_service_active_status, tray_service_active_detail = _probe_systemctl_user_service_state(
             "is-active",
             "operance-tray.service",
             systemctl_path=systemctl_path,
         )
-        voice_loop_service_enabled_status, voice_loop_service_enabled_detail = doctor_module._probe_systemctl_user_service_state(
+        voice_loop_service_enabled_status, voice_loop_service_enabled_detail = _probe_systemctl_user_service_state(
             "is-enabled",
             "operance-voice-loop.service",
             systemctl_path=systemctl_path,
         )
-        voice_loop_service_active_status, voice_loop_service_active_detail = doctor_module._probe_systemctl_user_service_state(
+        voice_loop_service_active_status, voice_loop_service_active_detail = _probe_systemctl_user_service_state(
             "is-active",
             "operance-voice-loop.service",
             systemctl_path=systemctl_path,
         )
-        wayland_session_access_status, wayland_session_access_detail = doctor_module._probe_wayland_session_access()
-        text_input_cli_status, text_input_cli_detail = doctor_module._probe_text_input_backend(
+        wayland_session_access_status, wayland_session_access_detail = _probe_wayland_session_access()
+        text_input_cli_status, text_input_cli_detail = _probe_text_input_backend(
             wayland_session_accessible=wayland_session_access_status == "ok"
         )
-        voice_loop_config_snapshot = doctor_module.build_voice_loop_config_snapshot()
-        voice_loop_runtime_status = doctor_module.build_voice_loop_runtime_status_snapshot()
+        voice_loop_config_snapshot = build_voice_loop_config_snapshot()
+        voice_loop_runtime_status = build_voice_loop_runtime_status_snapshot()
         voice_loop_runtime_status_available_status, voice_loop_runtime_status_available_detail = (
-            doctor_module._voice_loop_runtime_status_available_check(
+            _voice_loop_runtime_status_available_check(
                 voice_loop_runtime_status=voice_loop_runtime_status,
                 voice_loop_service_active_status=voice_loop_service_active_status,
             )
         )
         voice_loop_runtime_heartbeat_status, voice_loop_runtime_heartbeat_detail = (
-            doctor_module._voice_loop_runtime_heartbeat_check(
+            _voice_loop_runtime_heartbeat_check(
                 voice_loop_runtime_status=voice_loop_runtime_status,
                 voice_loop_service_active_status=voice_loop_service_active_status,
             )
@@ -314,8 +315,8 @@ class LinuxKdeWaylandPlatformProvider:
             },
             {
                 "name": "tray_user_service_installed",
-                "status": "ok" if doctor_module._tray_user_service_path().exists() else "warn",
-                "detail": str(doctor_module._tray_user_service_path()),
+                "status": "ok" if tray_service_path.exists() else "warn",
+                "detail": str(tray_service_path),
             },
             {
                 "name": "tray_user_service_enabled",
@@ -329,8 +330,8 @@ class LinuxKdeWaylandPlatformProvider:
             },
             {
                 "name": "voice_loop_user_service_installed",
-                "status": "ok" if doctor_module._voice_loop_user_service_path().exists() else "warn",
-                "detail": str(doctor_module._voice_loop_user_service_path()),
+                "status": "ok" if voice_loop_service_path.exists() else "warn",
+                "detail": str(voice_loop_service_path),
             },
             {
                 "name": "voice_loop_user_service_enabled",
@@ -344,8 +345,8 @@ class LinuxKdeWaylandPlatformProvider:
             },
             {
                 "name": "voice_loop_user_config_available",
-                "status": "ok" if doctor_module._voice_loop_config_path().exists() else "warn",
-                "detail": str(doctor_module._voice_loop_config_path()),
+                "status": "ok" if voice_loop_config_path.exists() else "warn",
+                "detail": str(voice_loop_config_path),
             },
             {
                 "name": "voice_loop_runtime_status_available",
@@ -364,10 +365,10 @@ class LinuxKdeWaylandPlatformProvider:
             },
             {
                 "name": "power_status_available",
-                "status": "ok" if shutil.which("upower") or doctor_module._has_battery_sysfs() else "warn",
+                "status": "ok" if shutil.which("upower") or sysfs_battery_available else "warn",
                 "detail": {
                     "upower": shutil.which("upower"),
-                    "sysfs_battery": doctor_module._has_battery_sysfs(),
+                    "sysfs_battery": sysfs_battery_available,
                 },
             },
         ]
@@ -381,6 +382,8 @@ class LinuxKdeWaylandPlatformProvider:
     ) -> str | None:
         if status == "ok":
             return None
+        if name == "virtualenv_active":
+            return "./scripts/install_linux_dev.sh"
         if name in {"voice_loop_runtime_status_available", "voice_loop_runtime_heartbeat_fresh"}:
             voice_loop_service_installed = (
                 str(checks_by_name.get("voice_loop_user_service_installed", {}).get("status")) == "ok"
@@ -665,41 +668,34 @@ def _voice_loop_runtime_status_available_check(
         return (
             "ok",
             {
+                "message": "Voice-loop user service is not active; runtime status is optional until the service runs.",
                 "status_file_path": status_file_path,
-                "message": "Voice-loop service is inactive, so runtime status is not required yet.",
             },
         )
-    return (
-        "warn",
-        {
-            "status_file_path": status_file_path,
-            "message": "Voice-loop runtime status file is missing while the service is active.",
-        },
-    )
+    return "warn", status_file_path
 
 
 def _voice_loop_runtime_heartbeat_check(
     *,
     voice_loop_runtime_status: object,
     voice_loop_service_active_status: str,
-) -> tuple[str, object]:
-    last_seen = getattr(voice_loop_runtime_status, "last_loop_at", None)
-    if last_seen is None:
-        if voice_loop_service_active_status != "ok":
-            return "ok", "Voice-loop service is inactive."
-        return "warn", "Voice-loop runtime heartbeat has not been recorded."
-    try:
-        parsed = datetime.fromisoformat(str(last_seen).replace("Z", "+00:00"))
-    except ValueError:
-        return "warn", f"Unparseable voice-loop heartbeat: {last_seen}"
-    if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=UTC)
-    age_seconds = (datetime.now(UTC) - parsed).total_seconds()
-    if age_seconds <= 15:
-        return "ok", {"last_loop_at": parsed.isoformat(), "age_seconds": round(age_seconds, 3)}
+) -> tuple[str, dict[str, object]]:
+    heartbeat_fresh = bool(getattr(voice_loop_runtime_status, "heartbeat_fresh", False))
+    detail = getattr(voice_loop_runtime_status, "to_dict", lambda: {})()
+    if not isinstance(detail, dict):
+        detail = {}
+    if heartbeat_fresh:
+        return "ok", detail
     if voice_loop_service_active_status != "ok":
-        return "ok", {"last_loop_at": parsed.isoformat(), "age_seconds": round(age_seconds, 3)}
-    return "warn", {"last_loop_at": parsed.isoformat(), "age_seconds": round(age_seconds, 3)}
+        detail = dict(detail)
+        detail["status"] = "ok"
+        detail["message"] = (
+            "Voice-loop user service is not active; no runtime status file has been written yet."
+            if not bool(getattr(voice_loop_runtime_status, "status_file_exists", False))
+            else "Voice-loop user service is not active; showing the last recorded runtime status."
+        )
+        return "ok", detail
+    return "warn", detail
 
 
 def _has_battery_sysfs() -> bool:
@@ -724,26 +720,27 @@ def build_voice_loop_runtime_status_snapshot():
 
 
 def _probe_wayland_session_access(env: dict[str, str] | None = None) -> tuple[str, object]:
-    session_env = os.environ if env is None else env
-    session_type = session_env.get("XDG_SESSION_TYPE")
-    runtime_dir = session_env.get("XDG_RUNTIME_DIR")
-    display_name = session_env.get("WAYLAND_DISPLAY", "wayland-0")
-    socket_path = None if runtime_dir is None else Path(runtime_dir) / display_name
+    current_env = os.environ if env is None else env
+    session_type = current_env.get("XDG_SESSION_TYPE")
+    runtime_dir = current_env.get("XDG_RUNTIME_DIR")
+    display = current_env.get("WAYLAND_DISPLAY")
 
-    detail = {
+    detail: dict[str, object] = {
         "session_type": session_type,
         "runtime_dir": runtime_dir,
-        "display_name": display_name,
-        "socket_path": str(socket_path) if socket_path is not None else None,
+        "display": display,
     }
 
     if session_type != "wayland":
         detail["message"] = "Wayland session is not active."
         return "warn", detail
-    if runtime_dir is None:
-        detail["message"] = "XDG_RUNTIME_DIR is not set."
+    if not runtime_dir or not display:
+        detail["message"] = "WAYLAND_DISPLAY or XDG_RUNTIME_DIR is not set."
         return "warn", detail
-    if socket_path is None or not socket_path.exists():
+
+    socket_path = Path(runtime_dir) / display
+    detail["socket_path"] = str(socket_path)
+    if not socket_path.exists():
         detail["message"] = "Wayland socket path does not exist."
         return "warn", detail
 
@@ -751,8 +748,8 @@ def _probe_wayland_session_access(env: dict[str, str] | None = None) -> tuple[st
     try:
         client.settimeout(0.5)
         client.connect(str(socket_path))
-    except (OSError, PermissionError) as exc:
-        detail["message"] = f"Wayland socket is not accessible: {exc}"
+    except OSError as exc:
+        detail["message"] = str(exc)
         return "warn", detail
     finally:
         client.close()
@@ -769,42 +766,45 @@ def _probe_text_input_backend(
 ) -> tuple[str, object]:
     wtype_path = resolve_executable("wtype")
     if wtype_path is None:
-        return "warn", {"wtype": None, "message": "wtype is not installed."}
+        return (
+            "warn",
+            {
+                "backend_status": "missing_binary",
+                "message": "wtype is not installed.",
+                "wtype": None,
+            },
+        )
+    detail: dict[str, object] = {
+        "backend_status": "probe_skipped",
+        "message": "wtype is installed.",
+        "wtype": wtype_path,
+    }
     if not wayland_session_accessible:
-        return "warn", {
-            "wtype": wtype_path,
-            "backend_status": "session_unavailable",
-            "message": "Wayland session access is unavailable, so text input cannot be verified.",
-        }
+        return "ok", detail
 
     if run_command is None:
         completed = subprocess.run(
-            [wtype_path, "-M", "shift", "-m", "shift"],
+            ["wtype", "-M", "shift", "-m", "shift"],
             capture_output=True,
             text=True,
-            timeout=1.0,
+            check=False,
         )
     else:
-        completed = run_command([wtype_path, "-M", "shift", "-m", "shift"])
+        completed = run_command(["wtype", "-M", "shift", "-m", "shift"])
     if completed.returncode == 0:
-        return "ok", {"wtype": wtype_path, "backend_status": "supported"}
+        detail["backend_status"] = "ok"
+        detail["message"] = "wtype backend is usable."
+        return "ok", detail
 
-    stderr = (completed.stderr or "").strip()
-    lower_stderr = stderr.lower()
-    if "virtual keyboard protocol" in lower_stderr:
-        return "warn", {
-            "wtype": wtype_path,
-            "backend_status": "unsupported_protocol",
-            "message": "wtype is installed but the compositor does not support the virtual keyboard protocol.",
-            "probe_error": stderr,
-        }
-
-    return "warn", {
-        "wtype": wtype_path,
-        "backend_status": "probe_failed",
-        "message": "wtype is installed but text input probing failed.",
-        "probe_error": stderr or f"exit code {completed.returncode}",
-    }
+    probe_error = (completed.stderr or completed.stdout or "").strip() or f"exit code {completed.returncode}"
+    if "virtual keyboard protocol" in probe_error.casefold():
+        detail["backend_status"] = "unsupported_protocol"
+        detail["message"] = "wtype is installed but the compositor does not support the virtual keyboard protocol."
+    else:
+        detail["backend_status"] = "probe_failed"
+        detail["message"] = "wtype is installed but the runtime probe failed."
+    detail["probe_error"] = probe_error
+    return "warn", detail
 
 
 def _tray_user_service_path() -> Path:
@@ -817,14 +817,17 @@ def _voice_loop_user_service_path() -> Path:
 
 def _voice_loop_config_path() -> Path:
     candidates = _voice_loop_config_candidate_paths()
-    if candidates:
-        return candidates[0]
-    return Path.home() / ".config" / "operance" / "voice-loop.args"
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return candidates[0]
 
 
 def _user_service_candidate_paths(unit_name: str) -> list[Path]:
     return [
         Path.home() / ".config" / "systemd" / "user" / unit_name,
+        Path("/etc/systemd/user") / unit_name,
+        Path("/usr/local/lib/systemd/user") / unit_name,
         Path("/usr/lib/systemd/user") / unit_name,
     ]
 
@@ -849,29 +852,26 @@ def _probe_systemctl_user_service_state(
     unit_name: str,
     *,
     systemctl_path: str | None = None,
-) -> tuple[str, object]:
+) -> tuple[str, str]:
     systemctl_executable = systemctl_path or shutil.which("systemctl")
     if systemctl_executable is None:
         return "warn", "systemctl not found"
 
-    completed = subprocess.run(
-        [systemctl_executable, "--user", subcommand, unit_name],
-        capture_output=True,
-        text=True,
-        timeout=2.0,
-    )
-    detail = (completed.stdout or completed.stderr or "").strip() or "unknown"
-    if completed.returncode == 0:
-        return "ok", detail
-    if subcommand == "is-enabled" and "disabled" in detail:
-        return "warn", "disabled"
-    if subcommand == "is-enabled" and "not-found" in detail:
-        return "warn", "not-found"
-    if subcommand == "is-active" and "inactive" in detail:
-        return "warn", "inactive"
-    if subcommand == "is-active" and "failed" in detail:
-        return "warn", "failed"
-    return "warn", detail
+    try:
+        completed = subprocess.run(
+            [systemctl_executable, "--user", subcommand, unit_name],
+            capture_output=True,
+            check=False,
+            text=True,
+        )
+    except OSError as exc:
+        return "warn", str(exc)
+
+    detail = completed.stdout.strip() or completed.stderr.strip()
+    if not detail:
+        detail = "ok" if completed.returncode == 0 else "unknown"
+
+    return "ok" if completed.returncode == 0 else "warn", detail
 
 
 def _collect_check_blockers(

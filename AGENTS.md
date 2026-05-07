@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-Source code lives under `src/operance/`. Keep portable core logic in modules such as `models/`, `intent/`, `planner/`, `policy.py`, `validator.py`, and `executor.py`. Platform boundaries belong in `src/operance/adapters/`, with `mock.py` used for developer-mode execution. Tests live in `tests/unit/`. Product and setup requirements are maintained in `docs/requirements/`, and the initial implementation brief is in `docs/prompt/initial.md`.
+Source code lives under `src/operance/`. Keep portable core logic in modules such as `models/`, `intent/`, `planner/`, `policy.py`, `validator.py`, and `executor.py`. Platform readiness and setup policy belong in `src/operance/platforms/`; OS-native execution belongs in `src/operance/adapters/`, with `mock.py` used for developer-mode execution. Tests live in `tests/unit/`. Product and setup requirements are maintained in `docs/requirements/`, and the initial implementation brief is in `docs/prompt/initial.md`.
 
 ## Build, Test, and Development Commands
 

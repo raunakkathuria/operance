@@ -49,6 +49,7 @@ A provider owns:
 - building the right `AdapterSet` for the current host
 - platform-specific environment checks used by `--doctor`
 - platform-specific setup-step metadata
+- platform-specific service discovery, session probes, and host transport checks
 - platform-specific setup actions, blocked recommendations, and next steps
 - live command blockers and remediation suggestions
 - release-verification metadata for the current platform target

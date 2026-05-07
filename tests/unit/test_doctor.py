@@ -80,9 +80,9 @@ def test_environment_report_includes_package_tooling_checks() -> None:
 
 
 def test_probe_wayland_session_access_reports_missing_socket(tmp_path) -> None:
-    from operance import doctor
+    from operance.platforms import linux as linux_platform
 
-    status, detail = doctor._probe_wayland_session_access(
+    status, detail = linux_platform._probe_wayland_session_access(
         {
             "XDG_SESSION_TYPE": "wayland",
             "XDG_RUNTIME_DIR": str(tmp_path),
@@ -96,7 +96,7 @@ def test_probe_wayland_session_access_reports_missing_socket(tmp_path) -> None:
 
 
 def test_probe_wayland_session_access_reports_accessible_socket(tmp_path) -> None:
-    from operance import doctor
+    from operance.platforms import linux as linux_platform
 
     socket_path = tmp_path / "wayland-7"
     socket_path.write_text("", encoding="utf-8")
@@ -113,11 +113,11 @@ def test_probe_wayland_session_access_reports_accessible_socket(tmp_path) -> Non
         def close(self) -> None:
             return None
 
-    doctor_socket = doctor.socket
-    original_socket_factory = doctor_socket.socket
-    doctor_socket.socket = lambda *_args, **_kwargs: _FakeSocket()
+    linux_socket = linux_platform.socket
+    original_socket_factory = linux_socket.socket
+    linux_socket.socket = lambda *_args, **_kwargs: _FakeSocket()
     try:
-        status, detail = doctor._probe_wayland_session_access(
+        status, detail = linux_platform._probe_wayland_session_access(
             {
                 "XDG_SESSION_TYPE": "wayland",
                 "XDG_RUNTIME_DIR": str(tmp_path),
@@ -125,7 +125,7 @@ def test_probe_wayland_session_access_reports_accessible_socket(tmp_path) -> Non
             }
         )
     finally:
-        doctor_socket.socket = original_socket_factory
+        linux_socket.socket = original_socket_factory
 
     assert status == "ok"
     assert connected_paths == [str(socket_path)]
@@ -134,18 +134,18 @@ def test_probe_wayland_session_access_reports_accessible_socket(tmp_path) -> Non
 
 
 def test_probe_text_input_backend_reports_unsupported_protocol() -> None:
-    from operance import doctor
+    from operance.platforms import linux as linux_platform
 
     def run_command(command: list[str]) -> object:
         assert command == ["wtype", "-M", "shift", "-m", "shift"]
-        return doctor.subprocess.CompletedProcess(
+        return linux_platform.subprocess.CompletedProcess(
             command,
             1,
             stdout="",
             stderr="Compositor does not support the virtual keyboard protocol",
         )
 
-    status, detail = doctor._probe_text_input_backend(
+    status, detail = linux_platform._probe_text_input_backend(
         wayland_session_accessible=True,
         run_command=run_command,
         resolve_executable=lambda name: f"/usr/bin/{name}" if name == "wtype" else None,
@@ -164,11 +164,12 @@ def test_environment_report_includes_tray_service_runtime_state(monkeypatch) -> 
     from pathlib import Path
 
     from operance import doctor
+    from operance.platforms import linux as linux_platform
 
-    monkeypatch.setattr(doctor, "_tray_user_service_path", lambda: Path("/tmp/operance-tray.service"))
-    monkeypatch.setattr(doctor, "_voice_loop_user_service_path", lambda: Path("/tmp/operance-voice-loop.service"))
+    monkeypatch.setattr(linux_platform, "_tray_user_service_path", lambda: Path("/tmp/operance-tray.service"))
+    monkeypatch.setattr(linux_platform, "_voice_loop_user_service_path", lambda: Path("/tmp/operance-voice-loop.service"))
     monkeypatch.setattr(
-        doctor,
+        linux_platform,
         "_probe_systemctl_user_service_state",
         lambda subcommand, unit_name, systemctl_path=None: (
             ("ok", "enabled") if subcommand == "is-enabled" else ("warn", "inactive")
@@ -190,6 +191,7 @@ def test_environment_report_includes_tray_service_runtime_state(monkeypatch) -> 
 
 def test_environment_report_detects_packaged_user_service_units(monkeypatch, tmp_path) -> None:
     from operance import doctor
+    from operance.platforms import linux as linux_platform
 
     packaged_unit_dir = tmp_path / "usr" / "lib" / "systemd" / "user"
     packaged_unit_dir.mkdir(parents=True)
@@ -199,7 +201,7 @@ def test_environment_report_detects_packaged_user_service_units(monkeypatch, tmp
     voice_loop_unit.write_text("[Unit]\nDescription=Operance voice loop\n", encoding="utf-8")
 
     monkeypatch.setattr(
-        doctor,
+        linux_platform,
         "_user_service_candidate_paths",
         lambda unit_name: [
             tmp_path / "home" / ".config" / "systemd" / "user" / unit_name,
@@ -207,7 +209,7 @@ def test_environment_report_detects_packaged_user_service_units(monkeypatch, tmp
         ],
     )
     monkeypatch.setattr(
-        doctor,
+        linux_platform,
         "_probe_systemctl_user_service_state",
         lambda subcommand, unit_name, systemctl_path=None: ("warn", "inactive"),
     )
@@ -223,13 +225,14 @@ def test_environment_report_detects_packaged_user_service_units(monkeypatch, tmp
 
 def test_environment_report_detects_voice_loop_user_config(monkeypatch, tmp_path) -> None:
     from operance import doctor
+    from operance.platforms import linux as linux_platform
 
     config_path = tmp_path / "config" / "operance" / "voice-loop.args"
     config_path.parent.mkdir(parents=True)
     config_path.write_text("--voice-loop-max-commands\n2\n", encoding="utf-8")
 
     monkeypatch.setattr(
-        doctor,
+        linux_platform,
         "_voice_loop_config_candidate_paths",
         lambda: [
             config_path,
@@ -246,13 +249,14 @@ def test_environment_report_detects_voice_loop_user_config(monkeypatch, tmp_path
 
 def test_environment_report_ignores_unrelated_voice_loop_user_config(monkeypatch, tmp_path) -> None:
     from operance import doctor
+    from operance.platforms import linux as linux_platform
 
     unrelated_config_path = tmp_path / "config" / "archived-app" / "voice-loop.args"
     unrelated_config_path.parent.mkdir(parents=True)
     unrelated_config_path.write_text("--wakeword-threshold\n0.844\n", encoding="utf-8")
 
     monkeypatch.setattr(
-        doctor,
+        linux_platform,
         "_voice_loop_config_candidate_paths",
         lambda: [
             tmp_path / "config" / "operance" / "voice-loop.args",
@@ -271,6 +275,7 @@ def test_environment_report_ignores_unrelated_voice_loop_user_config(monkeypatch
 
 def test_environment_report_reports_effective_voice_loop_wakeword_config(monkeypatch) -> None:
     from operance import doctor
+    from operance.platforms import linux as linux_platform
 
     class _FakeVoiceLoopConfigSnapshot:
         selected_args_file = "/home/test/.config/operance/voice-loop.args"
@@ -305,7 +310,7 @@ def test_environment_report_reports_effective_voice_loop_wakeword_config(monkeyp
                 "selected_args_file": "/home/test/.config/operance/voice-loop.args",
             }
 
-    monkeypatch.setattr(doctor, "build_voice_loop_config_snapshot", lambda: _FakeVoiceLoopConfigSnapshot())
+    monkeypatch.setattr(linux_platform, "build_voice_loop_config_snapshot", lambda: _FakeVoiceLoopConfigSnapshot())
 
     report = doctor.build_environment_report(system_name="Linux")
     checks = {check["name"]: check for check in report["checks"]}
@@ -338,6 +343,7 @@ def test_environment_report_reports_effective_voice_loop_wakeword_config(monkeyp
 
 def test_environment_report_reports_voice_loop_runtime_status(monkeypatch) -> None:
     from operance import doctor
+    from operance.platforms import linux as linux_platform
 
     class _FakeVoiceLoopRuntimeStatusSnapshot:
         status_file_exists = True
@@ -372,7 +378,7 @@ def test_environment_report_reports_voice_loop_runtime_status(monkeypatch) -> No
             }
 
     monkeypatch.setattr(
-        doctor,
+        linux_platform,
         "build_voice_loop_runtime_status_snapshot",
         lambda: _FakeVoiceLoopRuntimeStatusSnapshot(),
     )
@@ -396,6 +402,7 @@ def test_environment_report_treats_missing_voice_loop_runtime_status_as_informat
     from pathlib import Path
 
     from operance import doctor
+    from operance.platforms import linux as linux_platform
 
     class _FakeVoiceLoopRuntimeStatusSnapshot:
         status_file_exists = False
@@ -412,14 +419,14 @@ def test_environment_report_treats_missing_voice_loop_runtime_status_as_informat
                 "status_file_path": "/repo/.operance/voice-loop-status.json",
             }
 
-    monkeypatch.setattr(doctor, "_voice_loop_user_service_path", lambda: Path("/tmp/operance-voice-loop.service"))
+    monkeypatch.setattr(linux_platform, "_voice_loop_user_service_path", lambda: Path("/tmp/operance-voice-loop.service"))
     monkeypatch.setattr(
-        doctor,
+        linux_platform,
         "_probe_systemctl_user_service_state",
         lambda subcommand, unit_name, systemctl_path=None: ("warn", "inactive"),
     )
     monkeypatch.setattr(
-        doctor,
+        linux_platform,
         "build_voice_loop_runtime_status_snapshot",
         lambda: _FakeVoiceLoopRuntimeStatusSnapshot(),
     )
@@ -444,6 +451,7 @@ def test_environment_report_treats_stale_voice_loop_runtime_status_as_informatio
     from pathlib import Path
 
     from operance import doctor
+    from operance.platforms import linux as linux_platform
 
     class _FakeVoiceLoopRuntimeStatusSnapshot:
         status_file_exists = True
@@ -461,14 +469,14 @@ def test_environment_report_treats_stale_voice_loop_runtime_status_as_informatio
                 "status_file_path": "/repo/.operance/voice-loop-status.json",
             }
 
-    monkeypatch.setattr(doctor, "_voice_loop_user_service_path", lambda: Path("/tmp/operance-voice-loop.service"))
+    monkeypatch.setattr(linux_platform, "_voice_loop_user_service_path", lambda: Path("/tmp/operance-voice-loop.service"))
     monkeypatch.setattr(
-        doctor,
+        linux_platform,
         "_probe_systemctl_user_service_state",
         lambda subcommand, unit_name, systemctl_path=None: ("warn", "inactive"),
     )
     monkeypatch.setattr(
-        doctor,
+        linux_platform,
         "build_voice_loop_runtime_status_snapshot",
         lambda: _FakeVoiceLoopRuntimeStatusSnapshot(),
     )
@@ -490,6 +498,7 @@ def test_environment_report_treats_stale_voice_loop_runtime_status_as_informatio
 
 def test_environment_report_warns_when_voice_loop_wakeword_config_matches_defaults(monkeypatch) -> None:
     from operance import doctor
+    from operance.platforms import linux as linux_platform
 
     class _FakeVoiceLoopConfigSnapshot:
         selected_args_file = "/home/test/.config/operance/voice-loop.args"
@@ -527,7 +536,7 @@ def test_environment_report_warns_when_voice_loop_wakeword_config_matches_defaul
                 "status": "ok",
             }
 
-    monkeypatch.setattr(doctor, "build_voice_loop_config_snapshot", lambda: _FakeVoiceLoopConfigSnapshot())
+    monkeypatch.setattr(linux_platform, "build_voice_loop_config_snapshot", lambda: _FakeVoiceLoopConfigSnapshot())
 
     report = doctor.build_environment_report(system_name="Linux")
     checks = {check["name"]: check for check in report["checks"]}
