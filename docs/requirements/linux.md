@@ -19,7 +19,7 @@ It consolidates the Linux-specific requirements that are otherwise spread across
 - [overview.md](../architecture/overview.md)
 - [fedora-alpha-checklist.md](../release/fedora-alpha-checklist.md)
 - [tech.md](./tech.md)
-- [doctor.py](../../src/operance/doctor.py)
+- [linux.py](../../src/operance/platforms/linux.py)
 - [CHANGELOG.md](../../CHANGELOG.md)
 
 Use this document when preparing a real Linux machine for desktop-integration work.
@@ -36,7 +36,8 @@ Linux is Phase 1 of the product roadmap. Windows is planned as Phase 2 and macOS
 Current architecture note:
 
 - the Linux host surface now hangs off the `linux_kde_wayland` platform provider in `src/operance/platforms/linux.py`
-- that provider owns Linux-specific adapter construction, doctor checks, setup-step metadata, setup actions, and live command availability or verification rules
+- that provider owns Linux-specific adapter construction, doctor checks, setup-step metadata, setup actions, service discovery, Wayland probes, and live command availability or verification rules
+- `src/operance/doctor.py` now assembles common checks and delegates platform checks through the provider instead of carrying Linux host probes itself
 - Linux-specific input transport details like `wtype` key sequences now also stay in `src/operance/adapters/linux.py` instead of shared key-definition modules
 - the Linux execution path itself remains in `src/operance/adapters/linux.py`
 - new OS work should start by adding a provider and adapters, not by adding more Linux branching to shared core modules

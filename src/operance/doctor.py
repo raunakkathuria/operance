@@ -6,11 +6,7 @@ import importlib.util
 import os
 import platform
 from pathlib import Path
-import shutil
-import socket
-import subprocess
 import sys
-from typing import Callable
 
 from .config import AppConfig, PlannerSettings
 from .platforms import get_platform_provider
@@ -131,155 +127,8 @@ def build_environment_report(system_name: str | None = None) -> dict[str, object
     }
 
 
-def build_voice_loop_config_snapshot():
-    from .voice.config import build_voice_loop_config_snapshot as _build_voice_loop_config_snapshot
-
-    return _build_voice_loop_config_snapshot()
-
-
-def build_voice_loop_runtime_status_snapshot():
-    from .voice.runtime import (
-        build_voice_loop_runtime_status_snapshot as _build_voice_loop_runtime_status_snapshot,
-    )
-
-    return _build_voice_loop_runtime_status_snapshot()
-
-
-def _voice_loop_runtime_status_available_check(
-    *,
-    voice_loop_runtime_status: object,
-    voice_loop_service_active_status: str,
-) -> tuple[str, object]:
-    status_file_exists = bool(getattr(voice_loop_runtime_status, "status_file_exists", False))
-    status_file_path = str(getattr(voice_loop_runtime_status, "status_file_path", ""))
-    if status_file_exists:
-        return "ok", status_file_path
-    if voice_loop_service_active_status != "ok":
-        return (
-            "ok",
-            {
-                "message": "Voice-loop user service is not active; runtime status is optional until the service runs.",
-                "status_file_path": status_file_path,
-            },
-        )
-    return "warn", status_file_path
-
-
-def _voice_loop_runtime_heartbeat_check(
-    *,
-    voice_loop_runtime_status: object,
-    voice_loop_service_active_status: str,
-) -> tuple[str, dict[str, object]]:
-    heartbeat_fresh = bool(getattr(voice_loop_runtime_status, "heartbeat_fresh", False))
-    detail = getattr(voice_loop_runtime_status, "to_dict", lambda: {})()
-    if not isinstance(detail, dict):
-        detail = {}
-    if heartbeat_fresh:
-        return "ok", detail
-    if voice_loop_service_active_status != "ok":
-        detail = dict(detail)
-        detail["status"] = "ok"
-        detail["message"] = (
-            "Voice-loop user service is not active; no runtime status file has been written yet."
-            if not bool(getattr(voice_loop_runtime_status, "status_file_exists", False))
-            else "Voice-loop user service is not active; showing the last recorded runtime status."
-        )
-        return "ok", detail
-    return "warn", detail
-
-
-def _has_battery_sysfs() -> bool:
-    power_supply_root = "/sys/class/power_supply"
-    if not os.path.isdir(power_supply_root):
-        return False
-    return any(entry.startswith("BAT") for entry in os.listdir(power_supply_root))
-
-
 def _planner_config() -> PlannerSettings:
     return AppConfig.from_env().planner
-
-
-def _probe_wayland_session_access(env: dict[str, str] | None = None) -> tuple[str, object]:
-    current_env = os.environ if env is None else env
-    session_type = current_env.get("XDG_SESSION_TYPE")
-    runtime_dir = current_env.get("XDG_RUNTIME_DIR")
-    display = current_env.get("WAYLAND_DISPLAY")
-
-    detail: dict[str, object] = {
-        "session_type": session_type,
-        "runtime_dir": runtime_dir,
-        "display": display,
-    }
-
-    if session_type != "wayland":
-        detail["message"] = "Wayland session is not active."
-        return ("warn", detail)
-    if not runtime_dir or not display:
-        detail["message"] = "WAYLAND_DISPLAY or XDG_RUNTIME_DIR is not set."
-        return ("warn", detail)
-
-    socket_path = Path(runtime_dir) / display
-    detail["socket_path"] = str(socket_path)
-    if not socket_path.exists():
-        detail["message"] = "Wayland socket path does not exist."
-        return ("warn", detail)
-
-    client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    try:
-        client.settimeout(0.5)
-        client.connect(str(socket_path))
-    except OSError as exc:
-        detail["message"] = str(exc)
-        return ("warn", detail)
-    finally:
-        client.close()
-
-    detail["message"] = "Wayland session socket is accessible."
-    return ("ok", detail)
-
-
-def _probe_text_input_backend(
-    *,
-    wayland_session_accessible: bool,
-    run_command: Callable[[list[str]], subprocess.CompletedProcess[str]] | None = None,
-    resolve_executable: Callable[[str], str | None] | None = None,
-) -> tuple[str, dict[str, object]]:
-    resolver = shutil.which if resolve_executable is None else resolve_executable
-    wtype_path = resolver("wtype")
-    if wtype_path is None:
-        return (
-            "warn",
-            {
-                "backend_status": "missing_binary",
-                "message": "wtype is not installed.",
-                "wtype": None,
-            },
-        )
-
-    detail: dict[str, object] = {
-        "backend_status": "probe_skipped",
-        "message": "wtype is installed.",
-        "wtype": wtype_path,
-    }
-    if not wayland_session_accessible:
-        return ("ok", detail)
-
-    runner = run_command or (lambda command: subprocess.run(command, capture_output=True, text=True, check=False))
-    result = runner(["wtype", "-M", "shift", "-m", "shift"])
-    if result.returncode == 0:
-        detail["backend_status"] = "ok"
-        detail["message"] = "wtype backend is usable."
-        return ("ok", detail)
-
-    probe_error = (result.stderr or result.stdout or "").strip() or f"exit code {result.returncode}"
-    if "virtual keyboard protocol" in probe_error.casefold():
-        detail["backend_status"] = "unsupported_protocol"
-        detail["message"] = "wtype is installed but the compositor does not support the virtual keyboard protocol."
-    else:
-        detail["backend_status"] = "probe_failed"
-        detail["message"] = "wtype is installed but the runtime probe failed."
-    detail["probe_error"] = probe_error
-    return ("warn", detail)
 
 
 def _probe_planner_health(planner_config: PlannerSettings) -> tuple[str, object]:
@@ -306,22 +155,6 @@ def _probe_planner_health(planner_config: PlannerSettings) -> tuple[str, object]
     return ("ok" if health.get("status") == "ok" else "warn", health)
 
 
-def _tray_user_service_path() -> Path:
-    return _first_user_service_path("operance-tray.service")
-
-
-def _voice_loop_user_service_path() -> Path:
-    return _first_user_service_path("operance-voice-loop.service")
-
-
-def _voice_loop_config_path() -> Path:
-    candidates = _voice_loop_config_candidate_paths()
-    for candidate in candidates:
-        if candidate.exists():
-            return candidate
-    return candidates[0]
-
-
 def _voice_asset_source_path(env_name: str) -> Path | None:
     raw_value = os.environ.get(env_name)
     if not raw_value:
@@ -331,54 +164,3 @@ def _voice_asset_source_path(env_name: str) -> Path | None:
     if candidate.exists():
         return candidate
     return None
-
-
-def _user_service_candidate_paths(unit_name: str) -> list[Path]:
-    return [
-        Path.home() / ".config" / "systemd" / "user" / unit_name,
-        Path("/etc/systemd/user") / unit_name,
-        Path("/usr/local/lib/systemd/user") / unit_name,
-        Path("/usr/lib/systemd/user") / unit_name,
-    ]
-
-
-def _voice_loop_config_candidate_paths() -> list[Path]:
-    return [
-        Path.home() / ".config" / "operance" / "voice-loop.args",
-        Path("/etc/operance/voice-loop.args"),
-    ]
-
-
-def _first_user_service_path(unit_name: str) -> Path:
-    candidates = _user_service_candidate_paths(unit_name)
-    for candidate in candidates:
-        if candidate.exists():
-            return candidate
-    return candidates[0]
-
-
-def _probe_systemctl_user_service_state(
-    subcommand: str,
-    unit_name: str,
-    *,
-    systemctl_path: str | None = None,
-) -> tuple[str, str]:
-    executable = systemctl_path or shutil.which("systemctl")
-    if executable is None:
-        return ("warn", "systemctl not found")
-
-    try:
-        completed = subprocess.run(
-            [executable, "--user", subcommand, unit_name],
-            capture_output=True,
-            check=False,
-            text=True,
-        )
-    except OSError as exc:
-        return ("warn", str(exc))
-
-    detail = completed.stdout.strip() or completed.stderr.strip()
-    if not detail:
-        detail = "ok" if completed.returncode == 0 else "unknown"
-
-    return ("ok" if completed.returncode == 0 else "warn", detail)

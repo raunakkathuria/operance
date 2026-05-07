@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Hardened the platform-provider boundary so Linux service discovery, Wayland and text-input probes, runtime-status interpretation, setup metadata, and remediation policy now live behind the Linux provider while `doctor.py` and `ui/setup.py` stay focused on common assembly.
 - Fixed repo-local demo, systemd install, and local-install helper scripts so dry-run and service-rendering paths no longer require an existing checkout `.venv/bin/python`, which restores the expected CI and bootstrap behavior for render-only workflows.
 - Fixed voice-loop config snapshots to derive the fallback config path from an overridden `HOME` when `XDG_CONFIG_HOME` is not explicitly set, so test and setup environments no longer leak the runner's ambient config directory into snapshot output.
 - Added `scripts/bundle_python_runtime.py` plus a new optional `--bundle-profile mvp` path across the packaged-asset renderer and Fedora package build helpers, so maintainers can now build an RPM that vendors the current tray UI and STT runtime dependencies from the local virtualenv instead of stopping at the base-runtime package profile.
