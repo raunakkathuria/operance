@@ -106,8 +106,18 @@ def _repo_local_voice_loop_args_candidate_paths(
 ) -> list[Path]:
     source = dict(os.environ)
     source.update(env or {})
-    home_path = Path(source.get("HOME", str(Path.home()))).expanduser()
-    config_home = Path(source.get("XDG_CONFIG_HOME", str(home_path / ".config"))).expanduser()
+    if env is not None and "HOME" in env:
+        home_path = Path(env["HOME"]).expanduser()
+    else:
+        home_path = Path(source.get("HOME", str(Path.home()))).expanduser()
+
+    if env is not None and "XDG_CONFIG_HOME" in env:
+        config_home = Path(env["XDG_CONFIG_HOME"]).expanduser()
+    elif env is not None and "HOME" in env:
+        config_home = home_path / ".config"
+    else:
+        config_home = Path(source.get("XDG_CONFIG_HOME", str(home_path / ".config"))).expanduser()
+
     paths = [
         repo_root / ".operance" / "voice-loop.args",
         config_home / "operance" / "voice-loop.args",

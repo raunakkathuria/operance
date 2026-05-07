@@ -120,11 +120,11 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
+require_release_prerequisites
+
 if [[ ! -x "${python_bin}" ]] && [[ "${dry_run}" -eq 0 ]]; then
     fail "python executable not found: ${python_bin}"
 fi
-
-require_release_prerequisites
 
 cd "${repo_root}"
 

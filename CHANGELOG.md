@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fixed repo-local demo, systemd install, and local-install helper scripts so dry-run and service-rendering paths no longer require an existing checkout `.venv/bin/python`, which restores the expected CI and bootstrap behavior for render-only workflows.
+- Fixed voice-loop config snapshots to derive the fallback config path from an overridden `HOME` when `XDG_CONFIG_HOME` is not explicitly set, so test and setup environments no longer leak the runner's ambient config directory into snapshot output.
 - Added `scripts/bundle_python_runtime.py` plus a new optional `--bundle-profile mvp` path across the packaged-asset renderer and Fedora package build helpers, so maintainers can now build an RPM that vendors the current tray UI and STT runtime dependencies from the local virtualenv instead of stopping at the base-runtime package profile.
 - Hardened the bundled-runtime packaging path by stripping executable bits from vendored `site-packages` files during packaging, preventing `PySide6` helper scripts with ambiguous shebangs from breaking `rpmbuild` even though those files are runtime payload rather than installed CLI tools.
 - Real-validated the new `mvp` RPM bundle profile on Fedora: the targeted packaging test slice passes, `./scripts/build_package_artifacts.sh --rpm --bundle-profile mvp --bundle-python .venv/bin/python` completes, and the finished artifact now passes `rpm -Kv`, but the profile remains experimental until the installed path is smoke-tested end to end.

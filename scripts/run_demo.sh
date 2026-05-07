@@ -73,7 +73,7 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
-if [[ ! -x "${python_bin}" ]]; then
+if [[ ! -x "${python_bin}" ]] && [[ "${dry_run}" -eq 0 ]]; then
     fail "python executable not found: ${python_bin}"
 fi
 
