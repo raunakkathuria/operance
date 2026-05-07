@@ -42,6 +42,22 @@ def test_installed_beta_smoke_script_dry_run_prints_expected_steps() -> None:
     assert result.stderr == ""
 
 
+def test_installed_beta_smoke_script_can_require_mvp_runtime_in_dry_run() -> None:
+    result = _run_installed_beta_smoke_script("--require-mvp-runtime", "--dry-run")
+
+    assert result.stdout.splitlines() == [
+        "+ test -f /usr/share/applications/operance.desktop",
+        "+ test -f /usr/lib/systemd/user/operance-tray.service",
+        "+ test -f /usr/lib/systemd/user/operance-voice-loop.service",
+        "+ operance --version",
+        "+ operance --doctor",
+        "+ python3 scripts/check_installed_mvp_runtime.py --command operance",
+        "+ operance --supported-commands --supported-commands-available-only",
+        "+ operance --support-bundle",
+    ]
+    assert result.stderr == ""
+
+
 def test_installed_beta_smoke_script_can_install_run_and_uninstall_with_fake_tools(
     tmp_path: Path,
 ) -> None:

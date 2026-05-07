@@ -144,11 +144,10 @@ The current repo is ready for a Fedora developer alpha only when:
 2. the RPM gate passes on the target Fedora machine
 3. the known limitations above are documented honestly in the launch notes
 4. the expected tester workflow is explicit:
-   source checkout for the fullest current MVP path, RPM install for the
-   packaged base-runtime handoff
+   source checkout first, Fedora RPM `mvp` package second, and a human
+   tray-plus-microphone smoke before tagging a packaged alpha release
 
 If the goal changes from `developer alpha` to `wider public alpha`, the next
-required feature is not another desktop command. It is graduating the new
-experimental `mvp` RPM bundle profile into a supported packaged path by
-install-smoking it through the Fedora gate and deciding whether it is small and
-stable enough to replace the current base-runtime package profile.
+required feature is not another desktop command. It is tightening the installed
+tray plus click-to-talk UX and collecting enough Fedora feedback to know whether
+the packaged `mvp` runtime is stable enough for non-developer testers.

@@ -45,25 +45,22 @@ Primary supported alpha path:
 
 Secondary supported alpha path:
 
-- Fedora RPM install of the base runtime
+- Fedora RPM install of the `mvp` runtime profile
 - validated through `./scripts/run_fedora_alpha_gate.sh`
-- useful for proving packaging, install, and installed-command smoke behavior
+- useful for proving packaging, install, installed-command smoke behavior, and bundled tray plus STT runtime availability
 
-If you want the fullest current MVP path, use the source checkout. The RPM path is valid today, but it is still a base-runtime alpha rather than the fullest tray-plus-voice install experience.
+The Fedora gate now defaults to:
 
-There is now also an **experimental Fedora packaging profile** for maintainers and
-packaging contributors:
+- `./scripts/build_package_artifacts.sh --rpm --bundle-profile mvp`
+- `./scripts/run_installed_beta_smoke.sh --require-mvp-runtime`
 
-- `./scripts/build_package_artifacts.sh --rpm --bundle-profile mvp --bundle-python .venv/bin/python`
-- it vendors the current tray UI and STT runtime Python dependencies into the RPM artifact
-- it is build-validated and RPM-integrity-validated
-- it is **not yet** part of the public alpha support contract, because it has not yet been install-smoked as the supported packaged path
+That verifies the installed package can expose the tray UI backend and STT backend through `operance --doctor`. Actual tray interaction and microphone capture still require a human desktop-session smoke before tagging a release.
 
 What is already proven on the current target machine:
 
 - the full test suite passes
 - the source-checkout beta smoke path works
-- the Fedora alpha gate can build the RPM artifact and validate the installed command path
+- the Fedora alpha gate can build the RPM artifact and validate the installed command path plus packaged MVP runtime checks
 - the installed command can produce a support bundle
 - `operance.cli --supported-commands --supported-commands-available-only` now exposes only the release-verified alpha command subset above, not the broader implemented runtime surface
 

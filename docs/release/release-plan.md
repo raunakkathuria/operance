@@ -17,7 +17,7 @@ That means:
 - publish `v0.1.0-alpha.1`
 - position it as Fedora KDE Wayland first
 - keep source checkout as the primary supported path
-- keep RPM as the secondary base-runtime path
+- keep RPM as the secondary packaged `mvp` runtime path
 
 ---
 
@@ -67,7 +67,7 @@ commands.”
 
 That work should focus on:
 
-- bundling or otherwise solving the optional UI and voice backend dependency story for the installed path
+- tightening the packaged tray plus click-to-talk path after the `mvp` runtime gate
 - widening the release-verified command subset one command family at a time
 - keeping tray plus click-to-talk reliable from the installed product
 - improving outside-developer onboarding and failure capture

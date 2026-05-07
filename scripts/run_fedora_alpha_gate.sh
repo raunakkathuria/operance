@@ -6,7 +6,7 @@ repo_root="$(cd "${script_dir}/.." && pwd)"
 
 python_bin=".venv/bin/python"
 support_bundle_out=""
-bundle_profile="base"
+bundle_profile="mvp"
 bundle_python=""
 bundle_source_site_packages=""
 use_sudo=1
@@ -25,7 +25,7 @@ Options:
   --support-bundle-out PATH        Forward an output path to the installed-package
                                    support-bundle step in the release smoke helper.
   --bundle-profile PROFILE         Dependency bundle profile forwarded to the RPM build path.
-                                   Supported: base, mvp. Defaults to base.
+                                   Supported: base, mvp. Defaults to mvp.
   --bundle-python PATH             Python executable used for non-base runtime bundling.
   --bundle-source-site-packages PATH
                                    Override the source site-packages directory for runtime bundling.
