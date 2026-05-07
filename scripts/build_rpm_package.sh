@@ -12,6 +12,9 @@ output_dir="${repo_root}/dist/rpm"
 output_dir_set=0
 entrypoint="/usr/bin/operance"
 version=""
+bundle_profile="base"
+bundle_python=""
+bundle_source_site_packages=""
 skip_build=0
 dry_run=0
 
@@ -23,14 +26,19 @@ Render an RPM spec tree for the current Operance base runtime, tray, and
 voice-loop assets.
 
 Options:
-  --spec-dir PATH    Top-level rpmbuild directory. Defaults to dist/rpm.
-  --output-dir PATH  Output directory for the built .rpm artifact.
-                     Defaults to dist/rpm.
-  --entrypoint PATH  Installed operance entrypoint path. Defaults to /usr/bin/operance.
-  --version VALUE    Package version. Defaults to the version from pyproject.toml.
-  --skip-build       Render the RPM spec tree without calling rpmbuild.
-  --dry-run          Print the build steps without executing them.
-  -h, --help         Show this help text.
+  --spec-dir PATH                 Top-level rpmbuild directory. Defaults to dist/rpm.
+  --output-dir PATH               Output directory for the built .rpm artifact.
+                                  Defaults to dist/rpm.
+  --entrypoint PATH               Installed operance entrypoint path. Defaults to /usr/bin/operance.
+  --version VALUE                 Package version. Defaults to the version from pyproject.toml.
+  --bundle-profile PROFILE        Dependency bundle profile forwarded to render_packaged_assets.sh.
+                                  Supported: base, mvp. Defaults to base.
+  --bundle-python PATH            Python executable used for non-base runtime bundling.
+  --bundle-source-site-packages PATH
+                                  Override the source site-packages directory for runtime bundling.
+  --skip-build                    Render the RPM spec tree without calling rpmbuild.
+  --dry-run                       Print the build steps without executing them.
+  -h, --help                      Show this help text.
 EOF
 }
 
@@ -79,6 +87,27 @@ while [[ $# -gt 0 ]]; do
                 fail "--version requires a value"
             fi
             version="$1"
+            ;;
+        --bundle-profile)
+            shift
+            if [[ $# -eq 0 ]]; then
+                fail "--bundle-profile requires a value"
+            fi
+            bundle_profile="$1"
+            ;;
+        --bundle-python)
+            shift
+            if [[ $# -eq 0 ]]; then
+                fail "--bundle-python requires a path"
+            fi
+            bundle_python="$1"
+            ;;
+        --bundle-source-site-packages)
+            shift
+            if [[ $# -eq 0 ]]; then
+                fail "--bundle-source-site-packages requires a path"
+            fi
+            bundle_source_site_packages="$1"
             ;;
         --skip-build)
             skip_build=1
@@ -130,8 +159,16 @@ if [[ "${dry_run}" -eq 0 ]]; then
         "${spec_template}" > "${spec_path}"
 fi
 
-render_display="./scripts/render_packaged_assets.sh --output-dir ${assets_dir} --entrypoint ${entrypoint}"
-render_args=("./scripts/render_packaged_assets.sh" "--output-dir" "${assets_dir}" "--entrypoint" "${entrypoint}")
+render_display="./scripts/render_packaged_assets.sh --output-dir ${assets_dir} --entrypoint ${entrypoint} --bundle-profile ${bundle_profile}"
+render_args=("./scripts/render_packaged_assets.sh" "--output-dir" "${assets_dir}" "--entrypoint" "${entrypoint}" "--bundle-profile" "${bundle_profile}")
+if [[ -n "${bundle_python}" ]]; then
+    render_display="${render_display} --bundle-python ${bundle_python}"
+    render_args+=("--bundle-python" "${bundle_python}")
+fi
+if [[ -n "${bundle_source_site_packages}" ]]; then
+    render_display="${render_display} --bundle-source-site-packages ${bundle_source_site_packages}"
+    render_args+=("--bundle-source-site-packages" "${bundle_source_site_packages}")
+fi
 if [[ "${dry_run}" -eq 1 ]]; then
     render_args+=("--dry-run")
 fi

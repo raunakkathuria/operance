@@ -60,7 +60,8 @@ Operance is ready for a **Fedora KDE Wayland developer alpha** for outside devel
 - Secondary supported path: Fedora RPM install of the base runtime, validated through `./scripts/run_fedora_alpha_gate.sh`
 - Default interaction: tray plus click-to-talk
 - Wake word and the continuous voice loop remain secondary to click-to-talk for alpha reliability
-- The native package path still does not bundle optional UI and voice Python backends such as `PySide6`, `openwakeword`, `moonshine-voice`, `kokoro_onnx`, or `soundfile`
+- The supported native package path still does not bundle optional UI and voice Python backends such as `PySide6`, `openwakeword`, `moonshine-voice`, `kokoro_onnx`, or `soundfile`
+- Fedora packaging work now also has an experimental `mvp` bundle profile that can vendor tray UI plus STT runtime dependencies into an RPM artifact, but that profile is not yet part of the install-smoked public alpha contract
 
 Not yet claimed:
 
@@ -102,7 +103,7 @@ What is intentionally not implemented yet:
 
 This is still a developer alpha. The main remaining gaps are bundling, broader platform coverage, and deeper Linux coverage, not the absence of a basic runnable product path. Broader implemented commands remain out of the supported alpha subset until they are live-verified and graduate into `--supported-commands --supported-commands-available-only`.
 
-- A native package that bundles the optional UI and voice Python backends out of the box
+- A supported native package path that bundles the optional UI and voice Python backends out of the box
 - A bundled Operance wake-word model and tuned default wake-word behavior
 - Richer STT and TTS beyond the current optional bounded paths
 - Broader KDE execution coverage and later Windows or macOS adapters

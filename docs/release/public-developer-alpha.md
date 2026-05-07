@@ -51,6 +51,14 @@ Secondary supported alpha path:
 
 If you want the fullest current MVP path, use the source checkout. The RPM path is valid today, but it is still a base-runtime alpha rather than the fullest tray-plus-voice install experience.
 
+There is now also an **experimental Fedora packaging profile** for maintainers and
+packaging contributors:
+
+- `./scripts/build_package_artifacts.sh --rpm --bundle-profile mvp --bundle-python .venv/bin/python`
+- it vendors the current tray UI and STT runtime Python dependencies into the RPM artifact
+- it is build-validated and RPM-integrity-validated
+- it is **not yet** part of the public alpha support contract, because it has not yet been install-smoked as the supported packaged path
+
 What is already proven on the current target machine:
 
 - the full test suite passes
@@ -68,7 +76,7 @@ This repo does **not** currently claim:
 - a broader public alpha across distros or desktop environments
 - Windows or macOS delivery
 - wake-word-first as the default product interaction
-- a native package that already bundles optional UI and voice Python backends
+- a supported native package that already bundles optional UI and voice Python backends
 - a zero-setup consumer install story
 
 The current native package path still depends on host-provided optional Python

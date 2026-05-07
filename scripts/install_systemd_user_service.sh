@@ -77,12 +77,15 @@ if [[ ! -f "${template_path}" ]]; then
     fail "service template not found: ${template_path}"
 fi
 
-if [[ ! -x "${python_bin}" ]]; then
+if [[ ! -x "${python_bin}" ]] && [[ "${dry_run}" -eq 0 ]] && [[ "${skip_systemctl}" -eq 0 ]]; then
     fail "python executable not found: ${python_bin}"
 fi
 
-python_dir="$(cd "$(dirname "${python_bin}")" && pwd -P)"
-python_abs="${python_dir}/$(basename "${python_bin}")"
+if [[ "${python_bin}" = /* ]]; then
+    python_abs="${python_bin}"
+else
+    python_abs="${repo_root}/${python_bin}"
+fi
 unit_dir="${unit_dir%/}"
 unit_path="${unit_dir}/operance-tray.service"
 

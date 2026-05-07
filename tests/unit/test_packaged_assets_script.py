@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 
@@ -14,6 +15,56 @@ def _run_render_script(*args: str) -> subprocess.CompletedProcess[str]:
         check=True,
         cwd=REPO_ROOT,
         text=True,
+    )
+
+
+def _write_fake_distribution(
+    site_packages: Path,
+    *,
+    name: str,
+    package_dir: str,
+    requires: list[str] | None = None,
+    extra_files: list[tuple[str, str, int | None]] | None = None,
+) -> None:
+    requires = requires or []
+    extra_files = extra_files or []
+    package_path = site_packages / package_dir
+    package_path.mkdir(parents=True, exist_ok=True)
+    init_path = package_path / "__init__.py"
+    init_path.write_text(f'"""{name} package."""\n', encoding="utf-8")
+
+    record_entries = [f"{package_dir}/__init__.py,,"]
+    for relative_path, contents, mode in extra_files:
+        extra_path = site_packages / relative_path
+        extra_path.parent.mkdir(parents=True, exist_ok=True)
+        extra_path.write_text(contents, encoding="utf-8")
+        if mode is not None:
+            extra_path.chmod(mode)
+        record_entries.append(f"{relative_path},,")
+
+    dist_info_dir = site_packages / f"{package_dir}-1.0.dist-info"
+    dist_info_dir.mkdir(parents=True, exist_ok=True)
+    metadata_path = dist_info_dir / "METADATA"
+    record_path = dist_info_dir / "RECORD"
+
+    metadata_lines = [
+        "Metadata-Version: 2.1",
+        f"Name: {name}",
+        "Version: 1.0",
+    ]
+    for requirement in requires:
+        metadata_lines.append(f"Requires-Dist: {requirement}")
+    metadata_path.write_text("\n".join(metadata_lines) + "\n", encoding="utf-8")
+    record_path.write_text(
+        "\n".join(
+            record_entries
+            + [
+                f"{dist_info_dir.name}/METADATA,,",
+                f"{dist_info_dir.name}/RECORD,,",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
     )
 
 
@@ -112,6 +163,69 @@ def test_packaged_assets_script_renders_desktop_entry_and_service(tmp_path: Path
     assert "Description=Operance tray app" in tray_service_text
     assert "ExecStart=/usr/lib/operance/voice-loop-launcher" in voice_loop_service_text
     assert "Description=Operance continuous voice loop" in voice_loop_service_text
+
+
+def test_packaged_assets_script_can_bundle_mvp_runtime_from_source_site_packages(tmp_path: Path) -> None:
+    output_dir = tmp_path / "packaged-assets"
+    source_site_packages = tmp_path / "source-site-packages"
+    source_site_packages.mkdir()
+
+    _write_fake_distribution(
+        source_site_packages,
+        name="PySide6",
+        package_dir="PySide6",
+        requires=["shiboken6"],
+        extra_files=[
+            (
+                "PySide6/scripts/pyside_tool.py",
+                "#!/usr/bin/env python\nprint('tool')\n",
+                0o755,
+            )
+        ],
+    )
+    _write_fake_distribution(
+        source_site_packages,
+        name="shiboken6",
+        package_dir="shiboken6",
+    )
+    _write_fake_distribution(
+        source_site_packages,
+        name="moonshine-voice",
+        package_dir="moonshine_voice",
+        requires=["requests"],
+    )
+    _write_fake_distribution(
+        source_site_packages,
+        name="requests",
+        package_dir="requests",
+    )
+
+    result = _run_render_script(
+        "--output-dir",
+        str(output_dir),
+        "--bundle-profile",
+        "mvp",
+        "--bundle-python",
+        sys.executable,
+        "--bundle-source-site-packages",
+        str(source_site_packages),
+    )
+
+    packaged_site_packages = output_dir / "lib" / "operance" / "site-packages"
+
+    assert result.stderr == ""
+    assert (packaged_site_packages / "operance" / "__init__.py").exists()
+    assert (packaged_site_packages / "PySide6" / "__init__.py").exists()
+    assert (packaged_site_packages / "shiboken6" / "__init__.py").exists()
+    assert (packaged_site_packages / "moonshine_voice" / "__init__.py").exists()
+    assert (packaged_site_packages / "requests" / "__init__.py").exists()
+    assert (packaged_site_packages / "PySide6-1.0.dist-info" / "METADATA").exists()
+    assert (packaged_site_packages / "moonshine_voice-1.0.dist-info" / "METADATA").exists()
+    assert (packaged_site_packages / "PySide6" / "scripts" / "pyside_tool.py").exists()
+    assert not os.access(
+        packaged_site_packages / "PySide6" / "scripts" / "pyside_tool.py",
+        os.X_OK,
+    )
 
 
 def test_packaged_voice_loop_launcher_can_load_args_file_and_forward_extra_args(tmp_path: Path) -> None:

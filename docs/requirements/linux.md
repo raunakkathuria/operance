@@ -50,7 +50,8 @@ The current public support contract is:
 - installed RPM as a secondary base-runtime validation path
 - tray plus click-to-talk as the default interaction model
 - wake word and the continuous voice loop as secondary diagnostics, not the primary alpha workflow
-- optional UI and voice Python backends still host-provided rather than bundled into the RPM
+- optional UI and voice Python backends still host-provided for the supported RPM path rather than bundled into it by default
+- an experimental `mvp` RPM bundle profile now exists for packaging work, but it is not yet part of the public install-smoked alpha contract
 
 Current supported command subset on that target:
 
@@ -62,7 +63,7 @@ Current supported command subset on that target:
 - `what is the volume`
 - `is audio muted`
 
-If you want the fullest current MVP path, use the source checkout. Treat the RPM path as the packaged base-runtime handoff, not the fullest current voice or tray experience.
+If you want the fullest current MVP path, use the source checkout. Treat the RPM path as the packaged base-runtime handoff, not the fullest current voice or tray experience. The new `mvp` packaging profile is for maintainers and packaging contributors until it has been install-smoked as a supported path.
 
 Use [public-developer-alpha.md](../release/public-developer-alpha.md) for the outside-developer handoff and [fedora-alpha-checklist.md](../release/fedora-alpha-checklist.md) for the exact release gate.
 
@@ -368,6 +369,15 @@ Install the package-build tooling required by those helpers when `dpkg-deb` or `
 The RPM helper now copies the built artifact back into `dist/package-artifacts/rpm/`, so the documented install path no longer depends on the internal rpmbuild output tree. That copy step now tolerates Fedora-style internal filenames like `operance-0.1.0-1.fc43.noarch.rpm` while still writing the documented normalized output path. The Fedora release and alpha gate helpers now also fail fast with `./scripts/install_packaging_tools.sh --rpm` when `rpmbuild` is missing, so packaging-host blockers are surfaced before the longer gate steps start.
 
 The current native package artifacts now install `/usr/bin/operance` plus the packaged Python source tree under `/usr/lib/operance`, so base CLI commands like `operance --version` and `operance --doctor` can run from an installed package without a source checkout. Optional UI and voice backends are still host-provided rather than bundled into the native package.
+
+For Fedora packaging work, there is now also an experimental bundled-runtime profile:
+
+```bash
+./scripts/build_package_artifacts.sh --rpm --bundle-profile mvp --bundle-python .venv/bin/python
+./scripts/build_rpm_package.sh --bundle-profile mvp --bundle-python .venv/bin/python
+```
+
+That profile vendors the current tray UI and STT runtime Python dependencies into the RPM payload from the local virtualenv, so the artifact carries more of the tray-plus-click-to-talk path than the default base-runtime package. It is currently intended for maintainers and packaging contributors, not the public alpha support contract, because the bundled path has been build-validated and RPM-integrity-validated but not yet install-smoked as the supported packaged workflow.
 
 Install a built native package artifact through the matching distro package manager:
 
