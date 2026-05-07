@@ -148,6 +148,7 @@ The current repo is ready for a Fedora developer alpha only when:
    packaged base-runtime handoff
 
 If the goal changes from `developer alpha` to `wider public alpha`, the next
-required feature is not another desktop command. It is bundling or otherwise
-solving the optional UI and voice backend dependency story for the packaged
-path.
+required feature is not another desktop command. It is graduating the new
+experimental `mvp` RPM bundle profile into a supported packaged path by
+install-smoking it through the Fedora gate and deciding whether it is small and
+stable enough to replace the current base-runtime package profile.

@@ -39,12 +39,29 @@ def test_rpm_package_script_dry_run_prints_expected_steps() -> None:
     assert result.stdout.splitlines() == [
         "+ mkdir -p /tmp/operance-rpm/SOURCES",
         "+ render packaging/rpm/operance.spec.in -> /tmp/operance-rpm/operance.spec",
-        "+ ./scripts/render_packaged_assets.sh --output-dir /tmp/operance-rpm/SOURCES/packaged-assets --entrypoint /usr/bin/operance",
+        "+ ./scripts/render_packaged_assets.sh --output-dir /tmp/operance-rpm/SOURCES/packaged-assets --entrypoint /usr/bin/operance --bundle-profile base",
         "+ tar -czf /tmp/operance-rpm/SOURCES/operance-packaged-assets-1.2.3.tar.gz -C /tmp/operance-rpm/SOURCES packaged-assets",
         "+ rpmbuild --define _topdir /tmp/operance-rpm -bb /tmp/operance-rpm/operance.spec",
         "+ mkdir -p /tmp/operance-rpm",
         "+ cp /tmp/operance-rpm/RPMS/noarch/operance-1.2.3-*.noarch.rpm /tmp/operance-rpm/operance-1.2.3-1.noarch.rpm",
     ]
+    assert result.stderr == ""
+
+
+def test_rpm_package_script_forwards_bundle_profile_options() -> None:
+    result = _run_rpm_script(
+        "--dry-run",
+        "--spec-dir",
+        "/tmp/operance-rpm",
+        "--bundle-profile",
+        "mvp",
+        "--bundle-python",
+        "/tmp/operance-python",
+        "--bundle-source-site-packages",
+        "/tmp/operance-site-packages",
+    )
+
+    assert "+ ./scripts/render_packaged_assets.sh --output-dir /tmp/operance-rpm/SOURCES/packaged-assets --entrypoint /usr/bin/operance --bundle-profile mvp --bundle-python /tmp/operance-python --bundle-source-site-packages /tmp/operance-site-packages" in result.stdout.splitlines()
     assert result.stderr == ""
 
 
@@ -98,10 +115,7 @@ def test_rpm_package_script_can_render_spec_without_building(tmp_path: Path) -> 
     assert "Name:           operance" in spec_text
     assert "install -Dpm0755 packaged-assets/bin/operance %{buildroot}/opt/operance/bin/operance" in spec_text
     assert "/etc/operance/voice-loop.args.example" in spec_text
-    assert (
-        "cp -a packaged-assets/lib/operance/site-packages/operance/. "
-        "%{buildroot}%{_prefix}/lib/operance/site-packages/operance/" in spec_text
-    )
+    assert "cp -a packaged-assets/lib/operance/site-packages/. %{buildroot}%{_prefix}/lib/operance/site-packages/" in spec_text
     assert "%{_prefix}/lib/operance/voice-loop-launcher" in spec_text
     assert "/opt/operance/bin/operance" in spec_text
     assert "%{_userunitdir}/operance-voice-loop.service" in spec_text

@@ -32,7 +32,7 @@ def test_fedora_release_smoke_script_dry_run_prints_default_steps() -> None:
     )
 
     assert result.stdout.splitlines() == [
-        "+ ./scripts/build_package_artifacts.sh --rpm --root-dir /tmp/operance-release --version 1.2.3 --dry-run",
+        "+ ./scripts/build_package_artifacts.sh --rpm --root-dir /tmp/operance-release --version 1.2.3 --bundle-profile base --dry-run",
         "+ ./scripts/run_installed_beta_smoke.sh --package /tmp/operance-release/rpm/operance-1.2.3-1.noarch.rpm --installer dnf --uninstall-after --dry-run",
     ]
     assert result.stderr == ""
@@ -55,12 +55,32 @@ def test_fedora_release_smoke_script_can_forward_smoke_options_and_keep_install(
     )
 
     assert result.stdout.splitlines() == [
-        "+ ./scripts/build_package_artifacts.sh --rpm --root-dir /tmp/operance-release --version 2.0.0 --dry-run",
+        "+ ./scripts/build_package_artifacts.sh --rpm --root-dir /tmp/operance-release --version 2.0.0 --bundle-profile base --dry-run",
         (
             "+ ./scripts/run_installed_beta_smoke.sh --package /tmp/operance-release/rpm/operance-2.0.0-1.noarch.rpm "
             "--installer dnf --support-bundle-out /tmp/operance-release-support.tar.gz --no-sudo --dry-run "
             "--command /tmp/fake-operance"
         ),
+    ]
+    assert result.stderr == ""
+
+
+def test_fedora_release_smoke_script_forwards_bundle_profile_options() -> None:
+    result = _run_fedora_release_smoke_script(
+        "--dry-run",
+        "--root-dir",
+        "/tmp/operance-release",
+        "--bundle-profile",
+        "mvp",
+        "--bundle-python",
+        "/tmp/operance-python",
+        "--bundle-source-site-packages",
+        "/tmp/operance-site-packages",
+    )
+
+    assert result.stdout.splitlines() == [
+        "+ ./scripts/build_package_artifacts.sh --rpm --root-dir /tmp/operance-release --version 0.1.0 --bundle-profile mvp --bundle-python /tmp/operance-python --bundle-source-site-packages /tmp/operance-site-packages --dry-run",
+        "+ ./scripts/run_installed_beta_smoke.sh --package /tmp/operance-release/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --uninstall-after --dry-run",
     ]
     assert result.stderr == ""
 

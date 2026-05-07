@@ -17,6 +17,9 @@ pyproject_source_path="${repo_root}/pyproject.toml"
 output_dir="${repo_root}/dist/packaged-assets"
 entrypoint="/usr/bin/operance"
 python_bin="/usr/bin/python3"
+bundle_profile="base"
+bundle_python=""
+bundle_source_site_packages=""
 install_root="/usr/lib/operance"
 dry_run=0
 
@@ -28,12 +31,18 @@ Render the shared packaged Operance CLI wrapper, bundled Python source tree,
 desktop entry, voice-loop launcher, and tray plus voice-loop systemd assets.
 
 Options:
-  --output-dir PATH   Output directory for rendered assets.
-  --entrypoint PATH   Installed operance entrypoint path. Defaults to /usr/bin/operance.
-  --python-bin PATH   Python executable used by the packaged operance wrapper.
-                     Defaults to /usr/bin/python3.
-  --dry-run           Print the render steps without executing them.
-  -h, --help          Show this help text.
+  --output-dir PATH             Output directory for rendered assets.
+  --entrypoint PATH             Installed operance entrypoint path. Defaults to /usr/bin/operance.
+  --python-bin PATH             Python executable used by the packaged operance wrapper.
+                                Defaults to /usr/bin/python3.
+  --bundle-profile PROFILE      Dependency bundle profile. Supported: base, mvp.
+                                Defaults to base.
+  --bundle-python PATH          Python executable used to inspect the source site-packages
+                                when bundling a non-base runtime profile.
+  --bundle-source-site-packages PATH
+                                Override the source site-packages directory for runtime bundling.
+  --dry-run                     Print the render steps without executing them.
+  -h, --help                    Show this help text.
 EOF
 }
 
@@ -75,6 +84,27 @@ while [[ $# -gt 0 ]]; do
             fi
             python_bin="$1"
             ;;
+        --bundle-profile)
+            shift
+            if [[ $# -eq 0 ]]; then
+                fail "--bundle-profile requires a value"
+            fi
+            bundle_profile="$1"
+            ;;
+        --bundle-python)
+            shift
+            if [[ $# -eq 0 ]]; then
+                fail "--bundle-python requires a path"
+            fi
+            bundle_python="$1"
+            ;;
+        --bundle-source-site-packages)
+            shift
+            if [[ $# -eq 0 ]]; then
+                fail "--bundle-source-site-packages requires a path"
+            fi
+            bundle_source_site_packages="$1"
+            ;;
         --dry-run)
             dry_run=1
             ;;
@@ -89,12 +119,29 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
+case "${bundle_profile}" in
+    base|mvp)
+        ;;
+    *)
+        fail "unsupported bundle profile: ${bundle_profile}"
+        ;;
+esac
+
+if [[ -z "${bundle_python}" ]]; then
+    if [[ -x "${repo_root}/.venv/bin/python" ]]; then
+        bundle_python="${repo_root}/.venv/bin/python"
+    else
+        bundle_python="python3"
+    fi
+fi
+
 desktop_dir="${output_dir%/}/applications"
 entrypoint_dir="${output_dir%/}/bin"
 config_dir="${output_dir%/}/etc/operance"
 libexec_dir="${output_dir%/}/lib/operance"
 runtime_dir="${output_dir%/}/lib/operance"
-site_packages_dir="${runtime_dir}/site-packages/operance"
+site_packages_root="${runtime_dir}/site-packages"
+site_packages_dir="${site_packages_root}/operance"
 systemd_dir="${output_dir%/}/systemd"
 desktop_entry_path="${desktop_dir}/operance.desktop"
 entrypoint_path="${entrypoint_dir}/operance"
@@ -142,6 +189,16 @@ fi
 
 run_step "cp pyproject.toml ${packaged_pyproject_path}" cp "${pyproject_source_path}" "${packaged_pyproject_path}"
 run_step "cp -R src/operance/. ${site_packages_dir}" cp -R "${runtime_source_dir}/." "${site_packages_dir}"
+
+if [[ "${bundle_profile}" != "base" ]]; then
+    bundle_display="${bundle_python} ./scripts/bundle_python_runtime.py --profile ${bundle_profile} --output-dir ${site_packages_root}"
+    bundle_args=("${bundle_python}" "./scripts/bundle_python_runtime.py" "--profile" "${bundle_profile}" "--output-dir" "${site_packages_root}")
+    if [[ -n "${bundle_source_site_packages}" ]]; then
+        bundle_display="${bundle_display} --source-site-packages ${bundle_source_site_packages}"
+        bundle_args+=("--source-site-packages" "${bundle_source_site_packages}")
+    fi
+    run_step "${bundle_display}" "${bundle_args[@]}"
+fi
 
 echo "+ render packaging/systemd/operance-tray-packaged.service.in -> ${tray_service_unit_path}"
 if [[ "${dry_run}" -eq 0 ]]; then

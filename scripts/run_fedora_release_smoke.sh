@@ -6,6 +6,9 @@ repo_root="$(cd "${script_dir}/.." && pwd)"
 
 root_dir="${repo_root}/dist/package-artifacts"
 version=""
+bundle_profile="base"
+bundle_python=""
+bundle_source_site_packages=""
 support_bundle_out=""
 use_sudo=1
 uninstall_after=1
@@ -20,14 +23,19 @@ Build the current RPM artifact and run the installed-package beta smoke flow
 against it on Fedora-style hosts.
 
 Options:
-  --root-dir PATH           Root directory for the RPM build tree.
-                            Defaults to dist/package-artifacts.
-  --version VALUE           Package version. Defaults to the version from pyproject.toml.
-  --support-bundle-out PATH Forward an output path to the installed-package support-bundle step.
-  --no-sudo                 Forward --no-sudo to the installed-package smoke step.
-  --keep-installed          Do not uninstall the package after the smoke sequence.
-  --dry-run                 Print the build and smoke commands without executing them.
-  -h, --help                Show this help text.
+  --root-dir PATH                  Root directory for the RPM build tree.
+                                   Defaults to dist/package-artifacts.
+  --version VALUE                  Package version. Defaults to the version from pyproject.toml.
+  --bundle-profile PROFILE         Dependency bundle profile forwarded to the RPM build path.
+                                   Supported: base, mvp. Defaults to base.
+  --bundle-python PATH             Python executable used for non-base runtime bundling.
+  --bundle-source-site-packages PATH
+                                   Override the source site-packages directory for runtime bundling.
+  --support-bundle-out PATH        Forward an output path to the installed-package support-bundle step.
+  --no-sudo                        Forward --no-sudo to the installed-package smoke step.
+  --keep-installed                 Do not uninstall the package after the smoke sequence.
+  --dry-run                        Print the build and smoke commands without executing them.
+  -h, --help                       Show this help text.
 
 Any arguments after `--` are forwarded to `run_installed_beta_smoke.sh`.
 EOF
@@ -76,6 +84,27 @@ while [[ $# -gt 0 ]]; do
             fi
             version="$1"
             ;;
+        --bundle-profile)
+            shift
+            if [[ $# -eq 0 ]]; then
+                fail "--bundle-profile requires a value"
+            fi
+            bundle_profile="$1"
+            ;;
+        --bundle-python)
+            shift
+            if [[ $# -eq 0 ]]; then
+                fail "--bundle-python requires a path"
+            fi
+            bundle_python="$1"
+            ;;
+        --bundle-source-site-packages)
+            shift
+            if [[ $# -eq 0 ]]; then
+                fail "--bundle-source-site-packages requires a path"
+            fi
+            bundle_source_site_packages="$1"
+            ;;
         --support-bundle-out)
             shift
             if [[ $# -eq 0 ]]; then
@@ -122,13 +151,22 @@ package_path="${root_dir}/rpm/operance-${version}-1.noarch.rpm"
 
 cd "${repo_root}"
 
-build_display="./scripts/build_package_artifacts.sh --rpm --root-dir ${root_dir} --version ${version}"
+build_display="./scripts/build_package_artifacts.sh --rpm --root-dir ${root_dir} --version ${version} --bundle-profile ${bundle_profile}"
 build_args=(
     "./scripts/build_package_artifacts.sh"
     "--rpm"
     "--root-dir" "${root_dir}"
     "--version" "${version}"
+    "--bundle-profile" "${bundle_profile}"
 )
+if [[ -n "${bundle_python}" ]]; then
+    build_display="${build_display} --bundle-python ${bundle_python}"
+    build_args+=("--bundle-python" "${bundle_python}")
+fi
+if [[ -n "${bundle_source_site_packages}" ]]; then
+    build_display="${build_display} --bundle-source-site-packages ${bundle_source_site_packages}"
+    build_args+=("--bundle-source-site-packages" "${bundle_source_site_packages}")
+fi
 if [[ "${dry_run}" -eq 1 ]]; then
     build_display="${build_display} --dry-run"
     build_args+=("--dry-run")

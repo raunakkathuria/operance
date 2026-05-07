@@ -37,8 +37,28 @@ def test_package_artifact_bundle_script_dry_run_prints_expected_steps() -> None:
     )
 
     assert result.stdout.splitlines() == [
-        "+ ./scripts/build_deb_package.sh --staging-dir /tmp/operance-package-builds/deb/operance --output-dir /tmp/operance-package-builds/deb --version 1.2.3 --dry-run",
-        "+ ./scripts/build_rpm_package.sh --spec-dir /tmp/operance-package-builds/rpm --output-dir /tmp/operance-package-builds/rpm --version 1.2.3 --dry-run",
+        "+ ./scripts/build_deb_package.sh --staging-dir /tmp/operance-package-builds/deb/operance --output-dir /tmp/operance-package-builds/deb --bundle-profile base --version 1.2.3 --dry-run",
+        "+ ./scripts/build_rpm_package.sh --spec-dir /tmp/operance-package-builds/rpm --output-dir /tmp/operance-package-builds/rpm --bundle-profile base --version 1.2.3 --dry-run",
+    ]
+    assert result.stderr == ""
+
+
+def test_package_artifact_bundle_script_forwards_bundle_profile_options() -> None:
+    result = _run_bundle_script(
+        "--dry-run",
+        "--rpm",
+        "--root-dir",
+        "/tmp/operance-package-builds",
+        "--bundle-profile",
+        "mvp",
+        "--bundle-python",
+        "/tmp/operance-python",
+        "--bundle-source-site-packages",
+        "/tmp/operance-site-packages",
+    )
+
+    assert result.stdout.splitlines() == [
+        "+ ./scripts/build_rpm_package.sh --spec-dir /tmp/operance-package-builds/rpm --output-dir /tmp/operance-package-builds/rpm --bundle-profile mvp --bundle-python /tmp/operance-python --bundle-source-site-packages /tmp/operance-site-packages --dry-run",
     ]
     assert result.stderr == ""
 
@@ -109,6 +129,6 @@ def test_package_artifact_bundle_script_can_select_rpm_only(tmp_path: Path) -> N
     )
 
     assert result.stdout.splitlines() == [
-        f"+ ./scripts/build_rpm_package.sh --spec-dir {root_dir / 'rpm'} --output-dir {root_dir / 'rpm'} --version 2.0.0 --dry-run",
+        f"+ ./scripts/build_rpm_package.sh --spec-dir {root_dir / 'rpm'} --output-dir {root_dir / 'rpm'} --bundle-profile base --version 2.0.0 --dry-run",
     ]
     assert result.stderr == ""

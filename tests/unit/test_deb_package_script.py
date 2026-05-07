@@ -33,20 +33,39 @@ def test_deb_package_script_dry_run_prints_expected_steps() -> None:
         "+ mkdir -p /tmp/operance-deb/usr/bin",
         "+ mkdir -p /tmp/operance-deb/usr/share/applications",
         "+ mkdir -p /tmp/operance-deb/usr/lib/operance",
-        "+ mkdir -p /tmp/operance-deb/usr/lib/operance/site-packages/operance",
+        "+ mkdir -p /tmp/operance-deb/usr/lib/operance/site-packages",
         "+ mkdir -p /tmp/operance-deb/usr/lib/systemd/user",
         "+ render packaging/deb/control.in -> /tmp/operance-deb/DEBIAN/control",
-        "+ ./scripts/render_packaged_assets.sh --output-dir /tmp/operance-deb/.rendered --entrypoint /usr/bin/operance",
+        "+ ./scripts/render_packaged_assets.sh --output-dir /tmp/operance-deb/.rendered --entrypoint /usr/bin/operance --bundle-profile base",
         "+ cp /tmp/operance-deb/.rendered/bin/operance /tmp/operance-deb/usr/bin/operance",
         "+ cp /tmp/operance-deb/.rendered/etc/operance/voice-loop.args.example /tmp/operance-deb/etc/operance/voice-loop.args.example",
         "+ cp /tmp/operance-deb/.rendered/applications/operance.desktop /tmp/operance-deb/usr/share/applications/operance.desktop",
         "+ cp /tmp/operance-deb/.rendered/lib/operance/pyproject.toml /tmp/operance-deb/usr/lib/operance/pyproject.toml",
-        "+ cp -R /tmp/operance-deb/.rendered/lib/operance/site-packages/operance/. /tmp/operance-deb/usr/lib/operance/site-packages/operance",
+        "+ cp -R /tmp/operance-deb/.rendered/lib/operance/site-packages/. /tmp/operance-deb/usr/lib/operance/site-packages",
         "+ cp /tmp/operance-deb/.rendered/lib/operance/voice-loop-launcher /tmp/operance-deb/usr/lib/operance/voice-loop-launcher",
         "+ cp /tmp/operance-deb/.rendered/systemd/operance-tray.service /tmp/operance-deb/usr/lib/systemd/user/operance-tray.service",
         "+ cp /tmp/operance-deb/.rendered/systemd/operance-voice-loop.service /tmp/operance-deb/usr/lib/systemd/user/operance-voice-loop.service",
         "+ dpkg-deb --build /tmp/operance-deb /tmp/operance-out/operance_1.2.3_all.deb",
     ]
+    assert result.stderr == ""
+
+
+def test_deb_package_script_forwards_bundle_profile_options() -> None:
+    result = _run_deb_script(
+        "--dry-run",
+        "--staging-dir",
+        "/tmp/operance-deb",
+        "--output-dir",
+        "/tmp/operance-out",
+        "--bundle-profile",
+        "mvp",
+        "--bundle-python",
+        "/tmp/operance-python",
+        "--bundle-source-site-packages",
+        "/tmp/operance-site-packages",
+    )
+
+    assert "+ ./scripts/render_packaged_assets.sh --output-dir /tmp/operance-deb/.rendered --entrypoint /usr/bin/operance --bundle-profile mvp --bundle-python /tmp/operance-python --bundle-source-site-packages /tmp/operance-site-packages" in result.stdout.splitlines()
     assert result.stderr == ""
 
 
