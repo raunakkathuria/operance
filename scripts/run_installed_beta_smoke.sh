@@ -168,6 +168,10 @@ if [[ -n "${package_path}" ]]; then
         install_display="${install_display} --installer ${installer}"
         install_args+=("--installer" "${installer}")
     fi
+    if [[ "${installer}" == "dnf" ]]; then
+        install_display="${install_display} --replace-existing"
+        install_args+=("--replace-existing")
+    fi
     if [[ "${use_sudo}" -eq 0 ]]; then
         install_display="${install_display} --no-sudo"
         install_args+=("--no-sudo")

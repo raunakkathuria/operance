@@ -385,7 +385,10 @@ Install a built native package artifact through the matching distro package mana
 ```bash
 ./scripts/install_package_artifact.sh --package dist/package-artifacts/deb/operance_0.1.0_all.deb --installer apt --dry-run
 ./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --dry-run
+./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --replace-existing --dry-run
 ```
+
+Use `--replace-existing` when reinstalling a rebuilt local Fedora RPM that has the same package version as the already installed package. The helper detects whether the RPM package name is installed and uses `dnf reinstall` only for that case, which prevents `dnf install` from silently leaving an older same-version payload in place.
 
 Run the installed-package beta smoke when you want one install-to-run proof for a native artifact:
 

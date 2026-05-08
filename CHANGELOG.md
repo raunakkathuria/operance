@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added `--replace-existing` to `scripts/install_package_artifact.sh` and wired the installed Fedora RPM smoke path to use it, so rebuilding the same RPM version replaces the installed payload instead of letting `dnf install` report "already installed" while leaving older packaged dependencies in place.
 - Promoted the Fedora release and alpha gates to the `mvp` RPM bundle profile by default and added `scripts/check_installed_mvp_runtime.py`, so installed-package smoke now verifies that the packaged command exposes the tray UI and STT backends required for the tray plus click-to-talk alpha path.
 - Hardened the platform-provider boundary so Linux service discovery, Wayland and text-input probes, runtime-status interpretation, setup metadata, and remediation policy now live behind the Linux provider while `doctor.py` and `ui/setup.py` stay focused on common assembly.
 - Fixed repo-local demo, systemd install, and local-install helper scripts so dry-run and service-rendering paths no longer require an existing checkout `.venv/bin/python`, which restores the expected CI and bootstrap behavior for render-only workflows.

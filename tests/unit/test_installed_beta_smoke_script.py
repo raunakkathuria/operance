@@ -87,6 +87,16 @@ def test_installed_beta_smoke_script_can_install_run_and_uninstall_with_fake_too
         ),
     )
     _write_executable(
+        fake_bin / "rpm",
+        (
+            "#!/usr/bin/env bash\n"
+            "set -euo pipefail\n"
+            "if [[ \"$1\" == \"-qp\" ]]; then printf '%s' operance; exit 0; fi\n"
+            "if [[ \"$1\" == \"-q\" ]]; then exit 0; fi\n"
+            "exit 1\n"
+        ),
+    )
+    _write_executable(
         fake_bin / "operance",
         (
             "#!/usr/bin/env bash\n"
@@ -128,8 +138,8 @@ def test_installed_beta_smoke_script_can_install_run_and_uninstall_with_fake_too
 
     assert result.stderr == ""
     assert result.stdout.splitlines() == [
-        f"+ ./scripts/install_package_artifact.sh --package {package_path} --installer dnf --no-sudo",
-        f"+ dnf install -y {package_path}",
+        f"+ ./scripts/install_package_artifact.sh --package {package_path} --installer dnf --replace-existing --no-sudo",
+        f"+ dnf reinstall -y {package_path}",
         f"+ test -f {desktop_entry_path}",
         f"+ test -f {tray_unit_path}",
         f"+ test -f {voice_loop_unit_path}",
@@ -141,7 +151,7 @@ def test_installed_beta_smoke_script_can_install_run_and_uninstall_with_fake_too
         "+ dnf remove -y operance",
     ]
     assert dnf_log.read_text(encoding="utf-8").splitlines() == [
-        f"install -y {package_path}",
+        f"reinstall -y {package_path}",
         "remove -y operance",
     ]
     assert operance_log.read_text(encoding="utf-8").splitlines() == [
