@@ -1,5 +1,7 @@
 # Operance
 
+![Operance logo](assets/icons/operance.svg)
+
 Turn intent into action.
 
 Operance lets developers control a Linux desktop with natural language through a tray-first click-to-talk workflow. In the current Fedora KDE Wayland developer alpha, it can open apps and URLs, focus apps, and answer a small verified set of desktop-status commands such as time, battery, Wi-Fi, and audio state.
