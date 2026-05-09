@@ -389,7 +389,7 @@ Install a built native package artifact:
 ./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --replace-existing --dry-run
 ```
 
-Use `--replace-existing` when testing a rebuilt Fedora RPM with the same package version. The helper uses `dnf reinstall` only when that package is already installed, otherwise it keeps the normal first-install path.
+Use `--replace-existing` when testing a rebuilt Fedora RPM with the same package version. The helper removes the installed package when present and then installs the provided artifact, otherwise it keeps the normal first-install path.
 
 Smoke-test an installed native package, optionally installing the artifact first:
 

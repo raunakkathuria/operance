@@ -139,7 +139,8 @@ def test_installed_beta_smoke_script_can_install_run_and_uninstall_with_fake_too
     assert result.stderr == ""
     assert result.stdout.splitlines() == [
         f"+ ./scripts/install_package_artifact.sh --package {package_path} --installer dnf --replace-existing --no-sudo",
-        f"+ dnf reinstall -y {package_path}",
+        "+ dnf remove -y operance",
+        f"+ dnf install -y {package_path}",
         f"+ test -f {desktop_entry_path}",
         f"+ test -f {tray_unit_path}",
         f"+ test -f {voice_loop_unit_path}",
@@ -151,7 +152,8 @@ def test_installed_beta_smoke_script_can_install_run_and_uninstall_with_fake_too
         "+ dnf remove -y operance",
     ]
     assert dnf_log.read_text(encoding="utf-8").splitlines() == [
-        f"reinstall -y {package_path}",
+        "remove -y operance",
+        f"install -y {package_path}",
         "remove -y operance",
     ]
     assert operance_log.read_text(encoding="utf-8").splitlines() == [

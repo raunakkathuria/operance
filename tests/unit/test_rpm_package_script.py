@@ -113,6 +113,7 @@ def test_rpm_package_script_can_render_spec_without_building(tmp_path: Path) -> 
 
     assert "Version:        9.9.9" in spec_text
     assert "Name:           operance" in spec_text
+    assert "AutoReqProv:    no" in spec_text
     assert "install -Dpm0755 packaged-assets/bin/operance %{buildroot}/opt/operance/bin/operance" in spec_text
     assert "/etc/operance/voice-loop.args.example" in spec_text
     assert "cp -a packaged-assets/lib/operance/site-packages/. %{buildroot}%{_prefix}/lib/operance/site-packages/" in spec_text

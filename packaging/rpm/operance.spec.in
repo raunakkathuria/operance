@@ -5,6 +5,7 @@ Summary:        Local-first voice control runtime for KDE/Wayland
 License:        LicenseRef-Operance
 BuildArch:      noarch
 Source0:        operance-packaged-assets-__VERSION__.tar.gz
+AutoReqProv:    no
 
 %description
 Repo-local RPM packaging scaffold for the Operance base runtime, tray, and voice-loop assets.
