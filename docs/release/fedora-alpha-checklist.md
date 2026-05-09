@@ -82,10 +82,11 @@ packaging prerequisite first:
 Build the RPM artifact and then exercise the installed-package smoke path:
 
 ```bash
-./scripts/build_package_artifacts.sh --rpm
+./scripts/build_package_artifacts.sh --rpm --bundle-profile mvp --bundle-python .venv/bin/python
 ./scripts/run_installed_beta_smoke.sh \
   --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm \
-  --installer dnf
+  --installer dnf \
+  --require-mvp-runtime
 ```
 
 Or use the combined release gate:
@@ -105,6 +106,8 @@ Success means all of the following are true:
 - the packaged tray and voice-loop user units exist
 - `operance --version` runs from the installed command
 - `operance --doctor` runs from the installed command
+- `operance --print-config` reports `"developer_mode": false`
+- `scripts/check_installed_mvp_runtime.py --command operance` passes
 - the runnable supported-command subset can be projected from the installed command
 - the installed command can write a support bundle
 

@@ -34,7 +34,7 @@ Enforce these boundaries when making changes:
 - Shared core modules must not carry OS transport details such as Linux command arguments, Wayland protocol quirks, or platform-native key sequences.
 - Keep shared input definitions semantic; native input translation belongs in the adapter that executes it.
 - For an existing tool on a new OS, prefer provider or adapter changes only. Core changes are expected only when adding a genuinely new tool or changing shared safety semantics.
-- Keep the current public positioning honest: Linux first, Fedora KDE Wayland first, source checkout first, RPM base-runtime second.
+- Keep the current public positioning honest: Linux first, Fedora KDE Wayland first, source checkout first, RPM `mvp` runtime second.
 
 Apply these engineering principles in every slice:
 

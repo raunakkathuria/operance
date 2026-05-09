@@ -47,14 +47,14 @@ Secondary supported alpha path:
 
 - Fedora RPM install of the `mvp` runtime profile
 - validated through `./scripts/run_fedora_alpha_gate.sh`
-- useful for proving packaging, install, installed-command smoke behavior, and bundled tray plus STT runtime availability
+- useful for proving packaging, install, installed-command smoke behavior, bundled tray plus STT runtime availability, and live-adapter defaults for the packaged command
 
 The Fedora gate now defaults to:
 
 - `./scripts/build_package_artifacts.sh --rpm --bundle-profile mvp`
 - `./scripts/run_installed_beta_smoke.sh --require-mvp-runtime`
 
-That verifies the installed package can expose the tray UI backend and STT backend through `operance --doctor`. Actual tray interaction and microphone capture still require a human desktop-session smoke before tagging a release.
+That verifies the installed package can expose the tray UI backend and STT backend through `operance --doctor`, and that `operance --print-config` reports live execution rather than developer-mode simulation. Actual tray interaction, app launching, and microphone capture still require a human desktop-session smoke before tagging a release.
 
 What is already proven on the current target machine:
 
@@ -123,7 +123,7 @@ Useful contribution paths right now:
 - improve onboarding, quickstart, troubleshooting, and release docs
 - add or tighten tests around setup, packaging, doctor, release gates, and the typed runtime
 - fix focused Linux runtime issues that improve tray plus click-to-talk reliability
-- harden the packaged path so more of the current MVP works from the installed RPM
+- harden the packaged tray plus click-to-talk path and improve installed-RPM desktop smoke coverage
 
 If you are not sending code, high-quality bug reports still help materially.
 

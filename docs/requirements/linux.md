@@ -369,7 +369,7 @@ Install the package-build tooling required by those helpers when `dpkg-deb` or `
 
 The RPM helper now copies the built artifact back into `dist/package-artifacts/rpm/`, so the documented install path no longer depends on the internal rpmbuild output tree. That copy step now tolerates Fedora-style internal filenames like `operance-0.1.0-1.fc43.noarch.rpm` while still writing the documented normalized output path. The Fedora release and alpha gate helpers now also fail fast with `./scripts/install_packaging_tools.sh --rpm` when `rpmbuild` is missing, so packaging-host blockers are surfaced before the longer gate steps start.
 
-The current native package artifacts now install `/usr/bin/operance` plus the packaged Python source tree under `/usr/lib/operance`, so CLI commands like `operance --version` and `operance --doctor` can run from an installed package without a source checkout.
+The current Fedora `mvp` package installs `/usr/bin/operance`, the packaged Python source tree, and the tray UI plus STT Python runtime needed for the alpha click-to-talk path under `/usr/lib/operance`. The packaged command defaults to live Linux adapters (`OPERANCE_DEVELOPER_MODE=0`) and `OPERANCE_ENVIRONMENT=production`, so installed-package transcript and tray commands should affect the desktop instead of returning developer-mode simulated success. Wake-word and TTS assets remain optional and outside the packaged alpha contract.
 
 For the Fedora alpha package path, use the `mvp` bundled-runtime profile:
 
@@ -379,6 +379,15 @@ For the Fedora alpha package path, use the `mvp` bundled-runtime profile:
 ```
 
 That profile vendors the current tray UI and STT runtime Python dependencies into the RPM payload from the local virtualenv, so the artifact carries the packaged tray-plus-click-to-talk runtime checks. Wake-word and TTS assets or backends remain optional and outside the packaged alpha contract.
+
+After installing the RPM, verify that the package is using live adapters before testing tray voice commands:
+
+```bash
+operance --print-config
+python3 scripts/check_installed_mvp_runtime.py --command operance
+```
+
+`operance --print-config` should report `"developer_mode": false`. The installed MVP runtime check now fails if the packaged command is still in developer-mode simulation.
 
 Install a built native package artifact through the matching distro package manager:
 

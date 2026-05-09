@@ -379,7 +379,7 @@ Install the native package build tools used by those helpers:
 
 The RPM helper now copies the built artifact back into `dist/package-artifacts/rpm/`, so the install helper can consume the documented path directly instead of reaching into the rpmbuild staging tree. That copy step now tolerates Fedora-style internal filenames like `operance-0.1.0-1.fc43.noarch.rpm` while still writing the documented normalized output path. The Fedora release and alpha gate helpers now also fail fast with `./scripts/install_packaging_tools.sh --rpm` when `rpmbuild` is missing, so packaging-host blockers are surfaced before the longer gate steps start.
 
-The current native package artifacts now install `/usr/bin/operance` plus the packaged Python source tree under `/usr/lib/operance`, so `operance --version` and other base CLI commands can run from an installed package without requiring a source checkout. Optional UI and voice backends still depend on the current host Python environment for now.
+The current Fedora `mvp` package installs `/usr/bin/operance`, the packaged Python source tree, and the tray UI plus STT Python runtime needed for the alpha click-to-talk path under `/usr/lib/operance`. The packaged command defaults to live Linux adapters (`OPERANCE_DEVELOPER_MODE=0`), so `operance --transcript "open firefox"` and tray click-to-talk should affect the desktop instead of returning simulated success. Wake-word and TTS assets remain optional and outside the packaged alpha contract.
 
 Install a built native package artifact:
 
@@ -506,6 +506,15 @@ python3 -m operance.cli --transcript "open firefox"
 ```
 
 In default developer mode, `--transcript` runs against simulated adapters and the payload includes `"simulated": true`. Set `OPERANCE_DEVELOPER_MODE=0` when you want the real Linux adapters instead.
+
+Installed packages are different: the packaged `/usr/bin/operance` entrypoint defaults to live adapters. Verify this before testing tray commands:
+
+```bash
+operance --print-config
+python3 scripts/check_installed_mvp_runtime.py --command operance
+```
+
+`operance --print-config` should report `"developer_mode": false`; the installed MVP runtime check fails if the packaged command is still in developer-mode simulation.
 
 Run the built-in deterministic corpus and print a summary:
 
