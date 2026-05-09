@@ -6,7 +6,7 @@ repo_root="$(cd "${script_dir}/.." && pwd)"
 
 root_dir="${repo_root}/dist/package-artifacts"
 version=""
-bundle_profile="base"
+bundle_profile="mvp"
 bundle_python=""
 bundle_source_site_packages=""
 support_bundle_out=""
@@ -27,7 +27,7 @@ Options:
                                    Defaults to dist/package-artifacts.
   --version VALUE                  Package version. Defaults to the version from pyproject.toml.
   --bundle-profile PROFILE         Dependency bundle profile forwarded to the RPM build path.
-                                   Supported: base, mvp. Defaults to base.
+                                   Supported: base, mvp. Defaults to mvp.
   --bundle-python PATH             Python executable used for non-base runtime bundling.
   --bundle-source-site-packages PATH
                                    Override the source site-packages directory for runtime bundling.
@@ -186,6 +186,10 @@ fi
 if [[ "${use_sudo}" -eq 0 ]]; then
     smoke_display="${smoke_display} --no-sudo"
     smoke_args+=("--no-sudo")
+fi
+if [[ "${bundle_profile}" == "mvp" ]]; then
+    smoke_display="${smoke_display} --require-mvp-runtime"
+    smoke_args+=("--require-mvp-runtime")
 fi
 if [[ "${uninstall_after}" -eq 1 ]]; then
     smoke_display="${smoke_display} --uninstall-after"

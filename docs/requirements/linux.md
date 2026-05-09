@@ -48,11 +48,11 @@ The current public support contract is:
 
 - Fedora KDE Plasma on Wayland
 - source checkout as the primary supported alpha path
-- installed RPM as a secondary base-runtime validation path
+- installed RPM as a secondary `mvp` runtime validation path
 - tray plus click-to-talk as the default interaction model
 - wake word and the continuous voice loop as secondary diagnostics, not the primary alpha workflow
-- optional UI and voice Python backends still host-provided for the supported RPM path rather than bundled into it by default
-- an experimental `mvp` RPM bundle profile now exists for packaging work, but it is not yet part of the public install-smoked alpha contract
+- the supported Fedora RPM path vendors the tray UI and STT runtime dependencies needed for click-to-talk
+- wake-word and TTS assets or backends remain optional and outside the packaged alpha support contract
 
 Current supported command subset on that target:
 
@@ -64,7 +64,7 @@ Current supported command subset on that target:
 - `what is the volume`
 - `is audio muted`
 
-If you want the fullest current MVP path, use the source checkout. Treat the RPM path as the packaged base-runtime handoff, not the fullest current voice or tray experience. The new `mvp` packaging profile is for maintainers and packaging contributors until it has been install-smoked as a supported path.
+If you want the fastest iteration loop, use the source checkout. Treat the RPM path as the packaged alpha handoff and run a human tray plus microphone smoke after the automated gate passes.
 
 Use [public-developer-alpha.md](../release/public-developer-alpha.md) for the outside-developer handoff and [fedora-alpha-checklist.md](../release/fedora-alpha-checklist.md) for the exact release gate.
 
@@ -369,29 +369,41 @@ Install the package-build tooling required by those helpers when `dpkg-deb` or `
 
 The RPM helper now copies the built artifact back into `dist/package-artifacts/rpm/`, so the documented install path no longer depends on the internal rpmbuild output tree. That copy step now tolerates Fedora-style internal filenames like `operance-0.1.0-1.fc43.noarch.rpm` while still writing the documented normalized output path. The Fedora release and alpha gate helpers now also fail fast with `./scripts/install_packaging_tools.sh --rpm` when `rpmbuild` is missing, so packaging-host blockers are surfaced before the longer gate steps start.
 
-The current native package artifacts now install `/usr/bin/operance` plus the packaged Python source tree under `/usr/lib/operance`, so base CLI commands like `operance --version` and `operance --doctor` can run from an installed package without a source checkout. Optional UI and voice backends are still host-provided rather than bundled into the native package.
+The current Fedora `mvp` package installs `/usr/bin/operance`, the packaged Python source tree, and the tray UI plus STT Python runtime needed for the alpha click-to-talk path under `/usr/lib/operance`. The packaged command defaults to live Linux adapters (`OPERANCE_DEVELOPER_MODE=0`) and `OPERANCE_ENVIRONMENT=production`, so installed-package transcript and tray commands should affect the desktop instead of returning developer-mode simulated success. Wake-word and TTS assets remain optional and outside the packaged alpha contract.
 
-For Fedora packaging work, there is now also an experimental bundled-runtime profile:
+For the Fedora alpha package path, use the `mvp` bundled-runtime profile:
 
 ```bash
 ./scripts/build_package_artifacts.sh --rpm --bundle-profile mvp --bundle-python .venv/bin/python
 ./scripts/build_rpm_package.sh --bundle-profile mvp --bundle-python .venv/bin/python
 ```
 
-That profile vendors the current tray UI and STT runtime Python dependencies into the RPM payload from the local virtualenv, so the artifact carries more of the tray-plus-click-to-talk path than the default base-runtime package. It is currently intended for maintainers and packaging contributors, not the public alpha support contract, because the bundled path has been build-validated and RPM-integrity-validated but not yet install-smoked as the supported packaged workflow.
+That profile vendors the current tray UI and STT runtime Python dependencies into the RPM payload from the local virtualenv, so the artifact carries the packaged tray-plus-click-to-talk runtime checks. Wake-word and TTS assets or backends remain optional and outside the packaged alpha contract.
+
+After installing the RPM, verify that the package is using live adapters before testing tray voice commands:
+
+```bash
+operance --print-config
+python3 scripts/check_installed_mvp_runtime.py --command operance
+```
+
+`operance --print-config` should report `"developer_mode": false`. The installed MVP runtime check now fails if the packaged command is still in developer-mode simulation.
 
 Install a built native package artifact through the matching distro package manager:
 
 ```bash
 ./scripts/install_package_artifact.sh --package dist/package-artifacts/deb/operance_0.1.0_all.deb --installer apt --dry-run
 ./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --dry-run
+./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --replace-existing --dry-run
 ```
+
+Use `--replace-existing` when installing a rebuilt local Fedora RPM that has the same package version as the already installed package. The helper detects whether the RPM package name is installed, removes it when present, and then installs the provided artifact, which prevents `dnf install` from silently leaving an older same-version payload in place.
 
 Run the installed-package beta smoke when you want one install-to-run proof for a native artifact:
 
 ```bash
 ./scripts/run_installed_beta_smoke.sh --dry-run
-./scripts/run_installed_beta_smoke.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --dry-run
+./scripts/run_installed_beta_smoke.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --require-mvp-runtime --dry-run
 ```
 
 Run the Fedora-first release gate when you want one source-checkout command that builds the RPM artifact and then smokes the installed package:

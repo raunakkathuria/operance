@@ -28,17 +28,19 @@ The current repo can now prove:
 
 - the source checkout passes the full test suite
 - the repo-local beta smoke path works
-- the native package scaffolds build a runnable base `operance` CLI wrapper
+- the Fedora `mvp` RPM scaffolds build a runnable `operance` CLI wrapper
+- the Fedora `mvp` RPM vendors the tray UI and STT Python runtime needed for
+  click-to-talk
 - the RPM handoff path can be exercised through one Fedora release-smoke script
-- installed package smoke can verify the packaged desktop entry, user units, and
-  base CLI diagnostics
+- installed package smoke can verify the packaged desktop entry, user units,
+  live-adapter defaults, MVP runtime dependencies, and base CLI diagnostics
 
 The current repo does **not** yet prove a fully bundled end-user desktop build.
 
 Known remaining gaps before a broader public launch:
 
-- the native package path does not yet bundle optional UI or voice Python
-  backends such as PySide6, Moonshine, openWakeWord, or Kokoro
+- the native package path does not yet bundle every optional voice backend,
+  wake-word model, or TTS model asset
 - the safest default product path remains tray plus click-to-talk from a
   prepared developer machine, not a zero-setup consumer installer
 - wake word remains secondary to click-to-talk for launch reliability
@@ -82,10 +84,11 @@ packaging prerequisite first:
 Build the RPM artifact and then exercise the installed-package smoke path:
 
 ```bash
-./scripts/build_package_artifacts.sh --rpm
+./scripts/build_package_artifacts.sh --rpm --bundle-profile mvp --bundle-python .venv/bin/python
 ./scripts/run_installed_beta_smoke.sh \
   --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm \
-  --installer dnf
+  --installer dnf \
+  --require-mvp-runtime
 ```
 
 Or use the combined release gate:
@@ -105,6 +108,8 @@ Success means all of the following are true:
 - the packaged tray and voice-loop user units exist
 - `operance --version` runs from the installed command
 - `operance --doctor` runs from the installed command
+- `operance --print-config` reports `"developer_mode": false`
+- `scripts/check_installed_mvp_runtime.py --command operance` passes
 - the runnable supported-command subset can be projected from the installed command
 - the installed command can write a support bundle
 
@@ -144,11 +149,10 @@ The current repo is ready for a Fedora developer alpha only when:
 2. the RPM gate passes on the target Fedora machine
 3. the known limitations above are documented honestly in the launch notes
 4. the expected tester workflow is explicit:
-   source checkout for the fullest current MVP path, RPM install for the
-   packaged base-runtime handoff
+   source checkout first, Fedora RPM `mvp` package second, and a human
+   tray-plus-microphone smoke before tagging a packaged alpha release
 
 If the goal changes from `developer alpha` to `wider public alpha`, the next
-required feature is not another desktop command. It is graduating the new
-experimental `mvp` RPM bundle profile into a supported packaged path by
-install-smoking it through the Fedora gate and deciding whether it is small and
-stable enough to replace the current base-runtime package profile.
+required feature is not another desktop command. It is tightening the installed
+tray plus click-to-talk UX and collecting enough Fedora feedback to know whether
+the packaged `mvp` runtime is stable enough for non-developer testers.

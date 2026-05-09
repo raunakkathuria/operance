@@ -55,7 +55,7 @@ This repo is currently positioned as:
 
 - Fedora KDE Wayland developer alpha
 - source checkout first
-- RPM base-runtime second
+- RPM `mvp` runtime second
 - tray plus click-to-talk first
 
 Keep the metadata aligned with that support contract.

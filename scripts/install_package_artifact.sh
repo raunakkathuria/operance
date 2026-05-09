@@ -5,6 +5,7 @@ package_path=""
 installer=""
 use_sudo=1
 dry_run=0
+replace_existing=0
 
 usage() {
     cat <<'EOF'
@@ -15,6 +16,7 @@ Install a built Operance native package artifact through the matching distro pac
 Options:
   --package PATH      Built package artifact path (.deb or .rpm).
   --installer NAME    Package installer to use. Supported: apt, dnf.
+  --replace-existing  Remove an already installed package before installing this artifact.
   --no-sudo           Run the installer directly instead of prefixing it with sudo.
   --dry-run           Print the install command without executing it.
   -h, --help          Show this help text.
@@ -54,6 +56,9 @@ while [[ $# -gt 0 ]]; do
             ;;
         --no-sudo)
             use_sudo=0
+            ;;
+        --replace-existing)
+            replace_existing=1
             ;;
         --dry-run)
             dry_run=1
@@ -112,6 +117,40 @@ esac
 
 if [[ "${dry_run}" -eq 0 ]] && ! command -v "${installer}" >/dev/null 2>&1; then
     fail "installer not found on PATH: ${installer}"
+fi
+
+replace_package_name="operance"
+if [[ "${replace_existing}" -eq 1 ]]; then
+    if [[ "${installer}" == "dnf" ]]; then
+        if [[ "${dry_run}" -eq 0 ]]; then
+            if ! command -v rpm >/dev/null 2>&1; then
+                fail "rpm not found on PATH: rpm"
+            fi
+            package_name="$(rpm -qp --queryformat '%{NAME}' "${package_path}")" || {
+                fail "unable to read RPM package name from artifact: ${package_path}"
+            }
+            replace_package_name="${package_name}"
+            if rpm -q "${replace_package_name}" >/dev/null 2>&1; then
+                remove_args=("${installer}" "remove" "-y" "${replace_package_name}")
+                remove_display="${installer} remove -y ${replace_package_name}"
+                if [[ "${use_sudo}" -eq 1 ]]; then
+                    remove_args=("sudo" "${remove_args[@]}")
+                    remove_display="sudo ${remove_display}"
+                fi
+                run_step "${remove_display}" "${remove_args[@]}"
+            fi
+        else
+            remove_args=("${installer}" "remove" "-y" "${replace_package_name}")
+            remove_display="${installer} remove -y ${replace_package_name}"
+            if [[ "${use_sudo}" -eq 1 ]]; then
+                remove_args=("sudo" "${remove_args[@]}")
+                remove_display="sudo ${remove_display}"
+            fi
+            run_step "${remove_display}" "${remove_args[@]}"
+        fi
+    else
+        fail "--replace-existing is currently supported only with dnf"
+    fi
 fi
 
 install_args=("${installer}" "install" "-y" "${package_path}")

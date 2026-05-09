@@ -149,6 +149,8 @@ def test_packaged_assets_script_renders_desktop_entry_and_service(tmp_path: Path
     assert 'python_bin="/usr/bin/python3"' in packaged_entrypoint_text
     assert 'install_root="/usr/lib/operance"' in packaged_entrypoint_text
     assert 'site_packages="${install_root}/site-packages"' in packaged_entrypoint_text
+    assert 'export OPERANCE_DEVELOPER_MODE="${OPERANCE_DEVELOPER_MODE:-0}"' in packaged_entrypoint_text
+    assert 'export OPERANCE_ENVIRONMENT="${OPERANCE_ENVIRONMENT:-production}"' in packaged_entrypoint_text
     assert 'exec "${python_bin}" -m operance.cli "$@"' in packaged_entrypoint_text
     assert "--wakeword-model" in voice_loop_args_example_text
     assert "--voice-loop-max-commands" in voice_loop_args_example_text

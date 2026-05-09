@@ -42,6 +42,22 @@ def test_installed_beta_smoke_script_dry_run_prints_expected_steps() -> None:
     assert result.stderr == ""
 
 
+def test_installed_beta_smoke_script_can_require_mvp_runtime_in_dry_run() -> None:
+    result = _run_installed_beta_smoke_script("--require-mvp-runtime", "--dry-run")
+
+    assert result.stdout.splitlines() == [
+        "+ test -f /usr/share/applications/operance.desktop",
+        "+ test -f /usr/lib/systemd/user/operance-tray.service",
+        "+ test -f /usr/lib/systemd/user/operance-voice-loop.service",
+        "+ operance --version",
+        "+ operance --doctor",
+        "+ python3 scripts/check_installed_mvp_runtime.py --command operance",
+        "+ operance --supported-commands --supported-commands-available-only",
+        "+ operance --support-bundle",
+    ]
+    assert result.stderr == ""
+
+
 def test_installed_beta_smoke_script_can_install_run_and_uninstall_with_fake_tools(
     tmp_path: Path,
 ) -> None:
@@ -68,6 +84,16 @@ def test_installed_beta_smoke_script_can_install_run_and_uninstall_with_fake_too
             "#!/usr/bin/env bash\n"
             "set -euo pipefail\n"
             "printf '%s\\n' \"$*\" >> \"$FAKE_DNF_LOG\"\n"
+        ),
+    )
+    _write_executable(
+        fake_bin / "rpm",
+        (
+            "#!/usr/bin/env bash\n"
+            "set -euo pipefail\n"
+            "if [[ \"$1\" == \"-qp\" ]]; then printf '%s' operance; exit 0; fi\n"
+            "if [[ \"$1\" == \"-q\" ]]; then exit 0; fi\n"
+            "exit 1\n"
         ),
     )
     _write_executable(
@@ -112,7 +138,8 @@ def test_installed_beta_smoke_script_can_install_run_and_uninstall_with_fake_too
 
     assert result.stderr == ""
     assert result.stdout.splitlines() == [
-        f"+ ./scripts/install_package_artifact.sh --package {package_path} --installer dnf --no-sudo",
+        f"+ ./scripts/install_package_artifact.sh --package {package_path} --installer dnf --replace-existing --no-sudo",
+        "+ dnf remove -y operance",
         f"+ dnf install -y {package_path}",
         f"+ test -f {desktop_entry_path}",
         f"+ test -f {tray_unit_path}",
@@ -125,6 +152,7 @@ def test_installed_beta_smoke_script_can_install_run_and_uninstall_with_fake_too
         "+ dnf remove -y operance",
     ]
     assert dnf_log.read_text(encoding="utf-8").splitlines() == [
+        "remove -y operance",
         f"install -y {package_path}",
         "remove -y operance",
     ]

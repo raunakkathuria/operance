@@ -5,6 +5,9 @@ python_bin="__PYTHON_BIN__"
 install_root="__INSTALL_ROOT__"
 site_packages="${install_root}/site-packages"
 
+export OPERANCE_DEVELOPER_MODE="${OPERANCE_DEVELOPER_MODE:-0}"
+export OPERANCE_ENVIRONMENT="${OPERANCE_ENVIRONMENT:-production}"
+
 if [[ -n "${PYTHONPATH:-}" ]]; then
     export PYTHONPATH="${site_packages}:${PYTHONPATH}"
 else

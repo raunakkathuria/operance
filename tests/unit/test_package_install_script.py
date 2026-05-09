@@ -64,6 +64,27 @@ def test_package_install_script_dry_run_prints_expected_dnf_command_without_sudo
     assert result.stderr == ""
 
 
+def test_package_install_script_dry_run_can_replace_existing_dnf_package(tmp_path: Path) -> None:
+    package_path = tmp_path / "operance-1.2.3-1.noarch.rpm"
+    package_path.write_text("rpm", encoding="utf-8")
+
+    result = _run_install_script(
+        "--package",
+        str(package_path),
+        "--installer",
+        "dnf",
+        "--replace-existing",
+        "--no-sudo",
+        "--dry-run",
+    )
+
+    assert result.stdout.splitlines() == [
+        "+ dnf remove -y operance",
+        f"+ dnf install -y {package_path}",
+    ]
+    assert result.stderr == ""
+
+
 def test_package_install_script_can_execute_with_fake_dnf(tmp_path: Path) -> None:
     package_path = tmp_path / "operance-9.9.9-1.noarch.rpm"
     package_path.write_text("rpm", encoding="utf-8")
@@ -85,6 +106,89 @@ def test_package_install_script_can_execute_with_fake_dnf(tmp_path: Path) -> Non
         str(package_path),
         "--installer",
         "dnf",
+        "--no-sudo",
+        env=env,
+    )
+
+    assert result.stderr == ""
+    assert log_path.read_text(encoding="utf-8").strip() == f"install -y {package_path}"
+
+
+def test_package_install_script_removes_existing_dnf_package_before_install(tmp_path: Path) -> None:
+    package_path = tmp_path / "operance-9.9.9-1.noarch.rpm"
+    package_path.write_text("rpm", encoding="utf-8")
+    fake_bin = tmp_path / "bin"
+    log_path = tmp_path / "dnf.log"
+
+    fake_bin.mkdir()
+    _write_executable(
+        fake_bin / "rpm",
+        (
+            "#!/usr/bin/env bash\n"
+            "set -euo pipefail\n"
+            "if [[ \"$1\" == \"-qp\" ]]; then printf '%s' operance; exit 0; fi\n"
+            "if [[ \"$1\" == \"-q\" ]]; then exit 0; fi\n"
+            "exit 1\n"
+        ),
+    )
+    _write_executable(
+        fake_bin / "dnf",
+        "#!/usr/bin/env bash\nset -euo pipefail\nprintf '%s\\n' \"$*\" >> \"$FAKE_DNF_LOG\"\n",
+    )
+
+    env = dict(os.environ)
+    env["PATH"] = f"{fake_bin}:{env['PATH']}"
+    env["FAKE_DNF_LOG"] = str(log_path)
+
+    result = _run_install_script(
+        "--package",
+        str(package_path),
+        "--installer",
+        "dnf",
+        "--replace-existing",
+        "--no-sudo",
+        env=env,
+    )
+
+    assert result.stderr == ""
+    assert log_path.read_text(encoding="utf-8").splitlines() == [
+        "remove -y operance",
+        f"install -y {package_path}",
+    ]
+
+
+def test_package_install_script_installs_when_replacement_package_is_absent(tmp_path: Path) -> None:
+    package_path = tmp_path / "operance-9.9.9-1.noarch.rpm"
+    package_path.write_text("rpm", encoding="utf-8")
+    fake_bin = tmp_path / "bin"
+    log_path = tmp_path / "dnf.log"
+
+    fake_bin.mkdir()
+    _write_executable(
+        fake_bin / "rpm",
+        (
+            "#!/usr/bin/env bash\n"
+            "set -euo pipefail\n"
+            "if [[ \"$1\" == \"-qp\" ]]; then printf '%s' operance; exit 0; fi\n"
+            "if [[ \"$1\" == \"-q\" ]]; then exit 1; fi\n"
+            "exit 1\n"
+        ),
+    )
+    _write_executable(
+        fake_bin / "dnf",
+        "#!/usr/bin/env bash\nset -euo pipefail\nprintf '%s\\n' \"$*\" > \"$FAKE_DNF_LOG\"\n",
+    )
+
+    env = dict(os.environ)
+    env["PATH"] = f"{fake_bin}:{env['PATH']}"
+    env["FAKE_DNF_LOG"] = str(log_path)
+
+    result = _run_install_script(
+        "--package",
+        str(package_path),
+        "--installer",
+        "dnf",
+        "--replace-existing",
         "--no-sudo",
         env=env,
     )

@@ -28,7 +28,7 @@ def test_fedora_alpha_gate_script_dry_run_prints_default_steps() -> None:
     assert result.stdout.splitlines() == [
         "+ .venv/bin/python -m pytest",
         "+ ./scripts/run_beta_smoke.sh --python .venv/bin/python --dry-run",
-        "+ ./scripts/run_fedora_release_smoke.sh --bundle-profile base --dry-run",
+        "+ ./scripts/run_fedora_release_smoke.sh --bundle-profile mvp --dry-run",
     ]
     assert result.stderr == ""
 
