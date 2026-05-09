@@ -82,6 +82,7 @@ def test_rpm_package_script_can_render_spec_without_building(tmp_path: Path) -> 
     packaged_entrypoint = spec_dir / "SOURCES" / "packaged-assets" / "bin" / "operance"
     voice_loop_args_example = spec_dir / "SOURCES" / "packaged-assets" / "etc" / "operance" / "voice-loop.args.example"
     desktop_entry = spec_dir / "SOURCES" / "packaged-assets" / "applications" / "operance.desktop"
+    packaged_icon = spec_dir / "SOURCES" / "packaged-assets" / "icons" / "hicolor" / "scalable" / "apps" / "operance.svg"
     packaged_pyproject = spec_dir / "SOURCES" / "packaged-assets" / "lib" / "operance" / "pyproject.toml"
     packaged_runtime_dir = spec_dir / "SOURCES" / "packaged-assets" / "lib" / "operance" / "site-packages" / "operance"
     voice_loop_launcher = spec_dir / "SOURCES" / "packaged-assets" / "lib" / "operance" / "voice-loop-launcher"
@@ -94,6 +95,7 @@ def test_rpm_package_script_can_render_spec_without_building(tmp_path: Path) -> 
     assert packaged_entrypoint.exists()
     assert voice_loop_args_example.exists()
     assert desktop_entry.exists()
+    assert packaged_icon.exists()
     assert packaged_pyproject.exists()
     assert packaged_runtime_dir.exists()
     assert voice_loop_launcher.exists()
@@ -115,7 +117,10 @@ def test_rpm_package_script_can_render_spec_without_building(tmp_path: Path) -> 
     assert "Name:           operance" in spec_text
     assert "AutoReqProv:    no" in spec_text
     assert "install -Dpm0755 packaged-assets/bin/operance %{buildroot}/opt/operance/bin/operance" in spec_text
+    assert "install -Dpm0644 packaged-assets/icons/hicolor/scalable/apps/operance.svg %{buildroot}%{_datadir}/icons/hicolor/scalable/apps/operance.svg" in spec_text
+    files_section = spec_text.split("%files", maxsplit=1)[1]
     assert "/etc/operance/voice-loop.args.example" in spec_text
+    assert "%{_datadir}/icons/hicolor/scalable/apps/operance.svg" in files_section
     assert "cp -a packaged-assets/lib/operance/site-packages/. %{buildroot}%{_prefix}/lib/operance/site-packages/" in spec_text
     assert "%{_prefix}/lib/operance/voice-loop-launcher" in spec_text
     assert "/opt/operance/bin/operance" in spec_text
@@ -123,6 +128,7 @@ def test_rpm_package_script_can_render_spec_without_building(tmp_path: Path) -> 
     assert 'python_bin="/usr/bin/python3"' in packaged_entrypoint_text
     assert "--wakeword-model" in voice_loop_args_example_text
     assert "Exec=/opt/operance/bin/operance --tray-run" in desktop_text
+    assert "Icon=operance" in desktop_text
     assert 'version = "0.1.0"' in packaged_pyproject_text
     assert '"""Operance package bootstrap."""' in packaged_runtime_init_text
     assert 'entrypoint="/opt/operance/bin/operance"' in voice_loop_launcher_text

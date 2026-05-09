@@ -6,6 +6,7 @@ import fcntl
 from datetime import datetime, timezone
 from dataclasses import dataclass, field
 import json
+from pathlib import Path
 from queue import Empty, SimpleQueue
 from threading import Lock, Thread
 from typing import Any, Callable, Mapping, TextIO
@@ -85,6 +86,7 @@ class TraySnapshot:
     tray_state: str
     mic_state: str
     state_label: str
+    developer_mode: bool
     click_to_talk_label: str
     voice_loop_status: str | None
     voice_loop_state: str | None
@@ -114,6 +116,7 @@ class TraySnapshot:
             "tray_state": self.tray_state,
             "mic_state": self.mic_state,
             "state_label": self.state_label,
+            "developer_mode": self.developer_mode,
             "click_to_talk_label": self.click_to_talk_label,
             "voice_loop_status": self.voice_loop_status,
             "voice_loop_state": self.voice_loop_state,
@@ -172,6 +175,7 @@ class TrayController:
             self.daemon.status_snapshot(),
             voice_loop_status=voice_loop_status,
             click_to_talk_active=self.click_to_talk_active(),
+            developer_mode=self.daemon.config.runtime.developer_mode,
             fallback_last_transcript=self._last_click_to_talk_transcript,
             fallback_last_response=self._last_click_to_talk_response,
             last_click_to_talk_result=self._last_click_to_talk_result,
@@ -294,13 +298,20 @@ def build_tray_snapshot(
     *,
     voice_loop_status: VoiceLoopRuntimeStatusSnapshot | None = None,
     click_to_talk_active: bool = False,
+    developer_mode: bool = False,
     fallback_last_transcript: str | None = None,
     fallback_last_response: str | None = None,
     last_click_to_talk_result: dict[str, object] | None = None,
     last_click_to_talk_error: str | None = None,
 ) -> TraySnapshot:
-    tray_state, state_label = _resolve_tray_state(status)
-    mic_state = _resolve_mic_state(status.current_state)
+    tray_state, state_label = _resolve_tray_state(
+        status,
+        click_to_talk_active=click_to_talk_active,
+    )
+    mic_state = _resolve_mic_state(
+        status.current_state,
+        click_to_talk_active=click_to_talk_active,
+    )
     click_to_talk_label, can_start_click_to_talk = _resolve_click_to_talk_action(
         status,
         click_to_talk_active=click_to_talk_active,
@@ -328,7 +339,10 @@ def build_tray_snapshot(
         last_command_preview=last_command_preview,
         voice_loop_status=voice_loop_status,
     )
-    tooltip_parts = [f"Operance: {state_label}"]
+    display_state_label = f"{state_label} (simulated)" if developer_mode else state_label
+    tooltip_parts = [f"Operance: {display_state_label}"]
+    if developer_mode:
+        tooltip_parts.append("Developer mode uses simulated adapters")
     if usage_hint:
         tooltip_parts.append(usage_hint)
     elif voice_loop_activity:
@@ -346,7 +360,8 @@ def build_tray_snapshot(
         current_state=status.current_state.value,
         tray_state=tray_state,
         mic_state=mic_state,
-        state_label=state_label,
+        state_label=display_state_label,
+        developer_mode=developer_mode,
         click_to_talk_label=click_to_talk_label,
         voice_loop_status=None if voice_loop_status is None else voice_loop_status.status,
         voice_loop_state=None if voice_loop_status is None else voice_loop_status.loop_state,
@@ -410,8 +425,17 @@ def build_startup_notification(snapshot: TraySnapshot) -> TrayNotification | Non
     )
 
 
+def build_click_to_talk_started_notification() -> TrayNotification:
+    return TrayNotification(
+        level="info",
+        title="Listening",
+        message="Speak a command now. Operance will stop listening automatically.",
+        event_id="click_to_talk:started",
+    )
+
+
 def run_tray_app(env: Mapping[str, str] | None = None) -> int:
-    QApplication, QAction, QMenu, QMessageBox, QStyle, QSystemTrayIcon, QTimer = _load_pyside6_api()
+    QApplication, QAction, QIcon, QMenu, QMessageBox, QStyle, QSystemTrayIcon, QTimer = _load_pyside6_api()
 
     app = QApplication.instance()
     if app is None:
@@ -505,7 +529,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
             "Undo last action" if snapshot.undo_label is None else f"Undo {snapshot.undo_label}"
         )
         tray.setToolTip(snapshot.tooltip)
-        tray.setIcon(_build_tray_icon(app, QStyle, snapshot.tray_state))
+        tray.setIcon(_build_tray_icon(app, QStyle, snapshot.tray_state, QIcon))
         notification = select_tray_notification(last_snapshot, snapshot)
         if notification is not None:
             tray.showMessage(
@@ -575,6 +599,12 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
         click_to_talk_action.setText("Listening...")
         Thread(target=click_to_talk_worker, daemon=True).start()
         refresh()
+        notification = build_click_to_talk_started_notification()
+        tray.showMessage(
+            notification.title,
+            notification.message,
+            _resolve_notification_icon(QSystemTrayIcon, notification.level),
+        )
 
     def show_supported_commands() -> None:
         try:
@@ -821,6 +851,9 @@ def _build_click_to_talk_interaction_report(
     if isinstance(result_status, str) and result_status:
         details.append(f"Result: {result_status}")
 
+    if response.get("simulated") is True:
+        details.append("Mode: simulated")
+
     processed_frames = result.get("processed_frames")
     if isinstance(processed_frames, int) and processed_frames >= 0:
         details.append(f"Processed frames: {processed_frames}")
@@ -913,7 +946,13 @@ def _build_notification(
     return None
 
 
-def _resolve_tray_state(status: StatusSnapshot) -> tuple[str, str]:
+def _resolve_tray_state(
+    status: StatusSnapshot,
+    *,
+    click_to_talk_active: bool = False,
+) -> tuple[str, str]:
+    if click_to_talk_active and status.current_state == RuntimeState.IDLE:
+        return ("listening", "Listening")
     if status.pending_confirmation or status.current_state == RuntimeState.AWAITING_CONFIRMATION:
         return ("attention", "Confirmation needed")
     if status.current_state == RuntimeState.WAKE_DETECTED:
@@ -940,7 +979,9 @@ def _resolve_click_to_talk_action(
     *,
     click_to_talk_active: bool,
 ) -> tuple[str, bool]:
-    if click_to_talk_active or status.current_state in {
+    if click_to_talk_active:
+        return ("Listening...", False)
+    if status.current_state in {
         RuntimeState.WAKE_DETECTED,
         RuntimeState.LISTENING,
         RuntimeState.TRANSCRIBING,
@@ -959,7 +1000,9 @@ def _resolve_click_to_talk_action(
     return ("Click to talk", True)
 
 
-def _resolve_mic_state(state: RuntimeState) -> str:
+def _resolve_mic_state(state: RuntimeState, *, click_to_talk_active: bool = False) -> str:
+    if click_to_talk_active:
+        return "listening"
     if state == RuntimeState.WAKE_DETECTED:
         return "wake_detected"
     if state in {RuntimeState.LISTENING, RuntimeState.TRANSCRIBING}:
@@ -1090,9 +1133,12 @@ def _format_click_to_talk_notification_message(report: TrayInteractionReport) ->
         return report.summary
 
     heard_text = heard_line.removeprefix("Heard: ").strip()
+    summary = report.summary
+    if "Mode: simulated" in report.details:
+        summary = f"Simulated: {summary}"
     if not heard_text or heard_text == report.summary:
-        return report.summary
-    return f"{heard_line}\n{report.summary}"
+        return summary
+    return f"{heard_line}\n{summary}"
 
 
 def _should_start_click_to_talk_from_activation(reason: object, qsystemtrayicon: Any) -> bool:
@@ -1130,7 +1176,18 @@ def _release_tray_instance_lock(handle: TextIO) -> None:
         handle.close()
 
 
-def _build_tray_icon(app: Any, qstyle: Any, tray_state: str):
+def _build_tray_icon(app: Any, qstyle: Any, tray_state: str, qicon: Any | None = None):
+    if qicon is not None:
+        icon = qicon.fromTheme("operance")
+        if not icon.isNull():
+            return icon
+
+        for icon_path in _operance_icon_candidates():
+            if icon_path.exists():
+                icon = qicon(str(icon_path))
+                if not icon.isNull():
+                    return icon
+
     style = app.style()
     if tray_state == "attention":
         return style.standardIcon(qstyle.StandardPixmap.SP_MessageBoxWarning)
@@ -1139,6 +1196,13 @@ def _build_tray_icon(app: Any, qstyle: Any, tray_state: str):
     if tray_state in {"busy", "listening"}:
         return style.standardIcon(qstyle.StandardPixmap.SP_BrowserReload)
     return style.standardIcon(qstyle.StandardPixmap.SP_ComputerIcon)
+
+
+def _operance_icon_candidates() -> tuple[Path, ...]:
+    return (
+        Path("/usr/share/icons/hicolor/scalable/apps/operance.svg"),
+        Path(__file__).resolve().parents[3] / "assets" / "icons" / "operance.svg",
+    )
 
 
 def _resolve_notification_icon(qsystemtrayicon: Any, level: str):
@@ -1222,12 +1286,12 @@ def _save_support_bundle_artifact(
     return output_path
 
 
-def _load_pyside6_api() -> tuple[type[Any], type[Any], type[Any], type[Any], type[Any], type[Any], type[Any]]:
+def _load_pyside6_api() -> tuple[type[Any], type[Any], type[Any], type[Any], type[Any], type[Any], type[Any], type[Any]]:
     try:
         from PySide6.QtCore import QTimer
-        from PySide6.QtGui import QAction
+        from PySide6.QtGui import QAction, QIcon
         from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QStyle, QSystemTrayIcon
     except ImportError as exc:
         raise ValueError("PySide6 is not installed") from exc
 
-    return QApplication, QAction, QMenu, QMessageBox, QStyle, QSystemTrayIcon, QTimer
+    return QApplication, QAction, QIcon, QMenu, QMessageBox, QStyle, QSystemTrayIcon, QTimer

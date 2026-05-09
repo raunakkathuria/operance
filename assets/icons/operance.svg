@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Operance">
+  <defs>
+    <linearGradient id="operance-bg" x1="18" y1="112" x2="110" y2="16" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0f766e"/>
+      <stop offset="0.58" stop-color="#14b8a6"/>
+      <stop offset="1" stop-color="#5eead4"/>
+    </linearGradient>
+    <linearGradient id="operance-mark" x1="38" y1="96" x2="90" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f9fafb"/>
+      <stop offset="1" stop-color="#e5e7eb"/>
+    </linearGradient>
+  </defs>
+  <rect x="10" y="10" width="108" height="108" rx="30" fill="url(#operance-bg)"/>
+  <path
+    d="M64 31c18.2 0 33 14.8 33 33S82.2 97 64 97 31 82.2 31 64s14.8-33 33-33Zm0 16c-9.4 0-17 7.6-17 17s7.6 17 17 17 17-7.6 17-17-7.6-17-17-17Z"
+    fill="url(#operance-mark)"
+    fill-rule="evenodd"/>
+  <path d="M64 52c6.6 0 12 5.4 12 12s-5.4 12-12 12-12-5.4-12-12 5.4-12 12-12Z" fill="#111827"/>
+  <path d="M87 35l16-5-5 16-14 14-11-11 14-14Z" fill="#f9fafb"/>
+  <path d="M88 39l6-2-2 6-14 14-4-4 14-14Z" fill="#111827"/>
+</svg>

@@ -182,6 +182,73 @@ def test_linux_apps_adapter_uses_gtk_launch_for_desktop_entries_and_requires_suc
     assert commands == [["/usr/bin/gtk-launch", "firefox.desktop"]]
 
 
+def test_linux_apps_adapter_verifies_gtk_launch_created_process(monkeypatch: pytest.MonkeyPatch) -> None:
+    from operance.adapters import linux
+    from operance.adapters.linux import LinuxAppsAdapter
+
+    monkeypatch.setattr(linux, "APP_LAUNCH_VERIFICATION_TIMEOUT_SECONDS", 0)
+    monkeypatch.setattr(linux, "APP_LAUNCH_VERIFICATION_SETTLE_SECONDS", 0)
+    commands: list[list[str]] = []
+
+    def resolve_executable(name: str) -> str | None:
+        if name in {"gtk-launch", "pgrep"}:
+            return f"/usr/bin/{name}"
+        return None
+
+    def run_command(command: list[str]) -> subprocess.CompletedProcess[str]:
+        commands.append(command)
+        if command == ["/usr/bin/pgrep", "-x", "firefox"]:
+            return subprocess.CompletedProcess(command, 0, stdout="123\n", stderr="")
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    adapter = LinuxAppsAdapter(
+        run_command=run_command,
+        resolve_executable=resolve_executable,
+    )
+
+    message = adapter.launch("firefox")
+
+    assert message == "Launched firefox"
+    assert commands == [
+        ["/usr/bin/gtk-launch", "firefox.desktop"],
+        ["/usr/bin/pgrep", "-x", "firefox"],
+    ]
+
+
+def test_linux_apps_adapter_fails_when_launch_process_is_not_observed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from operance.adapters import linux
+    from operance.adapters.linux import LinuxAppsAdapter
+
+    monkeypatch.setattr(linux, "APP_LAUNCH_VERIFICATION_TIMEOUT_SECONDS", 0)
+    monkeypatch.setattr(linux, "APP_LAUNCH_VERIFICATION_SETTLE_SECONDS", 0)
+
+    def resolve_executable(name: str) -> str | None:
+        if name in {"gtk-launch", "pgrep"}:
+            return f"/usr/bin/{name}"
+        return None
+
+    def run_command(command: list[str]) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(
+            command,
+            1 if "pgrep" in command[0] else 0,
+            stdout="",
+            stderr="",
+        )
+
+    adapter = LinuxAppsAdapter(
+        run_command=run_command,
+        resolve_executable=resolve_executable,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="launch command completed but no matching process appeared for firefox",
+    ):
+        adapter.launch("firefox")
+
+
 def test_linux_apps_adapter_surfaces_xdg_open_failures() -> None:
     from operance.adapters.linux import LinuxAppsAdapter
 

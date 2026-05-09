@@ -104,6 +104,20 @@ def test_build_tray_snapshot_reports_idle_state() -> None:
     assert payload["tooltip"] == "Operance: Idle | Left-click to talk"
 
 
+def test_build_tray_snapshot_marks_developer_mode_as_simulated() -> None:
+    from operance.ui import build_tray_snapshot
+
+    snapshot = build_tray_snapshot(_status_snapshot(), developer_mode=True)
+
+    payload = snapshot.to_dict()
+
+    assert payload["developer_mode"] is True
+    assert payload["state_label"] == "Idle (simulated)"
+    assert payload["tooltip"] == (
+        "Operance: Idle (simulated) | Developer mode uses simulated adapters | Left-click to talk"
+    )
+
+
 def test_build_tray_snapshot_reports_pending_confirmation() -> None:
     from operance.ui import build_tray_snapshot
 
@@ -244,6 +258,19 @@ def test_build_tray_startup_notification_skips_attention_states() -> None:
     assert build_startup_notification(snapshot) is None
 
 
+def test_build_click_to_talk_started_notification() -> None:
+    from operance.ui.tray import build_click_to_talk_started_notification
+
+    notification = build_click_to_talk_started_notification()
+
+    assert notification.to_dict() == {
+        "event_id": "click_to_talk:started",
+        "level": "info",
+        "message": "Speak a command now. Operance will stop listening automatically.",
+        "title": "Listening",
+    }
+
+
 def test_acquire_tray_instance_lock_rejects_duplicate_process(tmp_path: Path) -> None:
     from operance.ui.tray import _acquire_tray_instance_lock, _release_tray_instance_lock
 
@@ -255,6 +282,78 @@ def test_acquire_tray_instance_lock_rejects_duplicate_process(tmp_path: Path) ->
             _acquire_tray_instance_lock(lock_path)
     finally:
         _release_tray_instance_lock(lock_handle)
+
+
+def test_build_tray_icon_prefers_operance_theme_icon() -> None:
+    from operance.ui.tray import _build_tray_icon
+
+    class FakeIcon:
+        theme_names: list[str] = []
+
+        def __init__(self, source: str, *, null: bool = False) -> None:
+            self.source = source
+            self._null = null
+
+        def isNull(self) -> bool:
+            return self._null
+
+        @classmethod
+        def fromTheme(cls, name: str):
+            cls.theme_names.append(name)
+            return cls(f"theme:{name}")
+
+    class FakeStyle:
+        def standardIcon(self, icon: str) -> str:
+            return f"standard:{icon}"
+
+    class FakeApp:
+        def style(self) -> FakeStyle:
+            return FakeStyle()
+
+    class FakeQStyle:
+        class StandardPixmap:
+            SP_ComputerIcon = "computer"
+            SP_MessageBoxWarning = "warning"
+            SP_MessageBoxCritical = "critical"
+            SP_BrowserReload = "reload"
+
+    icon = _build_tray_icon(FakeApp(), FakeQStyle, "idle", qicon=FakeIcon)
+
+    assert icon.source == "theme:operance"
+    assert FakeIcon.theme_names == ["operance"]
+
+
+def test_build_tray_icon_falls_back_to_stock_icon_when_operance_icon_is_missing() -> None:
+    from operance.ui.tray import _build_tray_icon
+
+    class FakeIcon:
+        def __init__(self, source: str = "", *, null: bool = True) -> None:
+            self.source = source
+            self._null = null
+
+        def isNull(self) -> bool:
+            return self._null
+
+        @classmethod
+        def fromTheme(cls, name: str):
+            return cls(f"theme:{name}", null=True)
+
+    class FakeStyle:
+        def standardIcon(self, icon: str) -> str:
+            return f"standard:{icon}"
+
+    class FakeApp:
+        def style(self) -> FakeStyle:
+            return FakeStyle()
+
+    class FakeQStyle:
+        class StandardPixmap:
+            SP_ComputerIcon = "computer"
+            SP_MessageBoxWarning = "warning"
+            SP_MessageBoxCritical = "critical"
+            SP_BrowserReload = "reload"
+
+    assert _build_tray_icon(FakeApp(), FakeQStyle, "error", qicon=FakeIcon) == "standard:critical"
 
 
 def test_build_tray_snapshot_disables_click_to_talk_while_capture_is_active() -> None:
@@ -269,6 +368,24 @@ def test_build_tray_snapshot_disables_click_to_talk_while_capture_is_active() ->
 
     assert payload["click_to_talk_label"] == "Listening..."
     assert payload["can_start_click_to_talk"] is False
+
+
+def test_build_tray_snapshot_shows_listening_state_as_soon_as_click_to_talk_starts() -> None:
+    from operance.ui import build_tray_snapshot
+
+    snapshot = build_tray_snapshot(
+        _status_snapshot(current_state=RuntimeState.IDLE),
+        click_to_talk_active=True,
+    )
+
+    payload = snapshot.to_dict()
+
+    assert payload["tray_state"] == "listening"
+    assert payload["mic_state"] == "listening"
+    assert payload["state_label"] == "Listening"
+    assert payload["click_to_talk_label"] == "Listening..."
+    assert payload["can_start_click_to_talk"] is False
+    assert payload["tooltip"] == "Operance: Listening"
 
 
 def test_build_tray_snapshot_reports_failure_notification() -> None:
@@ -830,6 +947,7 @@ def test_tray_controller_can_run_click_to_talk_command(tmp_path: Path) -> None:
     snapshot = controller.snapshot()
 
     assert result["response"] == {
+        "simulated": True,
         "status": "success",
         "text": "Launched firefox",
     }
@@ -840,6 +958,7 @@ def test_tray_controller_can_run_click_to_talk_command(tmp_path: Path) -> None:
         "details": [
             "Heard: open firefox",
             "Result: success",
+            "Mode: simulated",
             "Processed frames: 2",
             "Stopped: final_transcript",
             "Final state: IDLE",
@@ -888,6 +1007,7 @@ def test_tray_controller_surfaces_no_transcript_click_to_talk_attempt(tmp_path: 
     snapshot = controller.snapshot()
 
     assert result["response"] == {
+        "simulated": True,
         "status": "no_transcript",
         "text": "I did not catch a command.",
     }
@@ -897,6 +1017,7 @@ def test_tray_controller_surfaces_no_transcript_click_to_talk_attempt(tmp_path: 
         "details": [
             "Heard: No final transcript",
             "Result: no_transcript",
+            "Mode: simulated",
             "Processed frames: 2",
             "Stopped: frame_limit",
             "Final state: IDLE",
@@ -904,7 +1025,10 @@ def test_tray_controller_surfaces_no_transcript_click_to_talk_attempt(tmp_path: 
         "summary": "I did not catch a command.",
         "title": "Last click-to-talk interaction",
     }
-    assert snapshot.tooltip == "Operance: Idle | I did not catch a command."
+    assert snapshot.tooltip == (
+        "Operance: Idle (simulated) | Developer mode uses simulated adapters | "
+        "I did not catch a command."
+    )
 
 
 def test_tray_controller_surfaces_click_to_talk_backend_error(tmp_path: Path) -> None:
@@ -936,7 +1060,10 @@ def test_tray_controller_surfaces_click_to_talk_backend_error(tmp_path: Path) ->
         "summary": "moonshine-voice is not installed",
         "title": "Last click-to-talk error",
     }
-    assert snapshot.tooltip == "Operance: Idle | moonshine-voice is not installed"
+    assert snapshot.tooltip == (
+        "Operance: Idle (simulated) | Developer mode uses simulated adapters | "
+        "moonshine-voice is not installed"
+    )
 
 
 def test_tray_controller_surfaces_non_value_click_to_talk_backend_error(tmp_path: Path) -> None:
@@ -969,4 +1096,7 @@ def test_tray_controller_surfaces_non_value_click_to_talk_backend_error(tmp_path
         "summary": "audio capture backend failed",
         "title": "Last click-to-talk error",
     }
-    assert snapshot.tooltip == "Operance: Idle | audio capture backend failed"
+    assert snapshot.tooltip == (
+        "Operance: Idle (simulated) | Developer mode uses simulated adapters | "
+        "audio capture backend failed"
+    )

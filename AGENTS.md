@@ -65,11 +65,19 @@ Stop only when:
 
 The agent may create multiple small commits within one feature request.
 Do not stop after each commit or slice.
-At the end of a feature, summarize the completed commits and propose the next feature.
+At the end of a feature, verify code, tests, and documentation are complete before summarizing completed commits and proposing the next feature.
 
 ## Documentation & Agent Workflow
 
-Keep `README.md`, `docs/requirements/linux.md`, and `CHANGELOG.md` in sync with code in the same change. Use `README.md` for current runnable behavior, `docs/requirements/linux.md` for Linux integration status and setup, and `CHANGELOG.md` for completed implementation slices. Do not describe features as implemented unless they are runnable now. When working outside Linux, limit changes to portable logic, mocks, schemas, tests, and simulated adapter paths.
+Keep `README.md`, `docs/requirements/linux.md`, and `CHANGELOG.md` in sync with code in the same change. Documentation is part of feature completion, not follow-up work. Use `README.md` for current runnable behavior, `docs/requirements/linux.md` for Linux integration status and setup, and `CHANGELOG.md` for completed implementation slices. Do not describe features as implemented unless they are runnable now. When working outside Linux, limit changes to portable logic, mocks, schemas, tests, and simulated adapter paths.
+
+Before calling a feature complete:
+
+- update relevant documentation, or explicitly state that no documentation change is needed and why
+- ensure `README.md` reflects any changed public/user workflow
+- ensure `docs/requirements/linux.md` reflects any changed Linux setup, packaging, service, or integration behavior
+- ensure `CHANGELOG.md` records completed implementation slices
+- verify docs do not claim unsupported or untested behavior
 
 When using Codex or other coding agents on this repo, treat these as enforcement rules:
 

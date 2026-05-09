@@ -3,6 +3,7 @@ Type=Application
 Name=Operance
 Comment=Turn intent into action
 Exec=__ENTRYPOINT__ --tray-run
+Icon=operance
 Terminal=false
 Categories=Utility;
 StartupNotify=true

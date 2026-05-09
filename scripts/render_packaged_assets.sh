@@ -6,6 +6,7 @@ repo_root="$(cd "${script_dir}/.." && pwd)"
 cd "${repo_root}"
 
 desktop_template="${repo_root}/packaging/operance.desktop.in"
+icon_source_path="${repo_root}/assets/icons/operance.svg"
 entrypoint_template="${repo_root}/packaging/bin/operance-entrypoint.in"
 voice_loop_args_template="${repo_root}/packaging/etc/voice-loop.args.example.in"
 voice_loop_launcher_template="${repo_root}/packaging/bin/operance-voice-loop-launcher.in"
@@ -138,12 +139,14 @@ fi
 desktop_dir="${output_dir%/}/applications"
 entrypoint_dir="${output_dir%/}/bin"
 config_dir="${output_dir%/}/etc/operance"
+icon_dir="${output_dir%/}/icons/hicolor/scalable/apps"
 libexec_dir="${output_dir%/}/lib/operance"
 runtime_dir="${output_dir%/}/lib/operance"
 site_packages_root="${runtime_dir}/site-packages"
 site_packages_dir="${site_packages_root}/operance"
 systemd_dir="${output_dir%/}/systemd"
 desktop_entry_path="${desktop_dir}/operance.desktop"
+icon_path="${icon_dir}/operance.svg"
 entrypoint_path="${entrypoint_dir}/operance"
 voice_loop_args_path="${config_dir}/voice-loop.args.example"
 packaged_pyproject_path="${runtime_dir}/pyproject.toml"
@@ -158,6 +161,7 @@ escape_sed() {
 run_step "mkdir -p ${desktop_dir}" mkdir -p "${desktop_dir}"
 run_step "mkdir -p ${entrypoint_dir}" mkdir -p "${entrypoint_dir}"
 run_step "mkdir -p ${config_dir}" mkdir -p "${config_dir}"
+run_step "mkdir -p ${icon_dir}" mkdir -p "${icon_dir}"
 run_step "mkdir -p ${libexec_dir}" mkdir -p "${libexec_dir}"
 run_step "mkdir -p ${site_packages_dir}" mkdir -p "${site_packages_dir}"
 run_step "mkdir -p ${systemd_dir}" mkdir -p "${systemd_dir}"
@@ -166,6 +170,8 @@ echo "+ render packaging/operance.desktop.in -> ${desktop_entry_path}"
 if [[ "${dry_run}" -eq 0 ]]; then
     sed -e "s/__ENTRYPOINT__/$(escape_sed "${entrypoint}")/g" "${desktop_template}" > "${desktop_entry_path}"
 fi
+
+run_step "cp assets/icons/operance.svg ${icon_path}" cp "${icon_source_path}" "${icon_path}"
 
 echo "+ render packaging/bin/operance-entrypoint.in -> ${entrypoint_path}"
 if [[ "${dry_run}" -eq 0 ]]; then

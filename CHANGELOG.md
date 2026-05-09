@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Added an optional installed-tray service check to `scripts/check_installed_mvp_runtime.py`, so package smoke can catch stale repo-local user units that shadow the packaged service.
+- Added live app-launch verification on Linux so app launch commands no longer report success unless the expected process becomes observable after the native launcher returns.
+- Added explicit simulated-mode labeling to tray snapshots and click-to-talk result notifications, making source-checkout developer mode visibly different from installed live mode.
+- Added an immediate tray notification when click-to-talk starts, so users get explicit feedback that Operance is listening for a command.
+- Tightened click-to-talk tray state projection so the tray switches to the listening state immediately when capture starts, even before the daemon emits the first wake/listening runtime state.
+- Added the Operance brand icon asset and wired it into the PySide6 tray, packaged desktop entry, and Debian/RPM package staging paths, with stock Qt icon fallback when the branded icon is unavailable.
 - Updated the README and release handoff docs to reflect the verified packaged alpha path: Fedora RPM `mvp` runtime, live adapters by default, installed MVP runtime check enforcement, and the remaining human tray plus microphone smoke requirement.
 - Changed the packaged `operance` entrypoint to default to live execution (`OPERANCE_DEVELOPER_MODE=0`) instead of source-checkout developer simulation, and expanded the installed MVP runtime check so packaged alpha validation fails if the command can still return simulated action success.
 - Added `--replace-existing` to `scripts/install_package_artifact.sh` and wired the installed Fedora RPM smoke path to use it, so rebuilding the same RPM version removes the installed package before installing the new artifact instead of letting `dnf install` report "already installed" while leaving older packaged dependencies in place.
