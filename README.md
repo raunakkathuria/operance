@@ -513,10 +513,10 @@ Installed packages are different: the packaged `/usr/bin/operance` entrypoint de
 
 ```bash
 operance --print-config
-python3 scripts/check_installed_mvp_runtime.py --command operance
+python3 scripts/check_installed_mvp_runtime.py --command operance --check-tray-service
 ```
 
-`operance --print-config` should report `"developer_mode": false`; the installed MVP runtime check fails if the packaged command is still in developer-mode simulation.
+`operance --print-config` should report `"developer_mode": false`; the installed MVP runtime check fails if the packaged command is still in developer-mode simulation. With `--check-tray-service`, it also fails when an active `operance-tray.service` is shadowed by a stale repo-local user unit, for example one still pointing at an old checkout path. In `systemctl --user status`, `preset: disabled` is normal on Fedora; `Loaded`, `Active`, and the `ExecStart` command path are the parts to verify.
 
 Run the built-in deterministic corpus and print a summary:
 
