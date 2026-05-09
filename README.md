@@ -1,6 +1,7 @@
-# Operance
-
-![Operance logo](assets/icons/operance.svg)
+<h1>
+  <img src="assets/icons/operance.svg" alt="Operance logo" width="40" height="40" align="absmiddle">
+  Operance
+</h1>
 
 Turn intent into action.
 
