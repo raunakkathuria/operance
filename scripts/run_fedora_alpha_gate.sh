@@ -11,6 +11,7 @@ bundle_python=""
 bundle_source_site_packages=""
 use_sudo=1
 uninstall_after=1
+reset_user_services=0
 dry_run=0
 
 usage() {
@@ -30,6 +31,7 @@ Options:
   --bundle-source-site-packages PATH
                                    Override the source site-packages directory for runtime bundling.
   --no-sudo                        Forward --no-sudo to the release smoke helper.
+  --reset-user-services            Forward --reset-user-services to the release smoke helper.
   --keep-installed                 Forward --keep-installed to the release smoke helper.
   --dry-run                        Print the gate commands without executing them.
   -h, --help                       Show this help text.
@@ -103,6 +105,9 @@ while [[ $# -gt 0 ]]; do
         --no-sudo)
             use_sudo=0
             ;;
+        --reset-user-services)
+            reset_user_services=1
+            ;;
         --keep-installed)
             uninstall_after=0
             ;;
@@ -155,6 +160,10 @@ fi
 if [[ "${use_sudo}" -eq 0 ]]; then
     release_smoke_display="${release_smoke_display} --no-sudo"
     release_smoke_args+=("--no-sudo")
+fi
+if [[ "${reset_user_services}" -eq 1 ]]; then
+    release_smoke_display="${release_smoke_display} --reset-user-services"
+    release_smoke_args+=("--reset-user-services")
 fi
 if [[ "${uninstall_after}" -eq 0 ]]; then
     release_smoke_display="${release_smoke_display} --keep-installed"

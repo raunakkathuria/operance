@@ -77,7 +77,7 @@ For the shortest current source-checkout path on the target Linux stack:
 .venv/bin/python -m operance.cli --version
 ./scripts/run_mvp.sh
 ./scripts/run_beta_smoke.sh
-./scripts/run_fedora_alpha_gate.sh --dry-run
+./scripts/run_fedora_alpha_gate.sh --reset-user-services --dry-run
 ```
 
 If that path still fails and you need one issue artifact:
@@ -423,10 +423,11 @@ Run the full Fedora developer-alpha gate from the same checkout when you want on
 
 ```bash
 ./scripts/run_fedora_alpha_gate.sh --dry-run
+./scripts/run_fedora_alpha_gate.sh --reset-user-services --dry-run
 ./scripts/run_fedora_alpha_gate.sh --support-bundle-out /tmp/operance-release-support.tar.gz --dry-run
 ```
 
-The setup surface now also exposes `run_fedora_alpha_gate`, `run_fedora_release_smoke`, and `run_installed_rpm_beta_smoke` when the current machine has the right checkout and RPM build or install prerequisites, so the same package handoff path stays discoverable from `python3 -m operance.cli --setup-actions`.
+The setup surface now also exposes `run_fedora_alpha_gate`, `run_fedora_release_smoke`, and `run_installed_rpm_beta_smoke` with reset-aware Fedora commands when the current machine has the right checkout and RPM build or install prerequisites, so the same package handoff path stays discoverable from `python3 -m operance.cli --setup-actions`.
 That same setup surface now also exposes `install_deb_packaging_tools` and `install_rpm_packaging_tools` when the corresponding package-build CLI is missing but the host can install it, so Fedora alpha bring-up no longer stops at a passive `rpmbuild` warning.
 
 Remove an installed native package through the matching distro package manager:

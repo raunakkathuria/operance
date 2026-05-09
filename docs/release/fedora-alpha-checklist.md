@@ -59,7 +59,7 @@ From the checked-out tree:
 ```bash
 .venv/bin/python -m pytest
 ./scripts/run_beta_smoke.sh
-./scripts/run_fedora_release_smoke.sh --dry-run
+./scripts/run_fedora_release_smoke.sh --reset-user-services --dry-run
 ```
 
 All three must pass before a package-backed alpha candidate is considered.
@@ -67,7 +67,7 @@ All three must pass before a package-backed alpha candidate is considered.
 Or use the combined checkout gate:
 
 ```bash
-./scripts/run_fedora_alpha_gate.sh
+./scripts/run_fedora_alpha_gate.sh --reset-user-services
 ```
 
 If that gate stops immediately with `rpmbuild not found`, install the Fedora
@@ -88,13 +88,14 @@ Build the RPM artifact and then exercise the installed-package smoke path:
 ./scripts/run_installed_beta_smoke.sh \
   --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm \
   --installer dnf \
-  --require-mvp-runtime
+  --require-mvp-runtime \
+  --reset-user-services
 ```
 
 Or use the combined release gate:
 
 ```bash
-./scripts/run_fedora_release_smoke.sh
+./scripts/run_fedora_release_smoke.sh --reset-user-services
 ```
 
 The combined alpha gate above already covers both the source-checkout gate and this

@@ -1098,11 +1098,13 @@ def _build_setup_actions(
             str(_default_rpm_package_artifact_path()),
             "--installer",
             "dnf",
+            "--replace-existing",
+            "--reset-user-services",
         ]
     )
     install_deb_packaging_tools_command = "./scripts/install_packaging_tools.sh --deb"
     install_rpm_packaging_tools_command = "./scripts/install_packaging_tools.sh --rpm"
-    run_fedora_alpha_gate_command = "./scripts/run_fedora_alpha_gate.sh"
+    run_fedora_alpha_gate_command = "./scripts/run_fedora_alpha_gate.sh --reset-user-services"
     run_installed_rpm_beta_smoke_command = shlex.join(
         [
             "./scripts/run_installed_beta_smoke.sh",
@@ -1110,10 +1112,12 @@ def _build_setup_actions(
             str(_default_rpm_package_artifact_path()),
             "--installer",
             "dnf",
+            "--require-mvp-runtime",
+            "--reset-user-services",
             "--uninstall-after",
         ]
     )
-    run_fedora_release_smoke_command = "./scripts/run_fedora_release_smoke.sh"
+    run_fedora_release_smoke_command = "./scripts/run_fedora_release_smoke.sh --reset-user-services"
 
     def build_action(
         *,
@@ -2050,7 +2054,7 @@ def _build_setup_next_steps(
             insert_index,
             PlatformSetupNextStep(
                 label="Run Fedora alpha gate",
-                command="./scripts/run_fedora_alpha_gate.sh",
+                command="./scripts/run_fedora_alpha_gate.sh --reset-user-services",
             ),
         )
     elif fedora_release_smoke_ready:
@@ -2066,6 +2070,8 @@ def _build_setup_next_steps(
                     str(rpm_artifact_path),
                     "--installer",
                     "dnf",
+                    "--require-mvp-runtime",
+                    "--reset-user-services",
                     "--uninstall-after",
                 ]
             )

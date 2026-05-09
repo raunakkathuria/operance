@@ -46,13 +46,13 @@ Primary supported alpha path:
 Secondary supported alpha path:
 
 - Fedora RPM install of the `mvp` runtime profile
-- validated through `./scripts/run_fedora_alpha_gate.sh`
+- validated through `./scripts/run_fedora_alpha_gate.sh --reset-user-services`
 - useful for proving packaging, install, installed-command smoke behavior, bundled tray plus STT runtime availability, and live-adapter defaults for the packaged command
 
 The Fedora gate now defaults to:
 
 - `./scripts/build_package_artifacts.sh --rpm --bundle-profile mvp`
-- `./scripts/run_installed_beta_smoke.sh --require-mvp-runtime`
+- `./scripts/run_installed_beta_smoke.sh --require-mvp-runtime --reset-user-services`
 
 That verifies the installed package can expose the tray UI backend and STT backend through `operance --doctor`, and that `operance --print-config` reports live execution rather than developer-mode simulation. Actual tray interaction, app launching, and microphone capture still require a human desktop-session smoke before tagging a release.
 
@@ -95,13 +95,13 @@ Source-checkout path:
 Fedora checkout gate:
 
 ```bash
-./scripts/run_fedora_alpha_gate.sh --dry-run
+./scripts/run_fedora_alpha_gate.sh --reset-user-services --dry-run
 ```
 
 If you are validating the full Fedora path for real, use:
 
 ```bash
-./scripts/run_fedora_alpha_gate.sh
+./scripts/run_fedora_alpha_gate.sh --reset-user-services
 ```
 
 If the gate stops immediately with `rpmbuild not found`, install the build tool first:

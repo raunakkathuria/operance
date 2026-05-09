@@ -60,7 +60,7 @@ Current assumptions for that path:
 Operance is ready for a **Fedora KDE Wayland developer alpha** for outside developers. It is not yet a broad public desktop release.
 
 - Primary supported path: source checkout with `./scripts/install_linux_dev.sh --ui --voice`, `.venv/bin/python -m operance.cli --doctor`, `./scripts/run_mvp.sh`, and `./scripts/run_beta_smoke.sh`
-- Secondary supported path: Fedora RPM install of the `mvp` runtime profile, validated through `./scripts/run_fedora_alpha_gate.sh`
+- Secondary supported path: Fedora RPM install of the `mvp` runtime profile, validated through `./scripts/run_fedora_alpha_gate.sh --reset-user-services`
 - Default interaction: tray plus click-to-talk
 - Wake word and the continuous voice loop remain secondary to click-to-talk for alpha reliability
 - The supported Fedora package path now vendors the tray UI and STT runtime dependencies needed for the MVP tray plus click-to-talk path
@@ -418,6 +418,7 @@ Run the full Fedora developer-alpha gate from a checkout:
 
 ```bash
 ./scripts/run_fedora_alpha_gate.sh --dry-run
+./scripts/run_fedora_alpha_gate.sh --reset-user-services --dry-run
 ./scripts/run_fedora_alpha_gate.sh --support-bundle-out /tmp/operance-release-support.tar.gz --dry-run
 ```
 
