@@ -343,6 +343,24 @@ def test_build_tray_snapshot_disables_click_to_talk_while_capture_is_active() ->
     assert payload["can_start_click_to_talk"] is False
 
 
+def test_build_tray_snapshot_shows_listening_state_as_soon_as_click_to_talk_starts() -> None:
+    from operance.ui import build_tray_snapshot
+
+    snapshot = build_tray_snapshot(
+        _status_snapshot(current_state=RuntimeState.IDLE),
+        click_to_talk_active=True,
+    )
+
+    payload = snapshot.to_dict()
+
+    assert payload["tray_state"] == "listening"
+    assert payload["mic_state"] == "listening"
+    assert payload["state_label"] == "Listening"
+    assert payload["click_to_talk_label"] == "Listening..."
+    assert payload["can_start_click_to_talk"] is False
+    assert payload["tooltip"] == "Operance: Listening"
+
+
 def test_build_tray_snapshot_reports_failure_notification() -> None:
     from operance.ui import build_tray_snapshot
 

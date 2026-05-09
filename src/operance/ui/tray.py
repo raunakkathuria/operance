@@ -300,8 +300,14 @@ def build_tray_snapshot(
     last_click_to_talk_result: dict[str, object] | None = None,
     last_click_to_talk_error: str | None = None,
 ) -> TraySnapshot:
-    tray_state, state_label = _resolve_tray_state(status)
-    mic_state = _resolve_mic_state(status.current_state)
+    tray_state, state_label = _resolve_tray_state(
+        status,
+        click_to_talk_active=click_to_talk_active,
+    )
+    mic_state = _resolve_mic_state(
+        status.current_state,
+        click_to_talk_active=click_to_talk_active,
+    )
     click_to_talk_label, can_start_click_to_talk = _resolve_click_to_talk_action(
         status,
         click_to_talk_active=click_to_talk_active,
@@ -914,7 +920,13 @@ def _build_notification(
     return None
 
 
-def _resolve_tray_state(status: StatusSnapshot) -> tuple[str, str]:
+def _resolve_tray_state(
+    status: StatusSnapshot,
+    *,
+    click_to_talk_active: bool = False,
+) -> tuple[str, str]:
+    if click_to_talk_active and status.current_state == RuntimeState.IDLE:
+        return ("listening", "Listening")
     if status.pending_confirmation or status.current_state == RuntimeState.AWAITING_CONFIRMATION:
         return ("attention", "Confirmation needed")
     if status.current_state == RuntimeState.WAKE_DETECTED:
@@ -941,7 +953,9 @@ def _resolve_click_to_talk_action(
     *,
     click_to_talk_active: bool,
 ) -> tuple[str, bool]:
-    if click_to_talk_active or status.current_state in {
+    if click_to_talk_active:
+        return ("Listening...", False)
+    if status.current_state in {
         RuntimeState.WAKE_DETECTED,
         RuntimeState.LISTENING,
         RuntimeState.TRANSCRIBING,
@@ -960,7 +974,9 @@ def _resolve_click_to_talk_action(
     return ("Click to talk", True)
 
 
-def _resolve_mic_state(state: RuntimeState) -> str:
+def _resolve_mic_state(state: RuntimeState, *, click_to_talk_active: bool = False) -> str:
+    if click_to_talk_active:
+        return "listening"
     if state == RuntimeState.WAKE_DETECTED:
         return "wake_detected"
     if state in {RuntimeState.LISTENING, RuntimeState.TRANSCRIBING}:
