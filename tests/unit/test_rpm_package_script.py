@@ -118,7 +118,9 @@ def test_rpm_package_script_can_render_spec_without_building(tmp_path: Path) -> 
     assert "AutoReqProv:    no" in spec_text
     assert "install -Dpm0755 packaged-assets/bin/operance %{buildroot}/opt/operance/bin/operance" in spec_text
     assert "install -Dpm0644 packaged-assets/icons/hicolor/scalable/apps/operance.svg %{buildroot}%{_datadir}/icons/hicolor/scalable/apps/operance.svg" in spec_text
+    files_section = spec_text.split("%files", maxsplit=1)[1]
     assert "/etc/operance/voice-loop.args.example" in spec_text
+    assert "%{_datadir}/icons/hicolor/scalable/apps/operance.svg" in files_section
     assert "cp -a packaged-assets/lib/operance/site-packages/. %{buildroot}%{_prefix}/lib/operance/site-packages/" in spec_text
     assert "%{_prefix}/lib/operance/voice-loop-launcher" in spec_text
     assert "/opt/operance/bin/operance" in spec_text
