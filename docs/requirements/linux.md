@@ -387,7 +387,7 @@ operance --print-config
 python3 scripts/check_installed_mvp_runtime.py --command operance --check-tray-service
 ```
 
-`operance --print-config` should report `"developer_mode": false`. The installed MVP runtime check now fails if the packaged command is still in developer-mode simulation. With `--check-tray-service`, it also fails when `operance-tray.service` is shadowed by a stale source-checkout user unit instead of using the installed package command. `preset: disabled` in `systemctl --user status` is normal Fedora preset metadata; verify `Loaded`, `Active`, and the `ExecStart` path instead.
+`operance --print-config` should report `"developer_mode": false`. The installed MVP runtime check now fails if the packaged command is still in developer-mode simulation. With `--check-tray-service`, it also fails when `operance-tray.service` is shadowed by a stale repo-local user unit instead of using the installed package command. `preset: disabled` in `systemctl --user status` is normal Fedora preset metadata; verify `Loaded`, `Active`, and the `ExecStart` path instead.
 
 Install a built native package artifact through the matching distro package manager:
 

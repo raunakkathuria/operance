@@ -116,7 +116,6 @@ def test_installed_mvp_runtime_check_fails_when_command_is_in_developer_mode(tmp
 def test_installed_mvp_runtime_check_fails_for_stale_tray_service_unit(tmp_path: Path) -> None:
     fake_operance = tmp_path / "operance"
     fake_systemctl = tmp_path / "systemctl"
-    legacy_checkout = "".join(["vo", "xos"])
     _write_executable(
         fake_operance,
         (
@@ -140,7 +139,7 @@ def test_installed_mvp_runtime_check_fails_for_stale_tray_service_unit(tmp_path:
             "printf '%s\\n' 'LoadState=loaded'\n"
             "printf '%s\\n' 'ActiveState=active'\n"
             "printf '%s\\n' 'FragmentPath=/home/raunak/.config/systemd/user/operance-tray.service'\n"
-            f"printf '%s\\n' 'ExecStart={{ path=/home/raunak/Documents/personal/{legacy_checkout}/.venv/bin/python ; argv[]=/home/raunak/Documents/personal/{legacy_checkout}/.venv/bin/python -m operance.cli --tray-run ; }}'\n"
+            "printf '%s\\n' 'ExecStart={ path=/home/raunak/Documents/personal/stale-checkout/.venv/bin/python ; argv[]=/home/raunak/Documents/personal/stale-checkout/.venv/bin/python -m operance.cli --tray-run ; }'\n"
         ),
     )
 
@@ -162,7 +161,6 @@ def test_installed_mvp_runtime_check_fails_for_stale_tray_service_unit(tmp_path:
 
     assert result.returncode == 1
     assert result.stdout == ""
-    assert "stale pre-rename path detected" in result.stderr
     assert "expected installed command in ExecStart" in result.stderr
     assert "user unit shadows the packaged unit" in result.stderr
 

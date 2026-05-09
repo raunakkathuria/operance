@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Added an optional installed-tray service check to `scripts/check_installed_mvp_runtime.py`, so package smoke can catch stale repo-local user units that still point at an old checkout path.
+- Added an optional installed-tray service check to `scripts/check_installed_mvp_runtime.py`, so package smoke can catch stale repo-local user units that shadow the packaged service.
 - Added live app-launch verification on Linux so app launch commands no longer report success unless the expected process becomes observable after the native launcher returns.
 - Added explicit simulated-mode labeling to tray snapshots and click-to-talk result notifications, making source-checkout developer mode visibly different from installed live mode.
 - Added an immediate tray notification when click-to-talk starts, so users get explicit feedback that Operance is listening for a command.

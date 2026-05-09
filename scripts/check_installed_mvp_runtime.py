@@ -9,7 +9,6 @@ from typing import Any
 
 
 DEFAULT_REQUIRED_CHECKS = ("tray_ui_available", "stt_backend_available")
-LEGACY_BRAND_PATH_SEGMENT = "/" + "".join(["vo", "xos"]) + "/"
 
 
 def _parse_args() -> argparse.Namespace:
@@ -129,12 +128,6 @@ def _tray_service_failures(
     failures: list[str] = []
     fragment_path = properties.get("FragmentPath") or ""
     exec_start = properties.get("ExecStart") or ""
-    if LEGACY_BRAND_PATH_SEGMENT in fragment_path or LEGACY_BRAND_PATH_SEGMENT in exec_start:
-        failures.append(
-            "operance-tray.service: stale pre-rename path detected; "
-            f"fragment={fragment_path!r} exec_start={exec_start!r}"
-        )
-
     if expected_command not in exec_start:
         failures.append(
             "operance-tray.service: expected installed command in ExecStart; "
