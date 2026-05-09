@@ -244,6 +244,19 @@ def test_build_tray_startup_notification_skips_attention_states() -> None:
     assert build_startup_notification(snapshot) is None
 
 
+def test_build_click_to_talk_started_notification() -> None:
+    from operance.ui.tray import build_click_to_talk_started_notification
+
+    notification = build_click_to_talk_started_notification()
+
+    assert notification.to_dict() == {
+        "event_id": "click_to_talk:started",
+        "level": "info",
+        "message": "Speak a command now. Operance will stop listening automatically.",
+        "title": "Listening",
+    }
+
+
 def test_acquire_tray_instance_lock_rejects_duplicate_process(tmp_path: Path) -> None:
     from operance.ui.tray import _acquire_tray_instance_lock, _release_tray_instance_lock
 

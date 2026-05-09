@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added an immediate tray notification when click-to-talk starts, so users get explicit feedback that Operance is listening for a command.
 - Tightened click-to-talk tray state projection so the tray switches to the listening state immediately when capture starts, even before the daemon emits the first wake/listening runtime state.
 - Added the Operance brand icon asset and wired it into the PySide6 tray, packaged desktop entry, and Debian/RPM package staging paths, with stock Qt icon fallback when the branded icon is unavailable.
 - Updated the README and release handoff docs to reflect the verified packaged alpha path: Fedora RPM `mvp` runtime, live adapters by default, installed MVP runtime check enforcement, and the remaining human tray plus microphone smoke requirement.

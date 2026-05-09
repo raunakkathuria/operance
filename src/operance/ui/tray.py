@@ -417,6 +417,15 @@ def build_startup_notification(snapshot: TraySnapshot) -> TrayNotification | Non
     )
 
 
+def build_click_to_talk_started_notification() -> TrayNotification:
+    return TrayNotification(
+        level="info",
+        title="Listening",
+        message="Speak a command now. Operance will stop listening automatically.",
+        event_id="click_to_talk:started",
+    )
+
+
 def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     QApplication, QAction, QIcon, QMenu, QMessageBox, QStyle, QSystemTrayIcon, QTimer = _load_pyside6_api()
 
@@ -582,6 +591,12 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
         click_to_talk_action.setText("Listening...")
         Thread(target=click_to_talk_worker, daemon=True).start()
         refresh()
+        notification = build_click_to_talk_started_notification()
+        tray.showMessage(
+            notification.title,
+            notification.message,
+            _resolve_notification_icon(QSystemTrayIcon, notification.level),
+        )
 
     def show_supported_commands() -> None:
         try:
