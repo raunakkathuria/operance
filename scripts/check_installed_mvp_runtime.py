@@ -49,6 +49,27 @@ def _doctor_payload(command: str) -> dict[str, Any]:
     raise SystemExit("could not find a doctor JSON payload in command output")
 
 
+def _config_payload(command: str) -> dict[str, Any]:
+    completed = subprocess.run(
+        [command, "--print-config"],
+        capture_output=True,
+        check=False,
+        text=True,
+    )
+    if completed.returncode != 0:
+        raise SystemExit(
+            completed.stderr.strip() or completed.stdout.strip() or "operance --print-config failed"
+        )
+
+    try:
+        payload = json.loads(completed.stdout)
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"could not parse config JSON payload: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise SystemExit("config payload is not a JSON object")
+    return payload
+
+
 def _checks_by_name(payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
     checks: dict[str, dict[str, Any]] = {}
     for item in payload.get("checks", []):
@@ -61,6 +82,7 @@ def main() -> int:
     args = _parse_args()
     required_checks = tuple(args.required_checks or DEFAULT_REQUIRED_CHECKS)
     checks = _checks_by_name(_doctor_payload(args.command))
+    config = _config_payload(args.command)
     failures: list[str] = []
 
     for check_name in required_checks:
@@ -70,6 +92,11 @@ def main() -> int:
             continue
         if check.get("status") != "ok":
             failures.append(f"{check_name}: status={check.get('status')} detail={check.get('detail')}")
+
+    runtime = config.get("runtime")
+    developer_mode = runtime.get("developer_mode") if isinstance(runtime, dict) else None
+    if developer_mode is not False:
+        failures.append(f"runtime.developer_mode: expected false, got {developer_mode!r}")
 
     if failures:
         print("installed MVP runtime check failed:", file=sys.stderr)

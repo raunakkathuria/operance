@@ -19,6 +19,10 @@ def test_installed_mvp_runtime_check_passes_when_required_doctor_checks_are_ok(t
         (
             "#!/usr/bin/env bash\n"
             "set -euo pipefail\n"
+            "if [[ \"$1\" == \"--print-config\" ]]; then\n"
+            "  printf '%s\\n' '{\"runtime\":{\"developer_mode\":false}}'\n"
+            "  exit 0\n"
+            "fi\n"
             "printf '%s\\n' '{\"checks\":["
             "{\"name\":\"tray_ui_available\",\"status\":\"ok\",\"detail\":\"PySide6\"},"
             "{\"name\":\"stt_backend_available\",\"status\":\"ok\",\"detail\":\"moonshine_voice\"}"
@@ -45,6 +49,10 @@ def test_installed_mvp_runtime_check_fails_when_required_backend_is_missing(tmp_
         (
             "#!/usr/bin/env bash\n"
             "set -euo pipefail\n"
+            "if [[ \"$1\" == \"--print-config\" ]]; then\n"
+            "  printf '%s\\n' '{\"runtime\":{\"developer_mode\":false}}'\n"
+            "  exit 0\n"
+            "fi\n"
             "printf '%s\\n' '{\"checks\":["
             "{\"name\":\"tray_ui_available\",\"status\":\"ok\",\"detail\":\"PySide6\"},"
             "{\"name\":\"stt_backend_available\",\"status\":\"warn\",\"detail\":\"moonshine-voice not installed\"}"
@@ -65,4 +73,38 @@ def test_installed_mvp_runtime_check_fails_when_required_backend_is_missing(tmp_
     assert result.stderr == (
         "installed MVP runtime check failed:\n"
         "- stt_backend_available: status=warn detail=moonshine-voice not installed\n"
+    )
+
+
+def test_installed_mvp_runtime_check_fails_when_command_is_in_developer_mode(tmp_path: Path) -> None:
+    fake_operance = tmp_path / "operance"
+    _write_executable(
+        fake_operance,
+        (
+            "#!/usr/bin/env bash\n"
+            "set -euo pipefail\n"
+            "if [[ \"$1\" == \"--print-config\" ]]; then\n"
+            "  printf '%s\\n' '{\"runtime\":{\"developer_mode\":true}}'\n"
+            "  exit 0\n"
+            "fi\n"
+            "printf '%s\\n' '{\"checks\":["
+            "{\"name\":\"tray_ui_available\",\"status\":\"ok\",\"detail\":\"PySide6\"},"
+            "{\"name\":\"stt_backend_available\",\"status\":\"ok\",\"detail\":\"moonshine_voice\"}"
+            "]}'\n"
+        ),
+    )
+
+    result = subprocess.run(
+        ["python3", str(SCRIPT_PATH), "--command", str(fake_operance)],
+        capture_output=True,
+        check=False,
+        cwd=REPO_ROOT,
+        text=True,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr == (
+        "installed MVP runtime check failed:\n"
+        "- runtime.developer_mode: expected false, got True\n"
     )

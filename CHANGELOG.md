@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Changed the packaged `operance` entrypoint to default to live execution (`OPERANCE_DEVELOPER_MODE=0`) instead of source-checkout developer simulation, and expanded the installed MVP runtime check so packaged alpha validation fails if the command can still return simulated action success.
 - Added `--replace-existing` to `scripts/install_package_artifact.sh` and wired the installed Fedora RPM smoke path to use it, so rebuilding the same RPM version removes the installed package before installing the new artifact instead of letting `dnf install` report "already installed" while leaving older packaged dependencies in place.
 - Disabled RPM automatic dependency/provides scanning for the alpha noarch package, preventing vendored Python wheel binaries from generating host package requirements for private bundled libraries such as Qt, ONNX Runtime, TIFF, and Fortran runtime `.so` files.
 - Promoted the Fedora release and alpha gates to the `mvp` RPM bundle profile by default and added `scripts/check_installed_mvp_runtime.py`, so installed-package smoke now verifies that the packaged command exposes the tray UI and STT backends required for the tray plus click-to-talk alpha path.
