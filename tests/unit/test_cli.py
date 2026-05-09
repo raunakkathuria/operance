@@ -2588,6 +2588,7 @@ def test_cli_click_to_talk_prints_daemon_results(monkeypatch, capsys) -> None:
         }
     ]
     assert payload["response"] == {
+        "simulated": True,
         "status": "success",
         "text": "Launched firefox",
     }

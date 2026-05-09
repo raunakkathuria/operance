@@ -86,6 +86,7 @@ class TraySnapshot:
     tray_state: str
     mic_state: str
     state_label: str
+    developer_mode: bool
     click_to_talk_label: str
     voice_loop_status: str | None
     voice_loop_state: str | None
@@ -115,6 +116,7 @@ class TraySnapshot:
             "tray_state": self.tray_state,
             "mic_state": self.mic_state,
             "state_label": self.state_label,
+            "developer_mode": self.developer_mode,
             "click_to_talk_label": self.click_to_talk_label,
             "voice_loop_status": self.voice_loop_status,
             "voice_loop_state": self.voice_loop_state,
@@ -173,6 +175,7 @@ class TrayController:
             self.daemon.status_snapshot(),
             voice_loop_status=voice_loop_status,
             click_to_talk_active=self.click_to_talk_active(),
+            developer_mode=self.daemon.config.runtime.developer_mode,
             fallback_last_transcript=self._last_click_to_talk_transcript,
             fallback_last_response=self._last_click_to_talk_response,
             last_click_to_talk_result=self._last_click_to_talk_result,
@@ -295,6 +298,7 @@ def build_tray_snapshot(
     *,
     voice_loop_status: VoiceLoopRuntimeStatusSnapshot | None = None,
     click_to_talk_active: bool = False,
+    developer_mode: bool = False,
     fallback_last_transcript: str | None = None,
     fallback_last_response: str | None = None,
     last_click_to_talk_result: dict[str, object] | None = None,
@@ -335,7 +339,10 @@ def build_tray_snapshot(
         last_command_preview=last_command_preview,
         voice_loop_status=voice_loop_status,
     )
-    tooltip_parts = [f"Operance: {state_label}"]
+    display_state_label = f"{state_label} (simulated)" if developer_mode else state_label
+    tooltip_parts = [f"Operance: {display_state_label}"]
+    if developer_mode:
+        tooltip_parts.append("Developer mode uses simulated adapters")
     if usage_hint:
         tooltip_parts.append(usage_hint)
     elif voice_loop_activity:
@@ -353,7 +360,8 @@ def build_tray_snapshot(
         current_state=status.current_state.value,
         tray_state=tray_state,
         mic_state=mic_state,
-        state_label=state_label,
+        state_label=display_state_label,
+        developer_mode=developer_mode,
         click_to_talk_label=click_to_talk_label,
         voice_loop_status=None if voice_loop_status is None else voice_loop_status.status,
         voice_loop_state=None if voice_loop_status is None else voice_loop_status.loop_state,
@@ -843,6 +851,9 @@ def _build_click_to_talk_interaction_report(
     if isinstance(result_status, str) and result_status:
         details.append(f"Result: {result_status}")
 
+    if response.get("simulated") is True:
+        details.append("Mode: simulated")
+
     processed_frames = result.get("processed_frames")
     if isinstance(processed_frames, int) and processed_frames >= 0:
         details.append(f"Processed frames: {processed_frames}")
@@ -1122,9 +1133,12 @@ def _format_click_to_talk_notification_message(report: TrayInteractionReport) ->
         return report.summary
 
     heard_text = heard_line.removeprefix("Heard: ").strip()
+    summary = report.summary
+    if "Mode: simulated" in report.details:
+        summary = f"Simulated: {summary}"
     if not heard_text or heard_text == report.summary:
-        return report.summary
-    return f"{heard_line}\n{report.summary}"
+        return summary
+    return f"{heard_line}\n{summary}"
 
 
 def _should_start_click_to_talk_from_activation(reason: object, qsystemtrayicon: Any) -> bool:

@@ -104,6 +104,20 @@ def test_build_tray_snapshot_reports_idle_state() -> None:
     assert payload["tooltip"] == "Operance: Idle | Left-click to talk"
 
 
+def test_build_tray_snapshot_marks_developer_mode_as_simulated() -> None:
+    from operance.ui import build_tray_snapshot
+
+    snapshot = build_tray_snapshot(_status_snapshot(), developer_mode=True)
+
+    payload = snapshot.to_dict()
+
+    assert payload["developer_mode"] is True
+    assert payload["state_label"] == "Idle (simulated)"
+    assert payload["tooltip"] == (
+        "Operance: Idle (simulated) | Developer mode uses simulated adapters | Left-click to talk"
+    )
+
+
 def test_build_tray_snapshot_reports_pending_confirmation() -> None:
     from operance.ui import build_tray_snapshot
 
@@ -933,6 +947,7 @@ def test_tray_controller_can_run_click_to_talk_command(tmp_path: Path) -> None:
     snapshot = controller.snapshot()
 
     assert result["response"] == {
+        "simulated": True,
         "status": "success",
         "text": "Launched firefox",
     }
@@ -943,6 +958,7 @@ def test_tray_controller_can_run_click_to_talk_command(tmp_path: Path) -> None:
         "details": [
             "Heard: open firefox",
             "Result: success",
+            "Mode: simulated",
             "Processed frames: 2",
             "Stopped: final_transcript",
             "Final state: IDLE",
@@ -991,6 +1007,7 @@ def test_tray_controller_surfaces_no_transcript_click_to_talk_attempt(tmp_path: 
     snapshot = controller.snapshot()
 
     assert result["response"] == {
+        "simulated": True,
         "status": "no_transcript",
         "text": "I did not catch a command.",
     }
@@ -1000,6 +1017,7 @@ def test_tray_controller_surfaces_no_transcript_click_to_talk_attempt(tmp_path: 
         "details": [
             "Heard: No final transcript",
             "Result: no_transcript",
+            "Mode: simulated",
             "Processed frames: 2",
             "Stopped: frame_limit",
             "Final state: IDLE",
@@ -1007,7 +1025,10 @@ def test_tray_controller_surfaces_no_transcript_click_to_talk_attempt(tmp_path: 
         "summary": "I did not catch a command.",
         "title": "Last click-to-talk interaction",
     }
-    assert snapshot.tooltip == "Operance: Idle | I did not catch a command."
+    assert snapshot.tooltip == (
+        "Operance: Idle (simulated) | Developer mode uses simulated adapters | "
+        "I did not catch a command."
+    )
 
 
 def test_tray_controller_surfaces_click_to_talk_backend_error(tmp_path: Path) -> None:
@@ -1039,7 +1060,10 @@ def test_tray_controller_surfaces_click_to_talk_backend_error(tmp_path: Path) ->
         "summary": "moonshine-voice is not installed",
         "title": "Last click-to-talk error",
     }
-    assert snapshot.tooltip == "Operance: Idle | moonshine-voice is not installed"
+    assert snapshot.tooltip == (
+        "Operance: Idle (simulated) | Developer mode uses simulated adapters | "
+        "moonshine-voice is not installed"
+    )
 
 
 def test_tray_controller_surfaces_non_value_click_to_talk_backend_error(tmp_path: Path) -> None:
@@ -1072,4 +1096,7 @@ def test_tray_controller_surfaces_non_value_click_to_talk_backend_error(tmp_path
         "summary": "audio capture backend failed",
         "title": "Last click-to-talk error",
     }
-    assert snapshot.tooltip == "Operance: Idle | audio capture backend failed"
+    assert snapshot.tooltip == (
+        "Operance: Idle (simulated) | Developer mode uses simulated adapters | "
+        "audio capture backend failed"
+    )

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added live app-launch verification on Linux so app launch commands no longer report success unless the expected process becomes observable after the native launcher returns.
+- Added explicit simulated-mode labeling to tray snapshots and click-to-talk result notifications, making source-checkout developer mode visibly different from installed live mode.
 - Added an immediate tray notification when click-to-talk starts, so users get explicit feedback that Operance is listening for a command.
 - Tightened click-to-talk tray state projection so the tray switches to the listening state immediately when capture starts, even before the daemon emits the first wake/listening runtime state.
 - Added the Operance brand icon asset and wired it into the PySide6 tray, packaged desktop entry, and Debian/RPM package staging paths, with stock Qt icon fallback when the branded icon is unavailable.

@@ -284,6 +284,7 @@ def test_manual_voice_session_runs_final_transcript_against_existing_daemon(tmp_
         }
     ]
     assert result["response"] == {
+        "simulated": True,
         "status": "success",
         "text": "Launched firefox",
     }
@@ -338,6 +339,7 @@ def test_manual_voice_session_can_confirm_pending_command_without_wake(tmp_path:
     )
 
     assert result["response"] == {
+        "simulated": True,
         "status": "success",
         "text": "Closed window Firefox",
     }
@@ -382,6 +384,7 @@ def test_manual_voice_session_returns_no_transcript_and_restores_idle(tmp_path: 
     )
 
     assert result["response"] == {
+        "simulated": True,
         "status": "no_transcript",
         "text": "I did not catch a command.",
     }

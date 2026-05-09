@@ -11,6 +11,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import time
 from typing import Callable
 from uuid import uuid4
 
@@ -23,6 +24,9 @@ RunCommand = Callable[[list[str]], subprocess.CompletedProcess[str]]
 SpawnCommand = Callable[[list[str]], None]
 ResolveExecutable = Callable[[str], str | None]
 GDBUS_TIMEOUT_SECONDS = "3"
+APP_LAUNCH_VERIFICATION_TIMEOUT_SECONDS = 5.0
+APP_LAUNCH_VERIFICATION_INTERVAL_SECONDS = 0.25
+APP_LAUNCH_VERIFICATION_SETTLE_SECONDS = 2.0
 _WTYPE_ARGS_BY_SUPPORTED_KEY = {
     "backspace": ["-k", "BackSpace"],
     "enter": ["-k", "Return"],
@@ -92,6 +96,22 @@ def _require_text_input_success(result: subprocess.CompletedProcess[str]) -> sub
 
 def _strip_desktop_suffix(app: str) -> str:
     return app[:-8] if app.endswith(".desktop") else app
+
+
+def _process_name_candidates_for_launch(app: str, command: list[str]) -> list[str]:
+    candidates: list[str] = []
+    launcher_names = {"gtk-launch", "xdg-open"}
+    for raw_candidate in (
+        Path(command[0]).name if command else "",
+        _strip_desktop_suffix(app),
+        _strip_desktop_suffix(app).split(".")[-1],
+    ):
+        candidate = raw_candidate.strip()
+        if not candidate or "/" in candidate or candidate in launcher_names:
+            continue
+        if candidate not in candidates:
+            candidates.append(candidate)
+    return candidates
 
 
 @dataclass(slots=True)
@@ -186,8 +206,12 @@ class LinuxAppsAdapter:
         command, command_label = self._resolve_launch_command(app)
         if command_label == "spawn":
             self.spawn_command(command)
+            if not is_url_like_target(app):
+                self._require_launched_app_observable(app, command)
             return
         _require_success(self.run_command(command), command_label=command_label)
+        if not is_url_like_target(app):
+            self._require_launched_app_observable(app, command)
 
     def _resolve_launch_command(self, app: str) -> tuple[list[str], str]:
         resolved = self.resolve_executable(app)
@@ -214,6 +238,35 @@ class LinuxAppsAdapter:
             return [xdg_open, normalize_launch_target(app)], "xdg-open"
 
         raise ValueError(f"unable to resolve application launcher for {app}")
+
+    def _require_launched_app_observable(self, app: str, command: list[str]) -> None:
+        pgrep = self.resolve_executable("pgrep")
+        if pgrep is None:
+            return
+
+        candidates = _process_name_candidates_for_launch(app, command)
+        if not candidates:
+            return
+
+        started_at = time.monotonic()
+        deadline = started_at + APP_LAUNCH_VERIFICATION_TIMEOUT_SECONDS
+        settle_deadline = started_at + APP_LAUNCH_VERIFICATION_SETTLE_SECONDS
+        if APP_LAUNCH_VERIFICATION_SETTLE_SECONDS > 0:
+            time.sleep(APP_LAUNCH_VERIFICATION_SETTLE_SECONDS)
+        while True:
+            for candidate in candidates:
+                result = self.run_command([pgrep, "-x", candidate])
+                if result.returncode == 0 and time.monotonic() >= settle_deadline:
+                    return
+            if time.monotonic() >= deadline:
+                break
+            time.sleep(APP_LAUNCH_VERIFICATION_INTERVAL_SECONDS)
+
+        candidate_text = ", ".join(candidates)
+        raise ValueError(
+            f"launch command completed but no matching process appeared for {app} "
+            f"(checked: {candidate_text})"
+        )
 
     def _query_active_window_info(self) -> dict[str, str] | None:
         result = _require_success(

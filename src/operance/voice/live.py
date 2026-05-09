@@ -107,6 +107,7 @@ def run_manual_voice_session(
         if response is None:
             daemon.cancel_manual_listening(source="click_to_talk")
             response = {
+                "simulated": daemon.config.runtime.developer_mode,
                 "status": "no_transcript",
                 "text": "I did not catch a command.",
             }
@@ -381,6 +382,7 @@ def _complete_voice_response_cycle(daemon: OperanceDaemon) -> None:
 
 def _manual_response_payload(daemon: OperanceDaemon) -> dict[str, object]:
     return {
+        "simulated": daemon.config.runtime.developer_mode,
         "status": daemon.last_command_status,
         "text": daemon.last_response,
     }
