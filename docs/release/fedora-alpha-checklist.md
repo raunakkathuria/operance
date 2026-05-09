@@ -28,17 +28,19 @@ The current repo can now prove:
 
 - the source checkout passes the full test suite
 - the repo-local beta smoke path works
-- the native package scaffolds build a runnable base `operance` CLI wrapper
+- the Fedora `mvp` RPM scaffolds build a runnable `operance` CLI wrapper
+- the Fedora `mvp` RPM vendors the tray UI and STT Python runtime needed for
+  click-to-talk
 - the RPM handoff path can be exercised through one Fedora release-smoke script
-- installed package smoke can verify the packaged desktop entry, user units, and
-  base CLI diagnostics
+- installed package smoke can verify the packaged desktop entry, user units,
+  live-adapter defaults, MVP runtime dependencies, and base CLI diagnostics
 
 The current repo does **not** yet prove a fully bundled end-user desktop build.
 
 Known remaining gaps before a broader public launch:
 
-- the native package path does not yet bundle optional UI or voice Python
-  backends such as PySide6, Moonshine, openWakeWord, or Kokoro
+- the native package path does not yet bundle every optional voice backend,
+  wake-word model, or TTS model asset
 - the safest default product path remains tray plus click-to-talk from a
   prepared developer machine, not a zero-setup consumer installer
 - wake word remains secondary to click-to-talk for launch reliability
