@@ -51,10 +51,33 @@ def test_installed_beta_smoke_script_can_require_mvp_runtime_in_dry_run() -> Non
         "+ test -f /usr/lib/systemd/user/operance-voice-loop.service",
         "+ operance --version",
         "+ operance --doctor",
-        "+ python3 scripts/check_installed_mvp_runtime.py --command operance",
+        "+ python3 scripts/check_installed_mvp_runtime.py --command operance --check-tray-service",
         "+ operance --supported-commands --supported-commands-available-only",
         "+ operance --support-bundle",
     ]
+    assert result.stderr == ""
+
+
+def test_installed_beta_smoke_script_can_reset_user_services_before_package_install(
+    tmp_path: Path,
+) -> None:
+    package_path = tmp_path / "operance-9.9.9-1.noarch.rpm"
+    package_path.write_text("rpm", encoding="utf-8")
+
+    result = _run_installed_beta_smoke_script(
+        "--package",
+        str(package_path),
+        "--installer",
+        "dnf",
+        "--reset-user-services",
+        "--no-sudo",
+        "--dry-run",
+    )
+
+    assert result.stdout.splitlines()[0] == (
+        f"+ ./scripts/install_package_artifact.sh --package {package_path} "
+        "--installer dnf --replace-existing --reset-user-services --no-sudo"
+    )
     assert result.stderr == ""
 
 

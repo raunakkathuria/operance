@@ -389,21 +389,27 @@ Install a built native package artifact:
 ./scripts/install_package_artifact.sh --package dist/package-artifacts/deb/operance_0.1.0_all.deb --installer apt --dry-run
 ./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --dry-run
 ./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --replace-existing --dry-run
+./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --replace-existing --reset-user-services --dry-run
 ```
 
 Use `--replace-existing` when testing a rebuilt Fedora RPM with the same package version. The helper removes the installed package when present and then installs the provided artifact, otherwise it keeps the normal first-install path.
+Use `--reset-user-services` when switching from a source-checkout tray service to the packaged tray service. It stops, disables, and removes only user-scoped Operance systemd units before installing, so stale `~/.config/systemd/user` units cannot shadow the packaged units.
 
 Smoke-test an installed native package, optionally installing the artifact first:
 
 ```bash
 ./scripts/run_installed_beta_smoke.sh --dry-run
 ./scripts/run_installed_beta_smoke.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --require-mvp-runtime --dry-run
+./scripts/run_installed_beta_smoke.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --require-mvp-runtime --reset-user-services --dry-run
 ```
+
+When `--require-mvp-runtime` is enabled, the installed smoke also checks that the active tray service is not shadowed by a stale source-checkout user unit.
 
 Run the full Fedora-first release gate from a checkout:
 
 ```bash
 ./scripts/run_fedora_release_smoke.sh --dry-run
+./scripts/run_fedora_release_smoke.sh --reset-user-services --dry-run
 ./scripts/run_fedora_release_smoke.sh --support-bundle-out /tmp/operance-release-support.tar.gz --dry-run
 ```
 
@@ -516,7 +522,7 @@ operance --print-config
 python3 scripts/check_installed_mvp_runtime.py --command operance --check-tray-service
 ```
 
-`operance --print-config` should report `"developer_mode": false`; the installed MVP runtime check fails if the packaged command is still in developer-mode simulation. With `--check-tray-service`, it also fails when an active `operance-tray.service` is shadowed by a stale repo-local user unit. In `systemctl --user status`, `preset: disabled` is normal on Fedora; `Loaded`, `Active`, and the `ExecStart` command path are the parts to verify.
+`operance --print-config` should report `"developer_mode": false`; the installed MVP runtime check fails if the packaged command is still in developer-mode simulation. With `--check-tray-service`, it also fails when an active `operance-tray.service` is shadowed by a stale repo-local user unit. If that happens, reinstall with `./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --replace-existing --reset-user-services`. In `systemctl --user status`, `preset: disabled` is normal on Fedora; `Loaded`, `Active`, and the `ExecStart` command path are the parts to verify.
 
 Run the built-in deterministic corpus and print a summary:
 

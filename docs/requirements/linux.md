@@ -395,21 +395,27 @@ Install a built native package artifact through the matching distro package mana
 ./scripts/install_package_artifact.sh --package dist/package-artifacts/deb/operance_0.1.0_all.deb --installer apt --dry-run
 ./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --dry-run
 ./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --replace-existing --dry-run
+./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --replace-existing --reset-user-services --dry-run
 ```
 
 Use `--replace-existing` when installing a rebuilt local Fedora RPM that has the same package version as the already installed package. The helper detects whether the RPM package name is installed, removes it when present, and then installs the provided artifact, which prevents `dnf install` from silently leaving an older same-version payload in place.
+Use `--reset-user-services` when moving from source-checkout services to the packaged runtime. It stops, disables, and removes only user-scoped Operance systemd units under the current user's systemd config before install, then reloads the user manager so packaged units can be selected.
 
 Run the installed-package beta smoke when you want one install-to-run proof for a native artifact:
 
 ```bash
 ./scripts/run_installed_beta_smoke.sh --dry-run
 ./scripts/run_installed_beta_smoke.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --require-mvp-runtime --dry-run
+./scripts/run_installed_beta_smoke.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --require-mvp-runtime --reset-user-services --dry-run
 ```
+
+When `--require-mvp-runtime` is enabled, this smoke also forwards `--check-tray-service` to `scripts/check_installed_mvp_runtime.py`, so stale source-checkout tray units fail the package smoke instead of silently shadowing the installed runtime.
 
 Run the Fedora-first release gate when you want one source-checkout command that builds the RPM artifact and then smokes the installed package:
 
 ```bash
 ./scripts/run_fedora_release_smoke.sh --dry-run
+./scripts/run_fedora_release_smoke.sh --reset-user-services --dry-run
 ./scripts/run_fedora_release_smoke.sh --support-bundle-out /tmp/operance-release-support.tar.gz --dry-run
 ```
 

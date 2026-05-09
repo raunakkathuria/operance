@@ -6,6 +6,7 @@ installer=""
 use_sudo=1
 dry_run=0
 replace_existing=0
+reset_user_services=0
 
 usage() {
     cat <<'EOF'
@@ -17,6 +18,9 @@ Options:
   --package PATH      Built package artifact path (.deb or .rpm).
   --installer NAME    Package installer to use. Supported: apt, dnf.
   --replace-existing  Remove an already installed package before installing this artifact.
+  --reset-user-services
+                      Stop, disable, and remove user-scoped Operance systemd units
+                      before install so packaged units are not shadowed.
   --no-sudo           Run the installer directly instead of prefixing it with sudo.
   --dry-run           Print the install command without executing it.
   -h, --help          Show this help text.
@@ -36,6 +40,42 @@ run_step() {
     if [[ "${dry_run}" -eq 0 ]]; then
         "$@"
     fi
+}
+
+run_optional_step() {
+    local display="$1"
+    shift
+
+    echo "+ ${display}"
+    if [[ "${dry_run}" -eq 0 ]]; then
+        "$@" || true
+    fi
+}
+
+user_systemd_dir() {
+    if [[ -n "${XDG_CONFIG_HOME:-}" ]]; then
+        printf '%s\n' "${XDG_CONFIG_HOME}/systemd/user"
+        return
+    fi
+    if [[ -z "${HOME:-}" ]]; then
+        fail "HOME is required when XDG_CONFIG_HOME is not set"
+    fi
+    printf '%s\n' "${HOME}/.config/systemd/user"
+}
+
+reset_operance_user_services() {
+    if [[ "${dry_run}" -eq 0 ]] && ! command -v systemctl >/dev/null 2>&1; then
+        fail "systemctl not found on PATH: systemctl"
+    fi
+
+    local unit_dir
+    unit_dir="$(user_systemd_dir)"
+    local unit
+    for unit in operance-tray.service operance-voice-loop.service; do
+        run_optional_step "systemctl --user disable --now ${unit}" systemctl --user disable --now "${unit}"
+        run_step "rm -f ${unit_dir}/${unit}" rm -f "${unit_dir}/${unit}"
+    done
+    run_optional_step "systemctl --user daemon-reload" systemctl --user daemon-reload
 }
 
 while [[ $# -gt 0 ]]; do
@@ -59,6 +99,9 @@ while [[ $# -gt 0 ]]; do
             ;;
         --replace-existing)
             replace_existing=1
+            ;;
+        --reset-user-services)
+            reset_user_services=1
             ;;
         --dry-run)
             dry_run=1
@@ -117,6 +160,10 @@ esac
 
 if [[ "${dry_run}" -eq 0 ]] && ! command -v "${installer}" >/dev/null 2>&1; then
     fail "installer not found on PATH: ${installer}"
+fi
+
+if [[ "${reset_user_services}" -eq 1 ]]; then
+    reset_operance_user_services
 fi
 
 replace_package_name="operance"

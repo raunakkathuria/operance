@@ -16,6 +16,7 @@ uninstall_after=0
 dry_run=0
 support_bundle_out=""
 require_mvp_runtime=0
+reset_user_services=0
 
 usage() {
     cat <<'EOF'
@@ -37,6 +38,7 @@ Options:
   --dry-run                  Print the smoke commands without executing them.
   --support-bundle-out PATH  Forward an output path to the final support-bundle step.
   --require-mvp-runtime      Verify installed tray UI and STT runtime dependencies through --doctor.
+  --reset-user-services      Forward --reset-user-services to package install.
   -h, --help                 Show this help text.
 EOF
 }
@@ -140,6 +142,9 @@ while [[ $# -gt 0 ]]; do
         --require-mvp-runtime)
             require_mvp_runtime=1
             ;;
+        --reset-user-services)
+            reset_user_services=1
+            ;;
         -h|--help)
             usage
             exit 0
@@ -172,6 +177,10 @@ if [[ -n "${package_path}" ]]; then
         install_display="${install_display} --replace-existing"
         install_args+=("--replace-existing")
     fi
+    if [[ "${reset_user_services}" -eq 1 ]]; then
+        install_display="${install_display} --reset-user-services"
+        install_args+=("--reset-user-services")
+    fi
     if [[ "${use_sudo}" -eq 0 ]]; then
         install_display="${install_display} --no-sudo"
         install_args+=("--no-sudo")
@@ -187,8 +196,8 @@ run_step "${command_path} --version" "${command_path}" "--version"
 run_step "${command_path} --doctor" "${command_path}" "--doctor"
 if [[ "${require_mvp_runtime}" -eq 1 ]]; then
     run_step \
-        "python3 scripts/check_installed_mvp_runtime.py --command ${command_path}" \
-        python3 scripts/check_installed_mvp_runtime.py --command "${command_path}"
+        "python3 scripts/check_installed_mvp_runtime.py --command ${command_path} --check-tray-service" \
+        python3 scripts/check_installed_mvp_runtime.py --command "${command_path}" --check-tray-service
 fi
 run_step \
     "${command_path} --supported-commands --supported-commands-available-only" \
