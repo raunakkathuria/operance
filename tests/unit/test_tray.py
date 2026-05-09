@@ -257,6 +257,78 @@ def test_acquire_tray_instance_lock_rejects_duplicate_process(tmp_path: Path) ->
         _release_tray_instance_lock(lock_handle)
 
 
+def test_build_tray_icon_prefers_operance_theme_icon() -> None:
+    from operance.ui.tray import _build_tray_icon
+
+    class FakeIcon:
+        theme_names: list[str] = []
+
+        def __init__(self, source: str, *, null: bool = False) -> None:
+            self.source = source
+            self._null = null
+
+        def isNull(self) -> bool:
+            return self._null
+
+        @classmethod
+        def fromTheme(cls, name: str):
+            cls.theme_names.append(name)
+            return cls(f"theme:{name}")
+
+    class FakeStyle:
+        def standardIcon(self, icon: str) -> str:
+            return f"standard:{icon}"
+
+    class FakeApp:
+        def style(self) -> FakeStyle:
+            return FakeStyle()
+
+    class FakeQStyle:
+        class StandardPixmap:
+            SP_ComputerIcon = "computer"
+            SP_MessageBoxWarning = "warning"
+            SP_MessageBoxCritical = "critical"
+            SP_BrowserReload = "reload"
+
+    icon = _build_tray_icon(FakeApp(), FakeQStyle, "idle", qicon=FakeIcon)
+
+    assert icon.source == "theme:operance"
+    assert FakeIcon.theme_names == ["operance"]
+
+
+def test_build_tray_icon_falls_back_to_stock_icon_when_operance_icon_is_missing() -> None:
+    from operance.ui.tray import _build_tray_icon
+
+    class FakeIcon:
+        def __init__(self, source: str = "", *, null: bool = True) -> None:
+            self.source = source
+            self._null = null
+
+        def isNull(self) -> bool:
+            return self._null
+
+        @classmethod
+        def fromTheme(cls, name: str):
+            return cls(f"theme:{name}", null=True)
+
+    class FakeStyle:
+        def standardIcon(self, icon: str) -> str:
+            return f"standard:{icon}"
+
+    class FakeApp:
+        def style(self) -> FakeStyle:
+            return FakeStyle()
+
+    class FakeQStyle:
+        class StandardPixmap:
+            SP_ComputerIcon = "computer"
+            SP_MessageBoxWarning = "warning"
+            SP_MessageBoxCritical = "critical"
+            SP_BrowserReload = "reload"
+
+    assert _build_tray_icon(FakeApp(), FakeQStyle, "error", qicon=FakeIcon) == "standard:critical"
+
+
 def test_build_tray_snapshot_disables_click_to_talk_while_capture_is_active() -> None:
     from operance.ui import build_tray_snapshot
 

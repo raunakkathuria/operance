@@ -6,6 +6,7 @@ import fcntl
 from datetime import datetime, timezone
 from dataclasses import dataclass, field
 import json
+from pathlib import Path
 from queue import Empty, SimpleQueue
 from threading import Lock, Thread
 from typing import Any, Callable, Mapping, TextIO
@@ -411,7 +412,7 @@ def build_startup_notification(snapshot: TraySnapshot) -> TrayNotification | Non
 
 
 def run_tray_app(env: Mapping[str, str] | None = None) -> int:
-    QApplication, QAction, QMenu, QMessageBox, QStyle, QSystemTrayIcon, QTimer = _load_pyside6_api()
+    QApplication, QAction, QIcon, QMenu, QMessageBox, QStyle, QSystemTrayIcon, QTimer = _load_pyside6_api()
 
     app = QApplication.instance()
     if app is None:
@@ -505,7 +506,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
             "Undo last action" if snapshot.undo_label is None else f"Undo {snapshot.undo_label}"
         )
         tray.setToolTip(snapshot.tooltip)
-        tray.setIcon(_build_tray_icon(app, QStyle, snapshot.tray_state))
+        tray.setIcon(_build_tray_icon(app, QStyle, snapshot.tray_state, QIcon))
         notification = select_tray_notification(last_snapshot, snapshot)
         if notification is not None:
             tray.showMessage(
@@ -1130,7 +1131,18 @@ def _release_tray_instance_lock(handle: TextIO) -> None:
         handle.close()
 
 
-def _build_tray_icon(app: Any, qstyle: Any, tray_state: str):
+def _build_tray_icon(app: Any, qstyle: Any, tray_state: str, qicon: Any | None = None):
+    if qicon is not None:
+        icon = qicon.fromTheme("operance")
+        if not icon.isNull():
+            return icon
+
+        for icon_path in _operance_icon_candidates():
+            if icon_path.exists():
+                icon = qicon(str(icon_path))
+                if not icon.isNull():
+                    return icon
+
     style = app.style()
     if tray_state == "attention":
         return style.standardIcon(qstyle.StandardPixmap.SP_MessageBoxWarning)
@@ -1139,6 +1151,13 @@ def _build_tray_icon(app: Any, qstyle: Any, tray_state: str):
     if tray_state in {"busy", "listening"}:
         return style.standardIcon(qstyle.StandardPixmap.SP_BrowserReload)
     return style.standardIcon(qstyle.StandardPixmap.SP_ComputerIcon)
+
+
+def _operance_icon_candidates() -> tuple[Path, ...]:
+    return (
+        Path("/usr/share/icons/hicolor/scalable/apps/operance.svg"),
+        Path(__file__).resolve().parents[3] / "assets" / "icons" / "operance.svg",
+    )
 
 
 def _resolve_notification_icon(qsystemtrayicon: Any, level: str):
@@ -1222,12 +1241,12 @@ def _save_support_bundle_artifact(
     return output_path
 
 
-def _load_pyside6_api() -> tuple[type[Any], type[Any], type[Any], type[Any], type[Any], type[Any], type[Any]]:
+def _load_pyside6_api() -> tuple[type[Any], type[Any], type[Any], type[Any], type[Any], type[Any], type[Any], type[Any]]:
     try:
         from PySide6.QtCore import QTimer
-        from PySide6.QtGui import QAction
+        from PySide6.QtGui import QAction, QIcon
         from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QStyle, QSystemTrayIcon
     except ImportError as exc:
         raise ValueError("PySide6 is not installed") from exc
 
-    return QApplication, QAction, QMenu, QMessageBox, QStyle, QSystemTrayIcon, QTimer
+    return QApplication, QAction, QIcon, QMenu, QMessageBox, QStyle, QSystemTrayIcon, QTimer

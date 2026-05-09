@@ -32,6 +32,7 @@ def test_deb_package_script_dry_run_prints_expected_steps() -> None:
         "+ mkdir -p /tmp/operance-deb/etc/operance",
         "+ mkdir -p /tmp/operance-deb/usr/bin",
         "+ mkdir -p /tmp/operance-deb/usr/share/applications",
+        "+ mkdir -p /tmp/operance-deb/usr/share/icons/hicolor/scalable/apps",
         "+ mkdir -p /tmp/operance-deb/usr/lib/operance",
         "+ mkdir -p /tmp/operance-deb/usr/lib/operance/site-packages",
         "+ mkdir -p /tmp/operance-deb/usr/lib/systemd/user",
@@ -40,6 +41,7 @@ def test_deb_package_script_dry_run_prints_expected_steps() -> None:
         "+ cp /tmp/operance-deb/.rendered/bin/operance /tmp/operance-deb/usr/bin/operance",
         "+ cp /tmp/operance-deb/.rendered/etc/operance/voice-loop.args.example /tmp/operance-deb/etc/operance/voice-loop.args.example",
         "+ cp /tmp/operance-deb/.rendered/applications/operance.desktop /tmp/operance-deb/usr/share/applications/operance.desktop",
+        "+ cp /tmp/operance-deb/.rendered/icons/hicolor/scalable/apps/operance.svg /tmp/operance-deb/usr/share/icons/hicolor/scalable/apps/operance.svg",
         "+ cp /tmp/operance-deb/.rendered/lib/operance/pyproject.toml /tmp/operance-deb/usr/lib/operance/pyproject.toml",
         "+ cp -R /tmp/operance-deb/.rendered/lib/operance/site-packages/. /tmp/operance-deb/usr/lib/operance/site-packages",
         "+ cp /tmp/operance-deb/.rendered/lib/operance/voice-loop-launcher /tmp/operance-deb/usr/lib/operance/voice-loop-launcher",
@@ -89,6 +91,7 @@ def test_deb_package_script_can_render_stage_without_building(tmp_path: Path) ->
     voice_loop_args_example = staging_dir / "etc" / "operance" / "voice-loop.args.example"
     entrypoint_path = staging_dir / "opt" / "operance" / "bin" / "operance"
     desktop_entry = staging_dir / "usr" / "share" / "applications" / "operance.desktop"
+    packaged_icon = staging_dir / "usr" / "share" / "icons" / "hicolor" / "scalable" / "apps" / "operance.svg"
     packaged_pyproject = staging_dir / "usr" / "lib" / "operance" / "pyproject.toml"
     packaged_runtime_dir = staging_dir / "usr" / "lib" / "operance" / "site-packages" / "operance"
     voice_loop_launcher = staging_dir / "usr" / "lib" / "operance" / "voice-loop-launcher"
@@ -100,6 +103,7 @@ def test_deb_package_script_can_render_stage_without_building(tmp_path: Path) ->
     assert voice_loop_args_example.exists()
     assert entrypoint_path.exists()
     assert desktop_entry.exists()
+    assert packaged_icon.exists()
     assert packaged_pyproject.exists()
     assert packaged_runtime_dir.exists()
     assert voice_loop_launcher.exists()
@@ -121,6 +125,7 @@ def test_deb_package_script_can_render_stage_without_building(tmp_path: Path) ->
     assert 'exec "${python_bin}" -m operance.cli "$@"' in entrypoint_text
     assert "--wakeword-model" in voice_loop_args_example_text
     assert "Exec=/opt/operance/bin/operance --tray-run" in desktop_text
+    assert "Icon=operance" in desktop_text
     assert 'version = "0.1.0"' in packaged_pyproject_text
     assert '"""Operance package bootstrap."""' in packaged_runtime_init_text
     assert 'entrypoint="/opt/operance/bin/operance"' in voice_loop_launcher_text

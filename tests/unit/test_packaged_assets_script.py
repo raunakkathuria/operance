@@ -75,10 +75,12 @@ def test_packaged_assets_script_dry_run_prints_expected_steps() -> None:
         "+ mkdir -p /tmp/operance-packaged-assets/applications",
         "+ mkdir -p /tmp/operance-packaged-assets/bin",
         "+ mkdir -p /tmp/operance-packaged-assets/etc/operance",
+        "+ mkdir -p /tmp/operance-packaged-assets/icons/hicolor/scalable/apps",
         "+ mkdir -p /tmp/operance-packaged-assets/lib/operance",
         "+ mkdir -p /tmp/operance-packaged-assets/lib/operance/site-packages/operance",
         "+ mkdir -p /tmp/operance-packaged-assets/systemd",
         "+ render packaging/operance.desktop.in -> /tmp/operance-packaged-assets/applications/operance.desktop",
+        "+ cp assets/icons/operance.svg /tmp/operance-packaged-assets/icons/hicolor/scalable/apps/operance.svg",
         "+ render packaging/bin/operance-entrypoint.in -> /tmp/operance-packaged-assets/bin/operance",
         "+ render packaging/etc/voice-loop.args.example.in -> /tmp/operance-packaged-assets/etc/operance/voice-loop.args.example",
         "+ render packaging/bin/operance-voice-loop-launcher.in -> /tmp/operance-packaged-assets/lib/operance/voice-loop-launcher",
@@ -102,6 +104,7 @@ def test_packaged_assets_script_renders_desktop_entry_and_service(tmp_path: Path
 
     desktop_entry = output_dir / "applications" / "operance.desktop"
     packaged_entrypoint = output_dir / "bin" / "operance"
+    packaged_icon = output_dir / "icons" / "hicolor" / "scalable" / "apps" / "operance.svg"
     voice_loop_args_example = output_dir / "etc" / "operance" / "voice-loop.args.example"
     packaged_pyproject = output_dir / "lib" / "operance" / "pyproject.toml"
     packaged_runtime_dir = output_dir / "lib" / "operance" / "site-packages" / "operance"
@@ -113,10 +116,12 @@ def test_packaged_assets_script_renders_desktop_entry_and_service(tmp_path: Path
         f"+ mkdir -p {output_dir / 'applications'}",
         f"+ mkdir -p {output_dir / 'bin'}",
         f"+ mkdir -p {output_dir / 'etc' / 'operance'}",
+        f"+ mkdir -p {output_dir / 'icons' / 'hicolor' / 'scalable' / 'apps'}",
         f"+ mkdir -p {output_dir / 'lib' / 'operance'}",
         f"+ mkdir -p {output_dir / 'lib' / 'operance' / 'site-packages' / 'operance'}",
         f"+ mkdir -p {output_dir / 'systemd'}",
         f"+ render packaging/operance.desktop.in -> {desktop_entry}",
+        f"+ cp assets/icons/operance.svg {packaged_icon}",
         f"+ render packaging/bin/operance-entrypoint.in -> {packaged_entrypoint}",
         f"+ render packaging/etc/voice-loop.args.example.in -> {voice_loop_args_example}",
         f"+ render packaging/bin/operance-voice-loop-launcher.in -> {voice_loop_launcher}",
@@ -128,6 +133,7 @@ def test_packaged_assets_script_renders_desktop_entry_and_service(tmp_path: Path
     assert result.stderr == ""
     assert desktop_entry.exists()
     assert packaged_entrypoint.exists()
+    assert packaged_icon.exists()
     assert voice_loop_args_example.exists()
     assert packaged_pyproject.exists()
     assert packaged_runtime_dir.exists()
@@ -145,6 +151,7 @@ def test_packaged_assets_script_renders_desktop_entry_and_service(tmp_path: Path
     voice_loop_service_text = voice_loop_service_unit.read_text(encoding="utf-8")
 
     assert "Exec=/opt/operance/bin/operance --tray-run" in desktop_text
+    assert "Icon=operance" in desktop_text
     assert "Name=Operance" in desktop_text
     assert 'python_bin="/usr/bin/python3"' in packaged_entrypoint_text
     assert 'install_root="/usr/lib/operance"' in packaged_entrypoint_text
