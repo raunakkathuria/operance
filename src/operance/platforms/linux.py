@@ -1104,6 +1104,7 @@ def _build_setup_actions(
     )
     install_deb_packaging_tools_command = "./scripts/install_packaging_tools.sh --deb"
     install_rpm_packaging_tools_command = "./scripts/install_packaging_tools.sh --rpm"
+    run_beta_readiness_gate_command = "./scripts/run_beta_readiness_gate.sh"
     run_fedora_alpha_gate_command = "./scripts/run_fedora_alpha_gate.sh --reset-user-services"
     run_installed_rpm_beta_smoke_command = shlex.join(
         [
@@ -1600,6 +1601,14 @@ def _build_setup_actions(
             blocker_checks=("linux_platform", "archive_packaging_cli_available", "rpm_packaging_cli_available"),
         ),
         build_action(
+            action_id="run_beta_readiness_gate",
+            label="Run beta readiness gate",
+            command=run_beta_readiness_gate_command,
+            available=linux_ready and python_ready and virtualenv_ready,
+            recommended=run_beta_readiness_gate_command in recommended_set,
+            blocker_checks=("linux_platform", "python_3_12_plus", "virtualenv_active"),
+        ),
+        build_action(
             action_id="run_fedora_alpha_gate",
             label="Run Fedora alpha gate",
             command=run_fedora_alpha_gate_command,
@@ -2052,6 +2061,13 @@ def _build_setup_next_steps(
         insert_index = 3 if tray_run_ready else 2 if click_to_talk_ready else 0
         next_steps.insert(
             insert_index,
+            PlatformSetupNextStep(
+                label="Run beta readiness gate",
+                command="./scripts/run_beta_readiness_gate.sh",
+            ),
+        )
+        next_steps.insert(
+            insert_index + 1,
             PlatformSetupNextStep(
                 label="Run Fedora alpha gate",
                 command="./scripts/run_fedora_alpha_gate.sh --reset-user-services",

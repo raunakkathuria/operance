@@ -48,6 +48,13 @@ If the MVP path fails or you need to file a bug, collect the current issue artif
 .venv/bin/python -m operance.cli --support-bundle
 ```
 
+For beta-readiness work, use the repository gate that combines tests, branding
+guard, source-checkout smoke, and the reset-aware Fedora package gate dry-run:
+
+```bash
+./scripts/run_beta_readiness_gate.sh
+```
+
 Current assumptions for that path:
 
 - Linux
@@ -73,7 +80,7 @@ Not yet claimed:
 - wake-word-first as the default interaction model
 - a zero-setup consumer install story
 
-Use [docs/release/public-developer-alpha.md](docs/release/public-developer-alpha.md) for the current public handoff, [docs/release/fedora-alpha-checklist.md](docs/release/fedora-alpha-checklist.md) for the exact Fedora gate, [docs/release/release-plan.md](docs/release/release-plan.md) for the current release sequence, [docs/requirements/linux.md](docs/requirements/linux.md) for Linux setup, packaging, and advanced diagnostics, and [docs/release/public-repo-metadata.md](docs/release/public-repo-metadata.md) for suggested GitHub About metadata.
+Use [docs/release/public-developer-alpha.md](docs/release/public-developer-alpha.md) for the current public handoff, [docs/release/beta-readiness.md](docs/release/beta-readiness.md) for the beta stop line, [docs/release/fedora-alpha-checklist.md](docs/release/fedora-alpha-checklist.md) for the exact Fedora gate, [docs/release/release-plan.md](docs/release/release-plan.md) for the current release sequence, [docs/requirements/linux.md](docs/requirements/linux.md) for Linux setup, packaging, and advanced diagnostics, and [docs/release/public-repo-metadata.md](docs/release/public-repo-metadata.md) for suggested GitHub About metadata.
 
 ## How To Contribute
 
@@ -420,6 +427,14 @@ Run the full Fedora developer-alpha gate from a checkout:
 ./scripts/run_fedora_alpha_gate.sh --dry-run
 ./scripts/run_fedora_alpha_gate.sh --reset-user-services --dry-run
 ./scripts/run_fedora_alpha_gate.sh --support-bundle-out /tmp/operance-release-support.tar.gz --dry-run
+```
+
+Run the beta-readiness gate from a checkout:
+
+```bash
+./scripts/run_beta_readiness_gate.sh --dry-run
+./scripts/run_beta_readiness_gate.sh
+./scripts/run_beta_readiness_gate.sh --run-package-gate
 ```
 
 Remove an installed native package:

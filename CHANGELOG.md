@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added `scripts/run_beta_readiness_gate.sh`, a larger beta-oriented gate that runs tests, the old-brand guard, source-checkout beta smoke, and the reset-aware Fedora package gate dry-run by default, with `--run-package-gate` for full package validation, and surfaced it through Linux setup actions and next steps.
+- Added `docs/release/beta-readiness.md` and updated release docs to define the beta stop line and keep beta work grouped into coherent release-quality batches.
 - Changed the README logo from a full-width hero image to a compact icon beside the project title.
 - Added `--reset-user-services` to package install and Fedora smoke helpers, so alpha testers can explicitly stop, disable, and remove stale user-scoped Operance systemd units before installing a packaged runtime.
 - Tightened `scripts/run_installed_beta_smoke.sh --require-mvp-runtime` so it also checks that the active tray service is not shadowed by a stale source-checkout user unit.
