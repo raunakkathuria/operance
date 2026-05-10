@@ -40,6 +40,7 @@ That gate runs:
 - the old-brand reference guard
 - the source-checkout beta smoke
 - the reset-aware Fedora alpha package gate in dry-run mode
+- the installed desktop smoke checklist in dry-run mode
 
 Before tagging a beta candidate, run the full package gate as well:
 
@@ -51,6 +52,17 @@ Use `--support-bundle-out <path>` when the gate is being run for a release
 handoff and the source-checkout smoke should write a predictable support bundle
 artifact.
 
+Use the installed desktop smoke helper directly when validating a freshly
+installed RPM in the active KDE session:
+
+```bash
+./scripts/run_installed_desktop_smoke.sh
+```
+
+It verifies the installed command, tray service path, live-mode config, and
+supported-command projection, then prints the manual tray click-to-talk commands
+that still require a human microphone and desktop session.
+
 ---
 
 ## 3. Beta Stop Line
@@ -60,6 +72,7 @@ The first beta should require all of the following:
 - `./scripts/run_beta_readiness_gate.sh --run-package-gate` passes on the target
   Fedora KDE Wayland machine
 - a fresh installed RPM can launch the tray app from the desktop session
+- `./scripts/run_installed_desktop_smoke.sh` passes against that installed RPM
 - tray click-to-talk can open Firefox from a spoken command
 - tray click-to-talk can open a localhost URL from a spoken command
 - `operance --supported-commands --supported-commands-available-only` lists only

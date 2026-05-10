@@ -49,7 +49,8 @@ If the MVP path fails or you need to file a bug, collect the current issue artif
 ```
 
 For beta-readiness work, use the repository gate that combines tests, branding
-guard, source-checkout smoke, and the reset-aware Fedora package gate dry-run:
+guard, source-checkout smoke, reset-aware Fedora package gate dry-run, and the
+installed desktop smoke checklist:
 
 ```bash
 ./scripts/run_beta_readiness_gate.sh
@@ -435,6 +436,14 @@ Run the beta-readiness gate from a checkout:
 ./scripts/run_beta_readiness_gate.sh --dry-run
 ./scripts/run_beta_readiness_gate.sh
 ./scripts/run_beta_readiness_gate.sh --run-package-gate
+```
+
+Run the installed desktop smoke after installing the RPM in an active Fedora KDE
+Wayland session:
+
+```bash
+./scripts/run_installed_desktop_smoke.sh --dry-run
+./scripts/run_installed_desktop_smoke.sh
 ```
 
 Remove an installed native package:

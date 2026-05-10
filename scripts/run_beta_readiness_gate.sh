@@ -41,14 +41,18 @@ run_step() {
 }
 
 run_old_brand_guard() {
-    local display="git grep -n -i voxos -- ."
+    local old_brand
+    old_brand="$(
+        printf '%s%s\n' "vo" "xos"
+    )"
+    local display="git grep -n -i <old-brand> -- ."
     echo "+ ${display}"
     if [[ "${dry_run}" -eq 1 ]]; then
         return
     fi
 
     set +e
-    git grep -n -i voxos -- .
+    git grep -n -i "${old_brand}" -- .
     local status=$?
     set -e
     if [[ "${status}" -eq 0 ]]; then
@@ -116,3 +120,11 @@ if [[ "${run_package_gate}" -eq 0 ]]; then
     package_gate_args+=("--dry-run")
 fi
 run_step "${package_gate_display}" bash "${package_gate_args[@]}"
+
+installed_desktop_display="./scripts/run_installed_desktop_smoke.sh"
+installed_desktop_args=("./scripts/run_installed_desktop_smoke.sh")
+if [[ "${run_package_gate}" -eq 0 ]]; then
+    installed_desktop_display="${installed_desktop_display} --dry-run"
+    installed_desktop_args+=("--dry-run")
+fi
+run_step "${installed_desktop_display}" bash "${installed_desktop_args[@]}"

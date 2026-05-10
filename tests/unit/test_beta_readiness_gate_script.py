@@ -21,9 +21,10 @@ def test_beta_readiness_gate_dry_run_prints_default_steps() -> None:
 
     assert result.stdout.splitlines() == [
         "+ .venv/bin/python -m pytest",
-        "+ git grep -n -i voxos -- .",
+        "+ git grep -n -i <old-brand> -- .",
         "+ ./scripts/run_beta_smoke.sh --python .venv/bin/python",
         "+ ./scripts/run_fedora_alpha_gate.sh --reset-user-services --dry-run",
+        "+ ./scripts/run_installed_desktop_smoke.sh --dry-run",
     ]
     assert result.stderr == ""
 
@@ -40,11 +41,12 @@ def test_beta_readiness_gate_can_forward_options() -> None:
 
     assert result.stdout.splitlines() == [
         "+ /tmp/operance-python -m pytest",
-        "+ git grep -n -i voxos -- .",
+        "+ git grep -n -i <old-brand> -- .",
         (
             "+ ./scripts/run_beta_smoke.sh --python /tmp/operance-python "
             "--support-bundle-out /tmp/operance-beta-support.tar.gz"
         ),
         "+ ./scripts/run_fedora_alpha_gate.sh --reset-user-services",
+        "+ ./scripts/run_installed_desktop_smoke.sh",
     ]
     assert result.stderr == ""
