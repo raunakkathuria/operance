@@ -66,6 +66,26 @@ def test_fedora_release_smoke_script_can_forward_smoke_options_and_keep_install(
     assert result.stderr == ""
 
 
+def test_fedora_release_smoke_script_can_forward_user_service_reset() -> None:
+    result = _run_fedora_release_smoke_script(
+        "--dry-run",
+        "--root-dir",
+        "/tmp/operance-release",
+        "--version",
+        "2.1.0",
+        "--reset-user-services",
+    )
+
+    assert result.stdout.splitlines() == [
+        "+ ./scripts/build_package_artifacts.sh --rpm --root-dir /tmp/operance-release --version 2.1.0 --bundle-profile mvp --dry-run",
+        (
+            "+ ./scripts/run_installed_beta_smoke.sh --package /tmp/operance-release/rpm/operance-2.1.0-1.noarch.rpm "
+            "--installer dnf --reset-user-services --require-mvp-runtime --uninstall-after --dry-run"
+        ),
+    ]
+    assert result.stderr == ""
+
+
 def test_fedora_release_smoke_script_forwards_bundle_profile_options() -> None:
     result = _run_fedora_release_smoke_script(
         "--dry-run",

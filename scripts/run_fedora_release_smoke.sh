@@ -12,6 +12,7 @@ bundle_source_site_packages=""
 support_bundle_out=""
 use_sudo=1
 uninstall_after=1
+reset_user_services=0
 extra_smoke_args=()
 dry_run=0
 
@@ -33,6 +34,7 @@ Options:
                                    Override the source site-packages directory for runtime bundling.
   --support-bundle-out PATH        Forward an output path to the installed-package support-bundle step.
   --no-sudo                        Forward --no-sudo to the installed-package smoke step.
+  --reset-user-services            Forward --reset-user-services to the installed-package smoke step.
   --keep-installed                 Do not uninstall the package after the smoke sequence.
   --dry-run                        Print the build and smoke commands without executing them.
   -h, --help                       Show this help text.
@@ -115,6 +117,9 @@ while [[ $# -gt 0 ]]; do
         --no-sudo)
             use_sudo=0
             ;;
+        --reset-user-services)
+            reset_user_services=1
+            ;;
         --keep-installed)
             uninstall_after=0
             ;;
@@ -186,6 +191,10 @@ fi
 if [[ "${use_sudo}" -eq 0 ]]; then
     smoke_display="${smoke_display} --no-sudo"
     smoke_args+=("--no-sudo")
+fi
+if [[ "${reset_user_services}" -eq 1 ]]; then
+    smoke_display="${smoke_display} --reset-user-services"
+    smoke_args+=("--reset-user-services")
 fi
 if [[ "${bundle_profile}" == "mvp" ]]; then
     smoke_display="${smoke_display} --require-mvp-runtime"

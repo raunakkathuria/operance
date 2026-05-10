@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Changed the README logo from a full-width hero image to a compact icon beside the project title.
+- Added `--reset-user-services` to package install and Fedora smoke helpers, so alpha testers can explicitly stop, disable, and remove stale user-scoped Operance systemd units before installing a packaged runtime.
+- Tightened `scripts/run_installed_beta_smoke.sh --require-mvp-runtime` so it also checks that the active tray service is not shadowed by a stale source-checkout user unit.
+- Wired reset-aware Fedora package commands into setup actions and next-step guidance, so alpha package validation paths do not advertise commands that can leave stale source-checkout services in place.
 - Added an optional installed-tray service check to `scripts/check_installed_mvp_runtime.py`, so package smoke can catch stale repo-local user units that shadow the packaged service.
 - Added live app-launch verification on Linux so app launch commands no longer report success unless the expected process becomes observable after the native launcher returns.
 - Added explicit simulated-mode labeling to tray snapshots and click-to-talk result notifications, making source-checkout developer mode visibly different from installed live mode.

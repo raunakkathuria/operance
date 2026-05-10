@@ -40,6 +40,7 @@ def test_fedora_alpha_gate_script_forwards_release_smoke_options() -> None:
         "--support-bundle-out",
         "/tmp/operance-alpha-support.tar.gz",
         "--no-sudo",
+        "--reset-user-services",
         "--keep-installed",
         "--bundle-profile",
         "mvp",
@@ -56,7 +57,8 @@ def test_fedora_alpha_gate_script_forwards_release_smoke_options() -> None:
         (
             "+ ./scripts/run_fedora_release_smoke.sh --bundle-profile mvp --support-bundle-out "
             "/tmp/operance-alpha-support.tar.gz --bundle-python /tmp/operance-build-python "
-            "--bundle-source-site-packages /tmp/operance-site-packages --no-sudo --keep-installed --dry-run"
+            "--bundle-source-site-packages /tmp/operance-site-packages --no-sudo "
+            "--reset-user-services --keep-installed --dry-run"
         ),
     ]
     assert result.stderr == ""

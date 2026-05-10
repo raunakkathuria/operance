@@ -2544,14 +2544,14 @@ def test_build_setup_snapshot_exposes_package_actions_when_tooling_is_ready(
     assert actions["run_fedora_release_smoke"] == {
         "action_id": "run_fedora_release_smoke",
         "available": True,
-        "command": "./scripts/run_fedora_release_smoke.sh",
+        "command": "./scripts/run_fedora_release_smoke.sh --reset-user-services",
         "label": "Run Fedora release smoke",
         "recommended": False,
     }
     assert actions["run_fedora_alpha_gate"] == {
         "action_id": "run_fedora_alpha_gate",
         "available": True,
-        "command": "./scripts/run_fedora_alpha_gate.sh",
+        "command": "./scripts/run_fedora_alpha_gate.sh --reset-user-services",
         "label": "Run Fedora alpha gate",
         "recommended": False,
     }
@@ -2628,7 +2628,10 @@ def test_build_setup_snapshot_exposes_package_install_and_uninstall_actions(
     assert actions["install_rpm_package_artifact"] == {
         "action_id": "install_rpm_package_artifact",
         "available": True,
-        "command": f"./scripts/install_package_artifact.sh --package {rpm_artifact} --installer dnf",
+        "command": (
+            f"./scripts/install_package_artifact.sh --package {rpm_artifact} --installer dnf "
+            "--replace-existing --reset-user-services"
+        ),
         "label": "Install RPM package artifact",
         "recommended": False,
     }
@@ -2642,14 +2645,17 @@ def test_build_setup_snapshot_exposes_package_install_and_uninstall_actions(
     assert actions["run_installed_rpm_beta_smoke"] == {
         "action_id": "run_installed_rpm_beta_smoke",
         "available": True,
-        "command": f"./scripts/run_installed_beta_smoke.sh --package {rpm_artifact} --installer dnf --uninstall-after",
+        "command": (
+            f"./scripts/run_installed_beta_smoke.sh --package {rpm_artifact} --installer dnf "
+            "--require-mvp-runtime --reset-user-services --uninstall-after"
+        ),
         "label": "Run installed RPM beta smoke",
         "recommended": False,
     }
     assert actions["run_fedora_release_smoke"] == {
         "action_id": "run_fedora_release_smoke",
         "available": False,
-        "command": "./scripts/run_fedora_release_smoke.sh",
+        "command": "./scripts/run_fedora_release_smoke.sh --reset-user-services",
         "label": "Run Fedora release smoke",
         "recommended": False,
         "unavailable_reason": "Blocked by: Archive CLI, RPM packaging CLI.",
@@ -2700,7 +2706,7 @@ def test_build_setup_snapshot_exposes_fedora_alpha_gate_next_step_when_checkout_
 
     assert next_steps["Run Fedora alpha gate"] == {
         "label": "Run Fedora alpha gate",
-        "command": "./scripts/run_fedora_alpha_gate.sh",
+        "command": "./scripts/run_fedora_alpha_gate.sh --reset-user-services",
     }
 
 
@@ -2743,6 +2749,6 @@ def test_build_setup_snapshot_prefers_installed_rpm_smoke_next_step_when_artifac
         "label": "Run installed RPM beta smoke",
         "command": (
             f"./scripts/run_installed_beta_smoke.sh --package {rpm_artifact} "
-            "--installer dnf --uninstall-after"
+            "--installer dnf --require-mvp-runtime --reset-user-services --uninstall-after"
         ),
     }
