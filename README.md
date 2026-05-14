@@ -438,6 +438,9 @@ Run the beta-readiness gate from a checkout:
 ./scripts/run_beta_readiness_gate.sh --run-package-gate
 ```
 
+The full package gate keeps the RPM installed so the installed desktop smoke and
+manual tray click-to-talk checks can run against that package.
+
 Run the installed desktop smoke after installing the RPM in an active Fedora KDE
 Wayland session:
 

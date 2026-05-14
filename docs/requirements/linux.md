@@ -439,7 +439,7 @@ Run the beta-readiness gate when validating a larger beta batch:
 ./scripts/run_beta_readiness_gate.sh --run-package-gate
 ```
 
-The default beta-readiness gate runs the package portion as a dry-run so it stays usable during normal development. Use `--run-package-gate` before a beta candidate or when explicitly validating a full installed RPM path on the target Fedora KDE Wayland machine.
+The default beta-readiness gate runs the package portion as a dry-run so it stays usable during normal development. Use `--run-package-gate` before a beta candidate or when explicitly validating a full installed RPM path on the target Fedora KDE Wayland machine. The full package gate keeps the RPM installed so the installed desktop smoke and manual tray click-to-talk checks run against the same package payload.
 
 Run the installed desktop smoke after installing the RPM in the active KDE session:
 

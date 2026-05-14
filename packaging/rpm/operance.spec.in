@@ -34,3 +34,7 @@ __ENTRYPOINT__
 %{_prefix}/lib/operance
 %{_userunitdir}/operance-tray.service
 %{_userunitdir}/operance-voice-loop.service
+
+%changelog
+* Fri May 15 2026 Operance Maintainers <maintainers@operance.local> - __VERSION__-1
+- Initial RPM package scaffold.

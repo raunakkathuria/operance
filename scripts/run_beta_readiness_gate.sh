@@ -118,6 +118,9 @@ package_gate_args=("./scripts/run_fedora_alpha_gate.sh" "--reset-user-services")
 if [[ "${run_package_gate}" -eq 0 ]]; then
     package_gate_display="${package_gate_display} --dry-run"
     package_gate_args+=("--dry-run")
+else
+    package_gate_display="${package_gate_display} --keep-installed"
+    package_gate_args+=("--keep-installed")
 fi
 run_step "${package_gate_display}" bash "${package_gate_args[@]}"
 

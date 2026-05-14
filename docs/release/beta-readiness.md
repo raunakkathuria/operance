@@ -48,6 +48,9 @@ Before tagging a beta candidate, run the full package gate as well:
 ./scripts/run_beta_readiness_gate.sh --run-package-gate
 ```
 
+The full package gate keeps the RPM installed so the installed desktop smoke and
+manual tray click-to-talk checks can run against the same package payload.
+
 Use `--support-bundle-out <path>` when the gate is being run for a release
 handoff and the source-checkout smoke should write a predictable support bundle
 artifact.

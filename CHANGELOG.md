@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Fixed the full beta-readiness package gate so it keeps the RPM installed before running installed desktop smoke, and added an RPM changelog entry to avoid source-date build warnings.
 - Added `scripts/run_beta_readiness_gate.sh`, a larger beta-oriented gate that runs tests, the old-brand guard, source-checkout beta smoke, and the reset-aware Fedora package gate dry-run by default, with `--run-package-gate` for full package validation, and surfaced it through Linux setup actions and next steps.
 - Added `scripts/run_installed_desktop_smoke.sh`, which validates the installed runtime and tray service path, projects the supported command subset, and prints the manual tray click-to-talk checks required before a beta tag.
 - Added `docs/release/beta-readiness.md` and updated release docs to define the beta stop line and keep beta work grouped into coherent release-quality batches.

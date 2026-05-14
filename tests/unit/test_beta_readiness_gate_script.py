@@ -46,7 +46,7 @@ def test_beta_readiness_gate_can_forward_options() -> None:
             "+ ./scripts/run_beta_smoke.sh --python /tmp/operance-python "
             "--support-bundle-out /tmp/operance-beta-support.tar.gz"
         ),
-        "+ ./scripts/run_fedora_alpha_gate.sh --reset-user-services",
+        "+ ./scripts/run_fedora_alpha_gate.sh --reset-user-services --keep-installed",
         "+ ./scripts/run_installed_desktop_smoke.sh",
     ]
     assert result.stderr == ""
