@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Changed tray voice-loop warning behavior so a missing continuous-loop status file does not suppress click-to-talk result notifications in the packaged MVP path.
 - Changed installed desktop smoke to enable and start the packaged tray user service before checking status, so inactive tray services fail before manual click-to-talk checks.
 - Fixed the full beta-readiness package gate so it keeps the RPM installed before running installed desktop smoke, and added an RPM changelog entry to avoid source-date build warnings.
 - Added `scripts/run_beta_readiness_gate.sh`, a larger beta-oriented gate that runs tests, the old-brand guard, source-checkout beta smoke, and the reset-aware Fedora package gate dry-run by default, with `--run-package-gate` for full package validation, and surfaced it through Linux setup actions and next steps.

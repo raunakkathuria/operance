@@ -449,6 +449,10 @@ Wayland session:
 ./scripts/run_installed_desktop_smoke.sh
 ```
 
+The packaged tray is click-to-talk first. A missing continuous voice-loop runtime
+status file is expected unless the background wake-word loop has been started
+separately, and it should not block click-to-talk result notifications.
+
 Remove an installed native package:
 
 ```bash
