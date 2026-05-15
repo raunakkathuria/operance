@@ -931,15 +931,11 @@ def _build_notification(
                 event_id=f"unmatched:{status.last_response}",
             )
 
-    if (
-        voice_loop_status is not None
-        and voice_loop_status.status == "warn"
-        and voice_loop_status.message
-    ):
+    if _voice_loop_needs_attention(voice_loop_status):
         return TrayNotification(
             level="warning",
             title="Voice loop needs attention",
-            message=voice_loop_status.message,
+            message=str(voice_loop_status.message),
             event_id=f"voice_loop:{voice_loop_status.loop_state}:{voice_loop_status.message}",
         )
 
@@ -1048,9 +1044,7 @@ def _resolve_tray_usage_hint(
         return None
     if last_command_transcript is not None or last_command_preview is not None:
         return None
-    if voice_loop_status is not None and (
-        voice_loop_status.status != "ok" or voice_loop_status.loop_state != "waiting_for_wake"
-    ):
+    if voice_loop_status is not None and _voice_loop_needs_attention(voice_loop_status):
         return None
     return "Left-click to talk"
 
@@ -1058,9 +1052,19 @@ def _resolve_tray_usage_hint(
 def _can_restart_voice_loop_service(
     voice_loop_status: VoiceLoopRuntimeStatusSnapshot | None,
 ) -> bool:
-    if voice_loop_status is None:
+    if voice_loop_status is None or voice_loop_status.loop_state == "missing":
         return False
     return not voice_loop_status.heartbeat_fresh
+
+
+def _voice_loop_needs_attention(
+    voice_loop_status: VoiceLoopRuntimeStatusSnapshot | None,
+) -> bool:
+    if voice_loop_status is None:
+        return False
+    if voice_loop_status.loop_state == "missing":
+        return False
+    return voice_loop_status.status == "warn" and bool(voice_loop_status.message)
 
 
 def _setup_result_message(result: SetupRunResult) -> str:

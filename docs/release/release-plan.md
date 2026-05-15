@@ -8,16 +8,16 @@ Audience: Founder, maintainers
 
 ## 1. Immediate Goal
 
-Ship a **public developer alpha** for the Linux-first local core without
-over-claiming the current product maturity.
+Move from **public developer alpha** toward a first **Fedora KDE Wayland beta**
+without over-claiming the current product maturity.
 
-That means:
+The alpha release line has already established:
 
-- open-source the repository now
-- publish `v0.1.0-alpha.1`
-- position it as Fedora KDE Wayland first
-- keep source checkout as the primary supported path
-- keep RPM as the secondary packaged `mvp` runtime path
+- public source repository
+- Fedora KDE Wayland first positioning
+- source checkout as the primary supported path
+- RPM as the secondary packaged `mvp` runtime path
+- reset-aware packaged alpha validation
 
 ---
 
@@ -43,6 +43,14 @@ That means:
 - focus on Fedora KDE bring-up, packaging, and MVP runtime reliability
 - keep the public verified command subset conservative
 
+### Phase D: Beta readiness
+
+- keep the beta stop line in [beta-readiness.md](./beta-readiness.md)
+- run `./scripts/run_beta_readiness_gate.sh` during normal beta work
+- run `./scripts/run_beta_readiness_gate.sh --run-package-gate` before a beta
+  candidate
+- keep beta PRs as coherent release-quality batches, not isolated polish commits
+
 ---
 
 ## 3. What Counts As “Good Enough” For This Release
@@ -62,8 +70,8 @@ Do not block the open-source release on a broader packaged consumer path.
 
 ## 4. What Comes After This Release
 
-The next meaningful release goal is **broader public alpha**, not “more random
-commands.”
+The next meaningful release goal is **Fedora KDE Wayland beta**, not “more
+random commands.”
 
 That work should focus on:
 
@@ -88,9 +96,10 @@ Do not treat these as blockers for `v0.1.0-alpha.1`:
 
 ## 6. Recommended Next Maintainer Step
 
-After the public repo is created:
+After `v0.1.0-alpha.4`:
 
-1. publish `v0.1.0-alpha.1`
-2. point early users to the source-checkout path first
-3. treat the RPM path as a developer-alpha artifact, not the main onboarding story
-4. use incoming issues to decide which runtime areas deserve graduation into the verified subset next
+1. work in larger beta-readiness batches
+2. keep each batch behind a PR and release-quality validation
+3. use `./scripts/run_beta_readiness_gate.sh` as the fast local stop line
+4. use `./scripts/run_beta_readiness_gate.sh --run-package-gate` before a beta candidate
+5. only tag beta after the manual installed tray plus click-to-talk smoke passes

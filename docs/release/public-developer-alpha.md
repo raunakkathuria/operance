@@ -111,6 +111,7 @@ If the gate stops immediately with `rpmbuild not found`, install the build tool 
 ```
 
 For the exact release stop line, use [fedora-alpha-checklist.md](./fedora-alpha-checklist.md).
+For the beta stop line, use [beta-readiness.md](./beta-readiness.md).
 For the current maintainer release sequence, use [release-plan.md](./release-plan.md).
 
 ---

@@ -223,6 +223,29 @@ def test_build_tray_snapshot_reports_voice_loop_warning_notification() -> None:
     assert payload["can_restart_voice_loop_service"] is True
 
 
+def test_build_tray_snapshot_treats_missing_voice_loop_status_as_click_to_talk_optional() -> None:
+    from operance.ui import build_tray_snapshot
+
+    snapshot = build_tray_snapshot(
+        _status_snapshot(),
+        voice_loop_status=_voice_loop_status_snapshot(
+            status_file_exists=False,
+            status="warn",
+            message="No voice-loop runtime status file found.",
+            loop_state="missing",
+            heartbeat_fresh=False,
+            heartbeat_age_seconds=None,
+        ),
+    )
+
+    payload = snapshot.to_dict()
+
+    assert payload["notification"] is None
+    assert payload["can_restart_voice_loop_service"] is False
+    assert payload["can_start_click_to_talk"] is True
+    assert payload["tooltip"] == "Operance: Idle | Left-click to talk"
+
+
 def test_build_tray_startup_notification_prefers_click_to_talk_hint() -> None:
     from operance.ui import build_tray_snapshot
     from operance.ui.tray import build_startup_notification

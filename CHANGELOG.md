@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Changed tray voice-loop warning behavior so a missing continuous-loop status file does not suppress click-to-talk result notifications in the packaged MVP path.
+- Changed installed desktop smoke to enable and start the packaged tray user service before checking status, so inactive tray services fail before manual click-to-talk checks.
+- Fixed the full beta-readiness package gate so it keeps the RPM installed before running installed desktop smoke, and added an RPM changelog entry to avoid source-date build warnings.
+- Added `scripts/run_beta_readiness_gate.sh`, a larger beta-oriented gate that runs tests, the old-brand guard, source-checkout beta smoke, and the reset-aware Fedora package gate dry-run by default, with `--run-package-gate` for full package validation, and surfaced it through Linux setup actions and next steps.
+- Added `scripts/run_installed_desktop_smoke.sh`, which validates the installed runtime and tray service path, projects the supported command subset, and prints the manual tray click-to-talk checks required before a beta tag.
+- Added `docs/release/beta-readiness.md` and updated release docs to define the beta stop line and keep beta work grouped into coherent release-quality batches.
 - Changed the README logo from a full-width hero image to a compact icon beside the project title.
 - Added `--reset-user-services` to package install and Fedora smoke helpers, so alpha testers can explicitly stop, disable, and remove stale user-scoped Operance systemd units before installing a packaged runtime.
 - Tightened `scripts/run_installed_beta_smoke.sh --require-mvp-runtime` so it also checks that the active tray service is not shadowed by a stale source-checkout user unit.

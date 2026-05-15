@@ -116,6 +116,9 @@ def test_rpm_package_script_can_render_spec_without_building(tmp_path: Path) -> 
     assert "Version:        9.9.9" in spec_text
     assert "Name:           operance" in spec_text
     assert "AutoReqProv:    no" in spec_text
+    assert "%changelog" in spec_text
+    assert "* Fri May 15 2026 Operance Maintainers <maintainers@operance.local> - 9.9.9-1" in spec_text
+    assert "- Initial RPM package scaffold." in spec_text
     assert "install -Dpm0755 packaged-assets/bin/operance %{buildroot}/opt/operance/bin/operance" in spec_text
     assert "install -Dpm0644 packaged-assets/icons/hicolor/scalable/apps/operance.svg %{buildroot}%{_datadir}/icons/hicolor/scalable/apps/operance.svg" in spec_text
     files_section = spec_text.split("%files", maxsplit=1)[1]

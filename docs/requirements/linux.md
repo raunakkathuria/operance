@@ -78,6 +78,7 @@ For the shortest current source-checkout path on the target Linux stack:
 ./scripts/run_mvp.sh
 ./scripts/run_beta_smoke.sh
 ./scripts/run_fedora_alpha_gate.sh --reset-user-services --dry-run
+./scripts/run_beta_readiness_gate.sh --dry-run
 ```
 
 If that path still fails and you need one issue artifact:
@@ -306,6 +307,7 @@ The tray snapshot now also carries the tray daemon session’s own last heard tr
 The tray snapshot now also includes one structured last-interaction report for the tray session itself, so successful click-to-talk runs and backend failures can both be inspected from one projected state instead of depending on tooltip text or transient notifications.
 That same tray menu now also exposes `Show last interaction`, so developers can open that structured click-to-talk result or backend failure report from the product surface instead of dropping back to raw snapshot JSON.
 Click-to-talk completion notifications now also include both `Heard: ...` and the resulting response text when a final transcript exists, so successful voice runs are debuggable from the bubble itself instead of requiring the tray dialog for basic inspection.
+For the packaged click-to-talk MVP path, a missing continuous voice-loop runtime status file is informational in the tray and must not suppress the click-to-talk result notification. Stale or invalid continuous-loop status still surfaces as a voice-loop warning when that background loop has written status before.
 Click-to-talk startup failures now also fail closed across both the tray and CLI surfaces, so microphone or STT backend errors return the daemon to `IDLE` and remain visible as structured error output instead of leaving the session stuck in `LISTENING`.
 When the tray is otherwise idle, its tooltip now prefers the MVP hint `Left-click to talk` over the background loop’s benign `waiting_for_wake` activity text, so the first-run Linux interaction path stays explicit even when the optional voice loop is healthy.
 The tray app now also shows that same guidance once at startup with an `Operance is ready` info bubble that adds `Right-click for supported commands.`, and the tray menu now exposes a shared supported-command help view so developers can discover runnable commands from the product surface instead of dropping back to raw CLI JSON first.
@@ -387,7 +389,7 @@ operance --print-config
 python3 scripts/check_installed_mvp_runtime.py --command operance --check-tray-service
 ```
 
-`operance --print-config` should report `"developer_mode": false`. The installed MVP runtime check now fails if the packaged command is still in developer-mode simulation. With `--check-tray-service`, it also fails when `operance-tray.service` is shadowed by a stale repo-local user unit instead of using the installed package command. `preset: disabled` in `systemctl --user status` is normal Fedora preset metadata; verify `Loaded`, `Active`, and the `ExecStart` path instead.
+`operance --print-config` should report `"developer_mode": false`. The installed MVP runtime check now fails if the packaged command is still in developer-mode simulation. With `--check-tray-service`, it also fails when `operance-tray.service` is shadowed by a stale repo-local user unit instead of using the installed package command. `preset: disabled` in `systemctl --user status` is normal Fedora preset metadata; verify `Loaded`, `Active`, and the `ExecStart` path instead. `./scripts/run_installed_desktop_smoke.sh` starts/enables the packaged tray user service before checking status, so `Active: inactive (dead)` is a smoke failure.
 
 Install a built native package artifact through the matching distro package manager:
 
@@ -427,8 +429,27 @@ Run the full Fedora developer-alpha gate from the same checkout when you want on
 ./scripts/run_fedora_alpha_gate.sh --support-bundle-out /tmp/operance-release-support.tar.gz --dry-run
 ```
 
-The setup surface now also exposes `run_fedora_alpha_gate`, `run_fedora_release_smoke`, and `run_installed_rpm_beta_smoke` with reset-aware Fedora commands when the current machine has the right checkout and RPM build or install prerequisites, so the same package handoff path stays discoverable from `python3 -m operance.cli --setup-actions`.
+The setup surface now also exposes `run_beta_readiness_gate`, `run_installed_desktop_smoke`, `run_fedora_alpha_gate`, `run_fedora_release_smoke`, and `run_installed_rpm_beta_smoke` with reset-aware Fedora commands when the current machine has the right checkout and RPM build or install prerequisites, so the same package handoff path stays discoverable from `python3 -m operance.cli --setup-actions`. When Fedora alpha prerequisites are present, setup next steps now surface the beta-readiness gate and installed desktop smoke directly.
 That same setup surface now also exposes `install_deb_packaging_tools` and `install_rpm_packaging_tools` when the corresponding package-build CLI is missing but the host can install it, so Fedora alpha bring-up no longer stops at a passive `rpmbuild` warning.
+
+Run the beta-readiness gate when validating a larger beta batch:
+
+```bash
+./scripts/run_beta_readiness_gate.sh --dry-run
+./scripts/run_beta_readiness_gate.sh
+./scripts/run_beta_readiness_gate.sh --run-package-gate
+```
+
+The default beta-readiness gate runs the package portion as a dry-run so it stays usable during normal development. Use `--run-package-gate` before a beta candidate or when explicitly validating a full installed RPM path on the target Fedora KDE Wayland machine. The full package gate keeps the RPM installed so the installed desktop smoke and manual tray click-to-talk checks run against the same package payload.
+
+Run the installed desktop smoke after installing the RPM in the active KDE session:
+
+```bash
+./scripts/run_installed_desktop_smoke.sh --dry-run
+./scripts/run_installed_desktop_smoke.sh
+```
+
+This helper validates the installed runtime and prints the manual click-to-talk commands that still require microphone access and a real tray session.
 
 Remove an installed native package through the matching distro package manager:
 

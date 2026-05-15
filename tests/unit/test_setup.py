@@ -312,6 +312,8 @@ def test_build_setup_snapshot_reports_partial_ready_state() -> None:
         "install_rpm_packaging_tools",
         "build_deb_package_artifact",
         "build_rpm_package_artifact",
+        "run_beta_readiness_gate",
+        "run_installed_desktop_smoke",
         "run_fedora_alpha_gate",
         "run_fedora_release_smoke",
         "install_deb_package_artifact",
@@ -2548,6 +2550,20 @@ def test_build_setup_snapshot_exposes_package_actions_when_tooling_is_ready(
         "label": "Run Fedora release smoke",
         "recommended": False,
     }
+    assert actions["run_beta_readiness_gate"] == {
+        "action_id": "run_beta_readiness_gate",
+        "available": True,
+        "command": "./scripts/run_beta_readiness_gate.sh",
+        "label": "Run beta readiness gate",
+        "recommended": False,
+    }
+    assert actions["run_installed_desktop_smoke"] == {
+        "action_id": "run_installed_desktop_smoke",
+        "available": True,
+        "command": "./scripts/run_installed_desktop_smoke.sh",
+        "label": "Run installed desktop smoke",
+        "recommended": False,
+    }
     assert actions["run_fedora_alpha_gate"] == {
         "action_id": "run_fedora_alpha_gate",
         "available": True,
@@ -2704,6 +2720,14 @@ def test_build_setup_snapshot_exposes_fedora_alpha_gate_next_step_when_checkout_
 
     next_steps = _next_step_map(snapshot.to_dict())
 
+    assert next_steps["Run beta readiness gate"] == {
+        "label": "Run beta readiness gate",
+        "command": "./scripts/run_beta_readiness_gate.sh",
+    }
+    assert next_steps["Run installed desktop smoke"] == {
+        "label": "Run installed desktop smoke",
+        "command": "./scripts/run_installed_desktop_smoke.sh",
+    }
     assert next_steps["Run Fedora alpha gate"] == {
         "label": "Run Fedora alpha gate",
         "command": "./scripts/run_fedora_alpha_gate.sh --reset-user-services",

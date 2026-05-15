@@ -48,6 +48,14 @@ If the MVP path fails or you need to file a bug, collect the current issue artif
 .venv/bin/python -m operance.cli --support-bundle
 ```
 
+For beta-readiness work, use the repository gate that combines tests, branding
+guard, source-checkout smoke, reset-aware Fedora package gate dry-run, and the
+installed desktop smoke checklist:
+
+```bash
+./scripts/run_beta_readiness_gate.sh
+```
+
 Current assumptions for that path:
 
 - Linux
@@ -73,7 +81,7 @@ Not yet claimed:
 - wake-word-first as the default interaction model
 - a zero-setup consumer install story
 
-Use [docs/release/public-developer-alpha.md](docs/release/public-developer-alpha.md) for the current public handoff, [docs/release/fedora-alpha-checklist.md](docs/release/fedora-alpha-checklist.md) for the exact Fedora gate, [docs/release/release-plan.md](docs/release/release-plan.md) for the current release sequence, [docs/requirements/linux.md](docs/requirements/linux.md) for Linux setup, packaging, and advanced diagnostics, and [docs/release/public-repo-metadata.md](docs/release/public-repo-metadata.md) for suggested GitHub About metadata.
+Use [docs/release/public-developer-alpha.md](docs/release/public-developer-alpha.md) for the current public handoff, [docs/release/beta-readiness.md](docs/release/beta-readiness.md) for the beta stop line, [docs/release/fedora-alpha-checklist.md](docs/release/fedora-alpha-checklist.md) for the exact Fedora gate, [docs/release/release-plan.md](docs/release/release-plan.md) for the current release sequence, [docs/requirements/linux.md](docs/requirements/linux.md) for Linux setup, packaging, and advanced diagnostics, and [docs/release/public-repo-metadata.md](docs/release/public-repo-metadata.md) for suggested GitHub About metadata.
 
 ## How To Contribute
 
@@ -422,6 +430,29 @@ Run the full Fedora developer-alpha gate from a checkout:
 ./scripts/run_fedora_alpha_gate.sh --support-bundle-out /tmp/operance-release-support.tar.gz --dry-run
 ```
 
+Run the beta-readiness gate from a checkout:
+
+```bash
+./scripts/run_beta_readiness_gate.sh --dry-run
+./scripts/run_beta_readiness_gate.sh
+./scripts/run_beta_readiness_gate.sh --run-package-gate
+```
+
+The full package gate keeps the RPM installed so the installed desktop smoke and
+manual tray click-to-talk checks can run against that package.
+
+Run the installed desktop smoke after installing the RPM in an active Fedora KDE
+Wayland session:
+
+```bash
+./scripts/run_installed_desktop_smoke.sh --dry-run
+./scripts/run_installed_desktop_smoke.sh
+```
+
+The packaged tray is click-to-talk first. A missing continuous voice-loop runtime
+status file is expected unless the background wake-word loop has been started
+separately, and it should not block click-to-talk result notifications.
+
 Remove an installed native package:
 
 ```bash
@@ -525,6 +556,7 @@ python3 scripts/check_installed_mvp_runtime.py --command operance --check-tray-s
 ```
 
 `operance --print-config` should report `"developer_mode": false`; the installed MVP runtime check fails if the packaged command is still in developer-mode simulation. With `--check-tray-service`, it also fails when an active `operance-tray.service` is shadowed by a stale repo-local user unit. If that happens, reinstall with `./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --replace-existing --reset-user-services`. In `systemctl --user status`, `preset: disabled` is normal on Fedora; `Loaded`, `Active`, and the `ExecStart` command path are the parts to verify.
+`./scripts/run_installed_desktop_smoke.sh` starts/enables the packaged tray user service before checking status, so `Active: inactive (dead)` is a smoke failure rather than a successful beta desktop state.
 
 Run the built-in deterministic corpus and print a summary:
 
