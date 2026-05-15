@@ -89,6 +89,8 @@ if [[ "${systemctl_command}" != "systemctl" ]]; then
 fi
 
 run_step "${mvp_check_display}" "${mvp_check_args[@]}"
+run_step "${systemctl_command} --user enable --now operance-tray.service" \
+    "${systemctl_command}" --user enable --now operance-tray.service
 run_step "${systemctl_command} --user status operance-tray.service --no-pager" \
     "${systemctl_command}" --user status operance-tray.service --no-pager
 run_step "${command_path} --print-config" "${command_path}" --print-config

@@ -62,9 +62,10 @@ installed RPM in the active KDE session:
 ./scripts/run_installed_desktop_smoke.sh
 ```
 
-It verifies the installed command, tray service path, live-mode config, and
-supported-command projection, then prints the manual tray click-to-talk commands
-that still require a human microphone and desktop session.
+It verifies the installed command, tray service path, live-mode config, starts
+and checks the packaged tray user service, and projects the supported-command
+subset. It then prints the manual tray click-to-talk commands that still require
+a human microphone and desktop session.
 
 ---
 

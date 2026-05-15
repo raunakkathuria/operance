@@ -21,6 +21,7 @@ def test_installed_desktop_smoke_dry_run_prints_default_steps() -> None:
 
     assert result.stdout.splitlines() == [
         "+ python3 scripts/check_installed_mvp_runtime.py --command operance --check-tray-service",
+        "+ systemctl --user enable --now operance-tray.service",
         "+ systemctl --user status operance-tray.service --no-pager",
         "+ operance --print-config",
         "+ operance --supported-commands --supported-commands-available-only",
@@ -46,8 +47,8 @@ def test_installed_desktop_smoke_can_override_command_and_systemctl() -> None:
 
     assert result.stdout.splitlines()[:4] == [
         "+ python3 scripts/check_installed_mvp_runtime.py --command /tmp/operance --check-tray-service --systemctl-command /tmp/systemctl",
+        "+ /tmp/systemctl --user enable --now operance-tray.service",
         "+ /tmp/systemctl --user status operance-tray.service --no-pager",
         "+ /tmp/operance --print-config",
-        "+ /tmp/operance --supported-commands --supported-commands-available-only",
     ]
     assert result.stderr == ""

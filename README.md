@@ -552,6 +552,7 @@ python3 scripts/check_installed_mvp_runtime.py --command operance --check-tray-s
 ```
 
 `operance --print-config` should report `"developer_mode": false`; the installed MVP runtime check fails if the packaged command is still in developer-mode simulation. With `--check-tray-service`, it also fails when an active `operance-tray.service` is shadowed by a stale repo-local user unit. If that happens, reinstall with `./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --replace-existing --reset-user-services`. In `systemctl --user status`, `preset: disabled` is normal on Fedora; `Loaded`, `Active`, and the `ExecStart` command path are the parts to verify.
+`./scripts/run_installed_desktop_smoke.sh` starts/enables the packaged tray user service before checking status, so `Active: inactive (dead)` is a smoke failure rather than a successful beta desktop state.
 
 Run the built-in deterministic corpus and print a summary:
 
