@@ -23,7 +23,7 @@ from .base import (
 )
 
 
-CURRENT_RELEASE_VERIFICATION_TARGET = "fedora_kde_wayland_beta"
+CURRENT_RELEASE_VERIFICATION_TARGET = "fedora_kde_wayland"
 CURRENT_RELEASE_VERIFIED_TOOLS = frozenset(
     {
         ToolName.APPS_FOCUS,
@@ -1104,12 +1104,12 @@ def _build_setup_actions(
     )
     install_deb_packaging_tools_command = "./scripts/install_packaging_tools.sh --deb"
     install_rpm_packaging_tools_command = "./scripts/install_packaging_tools.sh --rpm"
-    run_beta_readiness_gate_command = "./scripts/run_beta_readiness_gate.sh"
+    run_release_readiness_gate_command = "./scripts/run_release_readiness_gate.sh"
     run_installed_desktop_smoke_command = "./scripts/run_installed_desktop_smoke.sh"
     run_fedora_gate_command = "./scripts/run_fedora_gate.sh --reset-user-services"
-    run_installed_rpm_beta_smoke_command = shlex.join(
+    run_installed_rpm_package_smoke_command = shlex.join(
         [
-            "./scripts/run_installed_beta_smoke.sh",
+            "./scripts/run_installed_package_smoke.sh",
             "--package",
             str(_default_rpm_package_artifact_path()),
             "--installer",
@@ -1602,11 +1602,11 @@ def _build_setup_actions(
             blocker_checks=("linux_platform", "archive_packaging_cli_available", "rpm_packaging_cli_available"),
         ),
         build_action(
-            action_id="run_beta_readiness_gate",
-            label="Run beta readiness gate",
-            command=run_beta_readiness_gate_command,
+            action_id="run_release_readiness_gate",
+            label="Run release readiness gate",
+            command=run_release_readiness_gate_command,
             available=linux_ready and python_ready and virtualenv_ready,
-            recommended=run_beta_readiness_gate_command in recommended_set,
+            recommended=run_release_readiness_gate_command in recommended_set,
             blocker_checks=("linux_platform", "python_3_12_plus", "virtualenv_active"),
         ),
         build_action(
@@ -1702,9 +1702,9 @@ def _build_setup_actions(
             ),
         ),
         build_action(
-            action_id="run_installed_rpm_beta_smoke",
-            label="Run installed RPM beta smoke",
-            command=run_installed_rpm_beta_smoke_command,
+            action_id="run_installed_rpm_package_smoke",
+            label="Run installed RPM package smoke",
+            command=run_installed_rpm_package_smoke_command,
             available=(
                 linux_ready
                 and str(checks_by_name.get("rpm_package_installer_available", {}).get("status")) == "ok"
@@ -2071,8 +2071,8 @@ def _build_setup_next_steps(
         next_steps.insert(
             insert_index,
             PlatformSetupNextStep(
-                label="Run beta readiness gate",
-                command="./scripts/run_beta_readiness_gate.sh",
+                label="Run release readiness gate",
+                command="./scripts/run_release_readiness_gate.sh",
             ),
         )
         next_steps.insert(
@@ -2094,10 +2094,10 @@ def _build_setup_next_steps(
         release_command = "./scripts/run_fedora_release_smoke.sh"
         rpm_artifact_path = _default_rpm_package_artifact_path()
         if rpm_artifact_path.exists():
-            release_label = "Run installed RPM beta smoke"
+            release_label = "Run installed RPM package smoke"
             release_command = shlex.join(
                 [
-                    "./scripts/run_installed_beta_smoke.sh",
+                    "./scripts/run_installed_package_smoke.sh",
                     "--package",
                     str(rpm_artifact_path),
                     "--installer",

@@ -20,16 +20,16 @@ Linux and KDE/Wayland are the current delivery target. Windows and macOS are
 roadmap phases behind the same portable core, not parallel implementation
 targets today.
 
-## Current public beta focus
+## Current public handoff focus
 
 The current public position is:
 
 - Fedora KDE Plasma on Wayland
-- source checkout as the primary supported beta path
+- source checkout as the primary supported path
 - installed RPM as the secondary `mvp` runtime path
 - tray plus click-to-talk as the default interaction model
 
-This is still a founder-maintained beta. Small, focused pull requests are much easier to review and land than large rewrites or broad refactors.
+This is still a founder-maintained developer release. Small, focused pull requests are much easier to review and land than large rewrites or broad refactors.
 
 The highest-value contributions right now are:
 
@@ -48,7 +48,7 @@ Lower priority right now:
 
 You do not need to land a large code feature to help. Useful contribution shapes include:
 
-- testing the current Fedora KDE beta path and reporting reproducible failures
+- testing the current Fedora KDE supported path and reporting reproducible failures
 - improving docs, release notes, quickstarts, and troubleshooting guidance
 - adding or tightening tests around setup, packaging, doctor, support bundles, or the typed runtime
 - fixing focused Linux runtime, tray, or click-to-talk defects
@@ -56,7 +56,7 @@ You do not need to land a large code feature to help. Useful contribution shapes
 
 If you want to propose a larger feature, open an issue first and keep the initial patch on the smallest runnable slice.
 
-Read [docs/release/public-beta.md](docs/release/public-beta.md) before proposing work that broadens the public surface, and [docs/release/fedora-checklist.md](docs/release/fedora-checklist.md) before changing the current release gate.
+Read [docs/release/public-handoff.md](docs/release/public-handoff.md) before proposing work that broadens the public surface, and [docs/release/fedora-checklist.md](docs/release/fedora-checklist.md) before changing the current release gate.
 
 ## Architecture boundary
 
@@ -125,7 +125,7 @@ pushes and pull requests through `.github/workflows/ci.yml`.
 For a quick safe baseline on a new machine or before filing a bug, run:
 
 ```bash
-./scripts/run_beta_smoke.sh
+./scripts/run_checkout_smoke.sh
 ```
 
 For the full Fedora checkout gate, run:
@@ -153,7 +153,7 @@ A good pull request for this repo should:
 - note doc updates in `README.md`, `docs/requirements/linux.md`, and
   `CHANGELOG.md` when applicable
 - call out any deferred work or platform limitations explicitly
-- keep the current public-beta support contract honest instead of silently widening claims
+- keep the current public handoff support contract honest instead of silently widening claims
 
 ## Issues
 

@@ -87,7 +87,7 @@ new tool, not just a new implementation.
 This is **not** a general external plugin SDK yet.
 
 Today, adding a new provider still means editing the in-repo provider registry.
-That is intentional for now. It keeps the beta architecture simple while the
+That is intentional for now. It keeps the release architecture simple while the
 tool contract stabilizes.
 
 The current goal is:

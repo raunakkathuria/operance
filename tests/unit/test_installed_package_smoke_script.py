@@ -5,10 +5,10 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-SCRIPT_PATH = REPO_ROOT / "scripts" / "run_installed_beta_smoke.sh"
+SCRIPT_PATH = REPO_ROOT / "scripts" / "run_installed_package_smoke.sh"
 
 
-def _run_installed_beta_smoke_script(
+def _run_installed_package_smoke_script(
     *args: str,
     env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
@@ -27,8 +27,8 @@ def _write_executable(path: Path, content: str) -> None:
     path.chmod(path.stat().st_mode | stat.S_IXUSR)
 
 
-def test_installed_beta_smoke_script_dry_run_prints_expected_steps() -> None:
-    result = _run_installed_beta_smoke_script("--dry-run")
+def test_installed_package_smoke_script_dry_run_prints_expected_steps() -> None:
+    result = _run_installed_package_smoke_script("--dry-run")
 
     assert result.stdout.splitlines() == [
         "+ test -f /usr/share/applications/operance.desktop",
@@ -42,8 +42,8 @@ def test_installed_beta_smoke_script_dry_run_prints_expected_steps() -> None:
     assert result.stderr == ""
 
 
-def test_installed_beta_smoke_script_can_require_mvp_runtime_in_dry_run() -> None:
-    result = _run_installed_beta_smoke_script("--require-mvp-runtime", "--dry-run")
+def test_installed_package_smoke_script_can_require_mvp_runtime_in_dry_run() -> None:
+    result = _run_installed_package_smoke_script("--require-mvp-runtime", "--dry-run")
 
     assert result.stdout.splitlines() == [
         "+ test -f /usr/share/applications/operance.desktop",
@@ -58,13 +58,13 @@ def test_installed_beta_smoke_script_can_require_mvp_runtime_in_dry_run() -> Non
     assert result.stderr == ""
 
 
-def test_installed_beta_smoke_script_can_reset_user_services_before_package_install(
+def test_installed_package_smoke_script_can_reset_user_services_before_package_install(
     tmp_path: Path,
 ) -> None:
     package_path = tmp_path / "operance-9.9.9-1.noarch.rpm"
     package_path.write_text("rpm", encoding="utf-8")
 
-    result = _run_installed_beta_smoke_script(
+    result = _run_installed_package_smoke_script(
         "--package",
         str(package_path),
         "--installer",
@@ -81,7 +81,7 @@ def test_installed_beta_smoke_script_can_reset_user_services_before_package_inst
     assert result.stderr == ""
 
 
-def test_installed_beta_smoke_script_can_install_run_and_uninstall_with_fake_tools(
+def test_installed_package_smoke_script_can_install_run_and_uninstall_with_fake_tools(
     tmp_path: Path,
 ) -> None:
     package_path = tmp_path / "operance-9.9.9-1.noarch.rpm"
@@ -139,7 +139,7 @@ def test_installed_beta_smoke_script_can_install_run_and_uninstall_with_fake_too
     env["FAKE_DNF_LOG"] = str(dnf_log)
     env["FAKE_OPERANCE_LOG"] = str(operance_log)
 
-    result = _run_installed_beta_smoke_script(
+    result = _run_installed_package_smoke_script(
         "--package",
         str(package_path),
         "--installer",

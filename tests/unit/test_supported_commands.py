@@ -38,7 +38,7 @@ def test_build_supported_command_help_text_renders_examples_and_blockers() -> No
                             "usage_pattern": "focus <app name>",
                             "requires_confirmation": False,
                             "live_runtime_status": "unverified",
-                            "release_verification_target": "fedora_kde_wayland_beta",
+                            "release_verification_target": "fedora_kde_wayland",
                             "live_runtime_blockers": [],
                         },
                     ],
@@ -79,7 +79,7 @@ def test_build_supported_command_help_text_renders_examples_and_blockers() -> No
     assert "- open <app name>" in help_text["details"]
     assert "- quit <app name> (confirmation)" in help_text["details"]
     assert "Apps not yet release-verified:" in help_text["details"]
-    assert "- focus <app name> -> fedora_kde_wayland_beta" in help_text["details"]
+    assert "- focus <app name> -> fedora_kde_wayland" in help_text["details"]
     assert "Clipboard blocked:" in help_text["details"]
     assert "- paste clipboard -> Wayland text input backend" in help_text["details"]
 

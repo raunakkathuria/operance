@@ -1,18 +1,19 @@
-# Public Beta
+# Public Handoff
 
 Status: Current public handoff  
-Type: Outside-developer beta state  
+Type: Outside-developer release state  
 Audience: Early adopters, contributors, maintainers
 
 ---
 
 ## 1. Position
 
-Operance is currently published as a **Fedora KDE Plasma Wayland developer beta**.
+Operance is currently published as a **Fedora KDE Plasma Wayland developer
+release**.
 
-This beta is intentionally narrow. It is meant for developers and early testers
-who can run documented commands, collect support bundles, and report useful
-failures. It is not a broad consumer desktop launch.
+This release is intentionally narrow. It is meant for developers and early
+testers who can run documented commands, collect support bundles, and report
+useful failures. It is not a broad consumer desktop launch.
 
 Current positioning:
 
@@ -35,16 +36,16 @@ Current supported command subset on that target:
 
 ---
 
-## 2. What is supported now
+## 2. What Is Supported Now
 
-Primary supported beta path:
+Primary supported path:
 
 - source checkout
 - optional `ui` and `voice` extras installed
 - `./scripts/run_mvp.sh` for the default interaction path
-- `./scripts/run_beta_smoke.sh` for a safe baseline
+- `./scripts/run_checkout_smoke.sh` for a safe baseline
 
-Secondary supported beta path:
+Secondary supported path:
 
 - Fedora RPM install of the `mvp` runtime profile
 - validated through `./scripts/run_fedora_gate.sh --reset-user-services`
@@ -55,7 +56,7 @@ Secondary supported beta path:
 The Fedora gate defaults to:
 
 - `./scripts/build_package_artifacts.sh --rpm --bundle-profile mvp`
-- `./scripts/run_installed_beta_smoke.sh --require-mvp-runtime --reset-user-services`
+- `./scripts/run_installed_package_smoke.sh --require-mvp-runtime --reset-user-services`
 
 That verifies the installed package can expose the tray UI backend and STT
 backend through `operance --doctor`, and that `operance --print-config` reports
@@ -66,17 +67,17 @@ smoke before tagging a release.
 What is already proven on the current target machine:
 
 - the full test suite passes
-- the source-checkout beta smoke path works
+- the source-checkout smoke path works
 - the Fedora gate can build the RPM artifact and validate the installed command
   path plus packaged MVP runtime checks
 - the installed command can produce a support bundle
 - `operance.cli --supported-commands --supported-commands-available-only`
-  exposes only the release-verified beta command subset above, not the broader
+  exposes only the release-verified command subset above, not the broader
   implemented runtime surface
 
 ---
 
-## 3. What is not yet claimed
+## 3. What Is Not Yet Claimed
 
 This repo does **not** currently claim:
 
@@ -86,12 +87,12 @@ This repo does **not** currently claim:
 - a fully bundled consumer installer with all model assets included
 - a zero-setup consumer install story
 
-Wake-word and TTS assets remain optional. The supported beta path is tray plus
+Wake-word and TTS assets remain optional. The supported path is tray plus
 click-to-talk on Fedora KDE Wayland.
 
 ---
 
-## 4. How to try it
+## 4. How To Try It
 
 Source-checkout path:
 
@@ -99,7 +100,7 @@ Source-checkout path:
 ./scripts/install_linux_dev.sh --ui --voice
 .venv/bin/python -m operance.cli --version
 ./scripts/run_mvp.sh
-./scripts/run_beta_smoke.sh
+./scripts/run_checkout_smoke.sh
 ```
 
 Fedora checkout gate:
@@ -122,12 +123,12 @@ first:
 ```
 
 For the exact release stop line, use [fedora-checklist.md](./fedora-checklist.md).
-For the beta stop line, use [beta-readiness.md](./beta-readiness.md).
+For the release-readiness stop line, use [release-readiness.md](./release-readiness.md).
 For the current maintainer release sequence, use [release-plan.md](./release-plan.md).
 
 ---
 
-## 5. How anyone can contribute
+## 5. How Anyone Can Contribute
 
 Useful contribution paths right now:
 
@@ -146,7 +147,7 @@ Start with [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
 ---
 
-## 6. How to file useful issues
+## 6. How To File Useful Issues
 
 When possible, attach:
 

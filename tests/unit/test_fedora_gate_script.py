@@ -27,7 +27,7 @@ def test_fedora_gate_script_dry_run_prints_default_steps() -> None:
 
     assert result.stdout.splitlines() == [
         "+ .venv/bin/python -m pytest",
-        "+ ./scripts/run_beta_smoke.sh --python .venv/bin/python --dry-run",
+        "+ ./scripts/run_checkout_smoke.sh --python .venv/bin/python --dry-run",
         "+ ./scripts/run_fedora_release_smoke.sh --bundle-profile mvp --dry-run",
     ]
     assert result.stderr == ""
@@ -38,7 +38,7 @@ def test_fedora_gate_script_forwards_release_smoke_options() -> None:
         "--python",
         "/tmp/operance-python",
         "--support-bundle-out",
-        "/tmp/operance-beta-support.tar.gz",
+        "/tmp/operance-support.tar.gz",
         "--no-sudo",
         "--reset-user-services",
         "--keep-installed",
@@ -53,10 +53,10 @@ def test_fedora_gate_script_forwards_release_smoke_options() -> None:
 
     assert result.stdout.splitlines() == [
         "+ /tmp/operance-python -m pytest",
-        "+ ./scripts/run_beta_smoke.sh --python /tmp/operance-python --dry-run",
+        "+ ./scripts/run_checkout_smoke.sh --python /tmp/operance-python --dry-run",
         (
             "+ ./scripts/run_fedora_release_smoke.sh --bundle-profile mvp --support-bundle-out "
-            "/tmp/operance-beta-support.tar.gz --bundle-python /tmp/operance-build-python "
+            "/tmp/operance-support.tar.gz --bundle-python /tmp/operance-build-python "
             "--bundle-source-site-packages /tmp/operance-site-packages --no-sudo "
             "--reset-user-services --keep-installed --dry-run"
         ),

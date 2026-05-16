@@ -12,7 +12,7 @@ usage() {
     cat <<'EOF'
 Usage: scripts/run_installed_desktop_smoke.sh [options]
 
-Run installed-runtime checks and print the manual tray click-to-talk beta smoke.
+Run installed-runtime checks and print the manual tray click-to-talk smoke.
 
 Options:
   --command PATH             Installed operance command to use. Defaults to operance.
