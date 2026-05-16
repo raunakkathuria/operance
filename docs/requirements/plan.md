@@ -341,7 +341,7 @@ Only isolate hotspots after metrics justify it.
 
 ## 12. Licensing constraints and distribution rules
 
-### 12.1 Commercial alpha rule
+### 12.1 Commercial distribution rule
 
 Commercial builds must not depend on non-commercial model assets bundled by default.
 
@@ -350,7 +350,7 @@ Commercial builds must not depend on non-commercial model assets bundled by defa
 - local daemon and SDK: permissive open-source license
 - hosted control plane: may be source-available, copyleft, or proprietary depending on fundraising and community strategy
 
-### 12.3 Language scope for commercial alpha
+### 12.3 Language scope for commercial distribution
 
 Start with English-first support if model licensing for other languages is unclear.
 

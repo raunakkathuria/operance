@@ -5,11 +5,11 @@
 
 Turn intent into action.
 
-Operance lets developers control a Linux desktop with natural language through a tray-first click-to-talk workflow. In the current Fedora KDE Wayland developer alpha, it can open apps and URLs, focus apps, and answer a small verified set of desktop-status commands such as time, battery, Wi-Fi, and audio state.
+Operance lets developers control a Linux desktop with natural language through a tray-first click-to-talk workflow. In the current Fedora KDE Wayland beta, it can open apps and URLs, focus apps, and answer a small verified set of desktop-status commands such as time, battery, Wi-Fi, and audio state.
 
 Under the hood, Operance is a local-first desktop action runtime for Linux desktops, with a shared portable core, per-platform adapters, and an MCP-compatible control surface. Every command flows through typed actions, validation, and policy before execution.
 
-The current MVP interaction path is tray plus click-to-talk through the repo-local `./scripts/run_mvp.sh` launcher. Wake-word and continuous voice-loop paths remain available for diagnostics and later product work, but they are not the default public alpha path.
+The current MVP interaction path is tray plus click-to-talk through the repo-local `./scripts/run_mvp.sh` launcher. Wake-word and continuous voice-loop paths remain available for diagnostics and later product work, but they are not the default public beta path.
 
 Platform roadmap:
 
@@ -21,9 +21,9 @@ The implementation stays Linux-first today. The portable core remains shared acr
 
 Windows and macOS provider scaffolds exist for adapter authors, but they are intentionally unverified and block live desktop commands until native adapters are implemented.
 
-## Developer Alpha Quickstart
+## Developer Beta Quickstart
 
-This is the primary supported public-alpha path today:
+This is the primary supported public-beta path today:
 
 ```bash
 ./scripts/install_linux_dev.sh --ui --voice
@@ -34,7 +34,7 @@ This is the primary supported public-alpha path today:
 ./scripts/run_beta_smoke.sh
 ```
 
-Try a few live commands from the verified alpha subset:
+Try a few live commands from the verified beta subset:
 
 ```bash
 OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "what time is it"
@@ -67,14 +67,14 @@ Current assumptions for that path:
 
 ## Current Public Position
 
-Operance is ready for a **Fedora KDE Wayland developer alpha** for outside developers. It is not yet a broad public desktop release.
+Operance is ready for a **Fedora KDE Wayland developer beta** for outside developers. It is not yet a broad public desktop release.
 
 - Primary supported path: source checkout with `./scripts/install_linux_dev.sh --ui --voice`, `.venv/bin/python -m operance.cli --doctor`, `./scripts/run_mvp.sh`, and `./scripts/run_beta_smoke.sh`
-- Secondary supported path: Fedora RPM install of the `mvp` runtime profile, validated through `./scripts/run_fedora_alpha_gate.sh --reset-user-services`
+- Secondary supported path: Fedora RPM install of the `mvp` runtime profile, validated through `./scripts/run_fedora_gate.sh --reset-user-services`
 - Default interaction: tray plus click-to-talk
-- Wake word and the continuous voice loop remain secondary to click-to-talk for alpha reliability
+- Wake word and the continuous voice loop remain secondary to click-to-talk for beta reliability
 - The supported Fedora package path now vendors the tray UI and STT runtime dependencies needed for the MVP tray plus click-to-talk path
-- Wake-word and TTS assets or backends remain optional and are not part of the packaged alpha support contract
+- Wake-word and TTS assets or backends remain optional and are not part of the packaged beta support contract
 - Windows and macOS are architecture targets only; their current providers are scaffolds, not supported runtimes
 
 Not yet claimed:
@@ -84,38 +84,38 @@ Not yet claimed:
 - wake-word-first as the default interaction model
 - a zero-setup consumer install story
 
-Use [docs/release/public-developer-alpha.md](docs/release/public-developer-alpha.md) for the current public handoff, [docs/release/beta-readiness.md](docs/release/beta-readiness.md) for the beta stop line, [docs/release/fedora-alpha-checklist.md](docs/release/fedora-alpha-checklist.md) for the exact Fedora gate, [docs/release/release-plan.md](docs/release/release-plan.md) for the current release sequence, [docs/requirements/linux.md](docs/requirements/linux.md) for Linux setup, packaging, and advanced diagnostics, and [docs/release/public-repo-metadata.md](docs/release/public-repo-metadata.md) for suggested GitHub About metadata.
+Use [docs/release/public-beta.md](docs/release/public-beta.md) for the current public handoff, [docs/release/beta-readiness.md](docs/release/beta-readiness.md) for the beta stop line, [docs/release/fedora-checklist.md](docs/release/fedora-checklist.md) for the exact Fedora gate, [docs/release/release-plan.md](docs/release/release-plan.md) for the current release sequence, [docs/requirements/linux.md](docs/requirements/linux.md) for Linux setup, packaging, and advanced diagnostics, and [docs/release/public-repo-metadata.md](docs/release/public-repo-metadata.md) for suggested GitHub About metadata.
 
 ## How To Contribute
 
 Anyone can contribute right now through one of these paths:
 
 - test Operance on Fedora KDE Wayland and file reproducible issues with a support bundle
-- improve onboarding, troubleshooting, and public-alpha docs
+- improve onboarding, troubleshooting, and public-beta docs
 - add tests and bug fixes that make tray plus click-to-talk more reliable
 - harden packaging, setup, doctor, and release-gate workflows
 
-This is still a founder-maintained alpha. Small, focused fixes and high-quality issue reports are more useful than broad rewrites.
+This is still a founder-maintained beta. Small, focused fixes and high-quality issue reports are more useful than broad rewrites.
 
 Start with [CONTRIBUTING.md](CONTRIBUTING.md). If you are reporting a problem instead of sending a patch, attach the output artifact from `.venv/bin/python -m operance.cli --support-bundle` whenever possible.
 
-This repository already contains the Phase 0A foundation plus the later planner, MCP, Linux-adapter, tray, voice, and release-tooling slices needed for the current developer alpha. Keep `README.md` for the public stop line and use [CHANGELOG.md](CHANGELOG.md) when you need the feature-by-feature implementation history.
+This repository already contains the Phase 0A foundation plus the later planner, MCP, Linux-adapter, tray, voice, and release-tooling slices needed for the current developer beta. Keep `README.md` for the public stop line and use [CHANGELOG.md](CHANGELOG.md) when you need the feature-by-feature implementation history.
 
 ## Current status
 
-Operance already has a coherent Linux-first developer-alpha path: a typed and validated runtime, tray plus click-to-talk MVP flow, and Fedora packaging or support tooling. For the current public alpha, the supported command surface is intentionally narrower than the full implemented runtime. Use [CHANGELOG.md](CHANGELOG.md) for the feature-by-feature implementation history.
+Operance already has a coherent Linux-first developer-beta path: a typed and validated runtime, tray plus click-to-talk MVP flow, and Fedora packaging or support tooling. For the current public beta, the supported command surface is intentionally narrower than the full implemented runtime. Use [CHANGELOG.md](CHANGELOG.md) for the feature-by-feature implementation history.
 
 What works now:
 
 - Core runtime: typed action models, deterministic intent matching, validator and policy enforcement, local audit logging, planner fallback, and MCP-compatible control surfaces.
-- Verified alpha command subset on Fedora KDE Wayland: `open <app name>` or URL targets, `focus <app name>`, `what time is it`, `what is my battery level`, `wifi status`, `what is the volume`, and `is audio muted`.
+- Verified beta command subset on Fedora KDE Wayland: `open <app name>` or URL targets, `focus <app name>`, `what time is it`, `what is my battery level`, `wifi status`, `what is the volume`, and `is audio muted`.
 - Voice and tray MVP: tray app, bounded click-to-talk, confirmation flows, last-interaction reporting, optional wake-word, STT, and TTS probe paths, plus repo-local background voice-loop support.
 - Diagnostics and support: doctor, setup actions, runnable-command catalog, runtime status resources, support snapshot, support bundle, audit inspection, and beta-smoke scripts.
-- Packaging and release gates: reproducible Linux bootstrap, source-checkout install or uninstall helpers, repo-local systemd helpers, Debian or RPM scaffolds, installed-package smoke, and the Fedora developer-alpha gate.
+- Packaging and release gates: reproducible Linux bootstrap, source-checkout install or uninstall helpers, repo-local systemd helpers, Debian or RPM scaffolds, installed-package smoke, and the Fedora gate.
 
 What is intentionally not implemented yet:
 
-This is still a developer alpha. The main remaining gaps are bundling, broader platform coverage, and deeper Linux coverage, not the absence of a basic runnable product path. Broader implemented commands remain out of the supported alpha subset until they are live-verified and graduate into `--supported-commands --supported-commands-available-only`.
+This is still a developer beta. The main remaining gaps are broader platform coverage and deeper Linux coverage, not the absence of a basic runnable product path. Broader implemented commands remain out of the supported beta subset until they are live-verified and graduate into `--supported-commands --supported-commands-available-only`.
 
 - Native package coverage beyond the current Fedora RPM `mvp` runtime path
 - A bundled Operance wake-word model and tuned default wake-word behavior
@@ -125,11 +125,11 @@ This is still a developer alpha. The main remaining gaps are bundling, broader p
 
 ## Development and Diagnostics
 
-README intentionally stays narrow for the public developer alpha. Use these docs for the deeper reference material instead of treating the README as a command inventory:
+README intentionally stays narrow for the public developer beta. Use these docs for the deeper reference material instead of treating the README as a command inventory:
 
 - [docs/requirements/linux.md](docs/requirements/linux.md) for Linux setup, packaging, systemd, planner, and optional voice diagnostics
-- [docs/release/public-developer-alpha.md](docs/release/public-developer-alpha.md) for the outside-developer handoff
-- [docs/release/fedora-alpha-checklist.md](docs/release/fedora-alpha-checklist.md) for the Fedora release gate
+- [docs/release/public-beta.md](docs/release/public-beta.md) for the outside-developer handoff
+- [docs/release/fedora-checklist.md](docs/release/fedora-checklist.md) for the Fedora release gate
 - [CONTRIBUTING.md](CONTRIBUTING.md) for contributor workflow and verification expectations
 
 ## Open-source baseline
@@ -149,8 +149,8 @@ The repo now also includes a baseline public-project trust surface:
   portable-core versus platform-adapter boundary
 - [docs/architecture/adapter-authoring.md](docs/architecture/adapter-authoring.md)
   for the current provider and adapter extension contract
-- [docs/release/fedora-alpha-checklist.md](docs/release/fedora-alpha-checklist.md)
-  for the current Fedora KDE alpha release gate and stop line
+- [docs/release/fedora-checklist.md](docs/release/fedora-checklist.md)
+  for the current Fedora KDE release gate and stop line
 - [docs/requirements/linux.md](docs/requirements/linux.md) for Linux machine
   setup and live integration status
 - `.github/workflows/ci.yml`, which runs the full test suite, minimal CLI smoke
@@ -391,9 +391,9 @@ Install the native package build tools used by those helpers:
 ./scripts/install_packaging_tools.sh --rpm --dry-run
 ```
 
-The RPM helper now copies the built artifact back into `dist/package-artifacts/rpm/`, so the install helper can consume the documented path directly instead of reaching into the rpmbuild staging tree. That copy step now tolerates Fedora-style internal filenames like `operance-0.1.0-1.fc43.noarch.rpm` while still writing the documented normalized output path. The Fedora release and alpha gate helpers now also fail fast with `./scripts/install_packaging_tools.sh --rpm` when `rpmbuild` is missing, so packaging-host blockers are surfaced before the longer gate steps start.
+The RPM helper now copies the built artifact back into `dist/package-artifacts/rpm/`, so the install helper can consume the documented path directly instead of reaching into the rpmbuild staging tree. That copy step now tolerates Fedora-style internal filenames like `operance-0.1.0-1.fc43.noarch.rpm` while still writing the documented normalized output path. The Fedora release gate helpers now also fail fast with `./scripts/install_packaging_tools.sh --rpm` when `rpmbuild` is missing, so packaging-host blockers are surfaced before the longer gate steps start.
 
-The current Fedora `mvp` package installs `/usr/bin/operance`, the packaged Python source tree, and the tray UI plus STT Python runtime needed for the alpha click-to-talk path under `/usr/lib/operance`. The packaged command defaults to live Linux adapters (`OPERANCE_DEVELOPER_MODE=0`), so `operance --transcript "open firefox"` and tray click-to-talk should affect the desktop instead of returning simulated success. Wake-word and TTS assets remain optional and outside the packaged alpha contract.
+The current Fedora `mvp` package installs `/usr/bin/operance`, the packaged Python source tree, and the tray UI plus STT Python runtime needed for the beta click-to-talk path under `/usr/lib/operance`. The packaged command defaults to live Linux adapters (`OPERANCE_DEVELOPER_MODE=0`), so `operance --transcript "open firefox"` and tray click-to-talk should affect the desktop instead of returning simulated success. Wake-word and TTS assets remain optional and outside the packaged beta contract.
 
 Install a built native package artifact:
 
@@ -425,12 +425,12 @@ Run the full Fedora-first release gate from a checkout:
 ./scripts/run_fedora_release_smoke.sh --support-bundle-out /tmp/operance-release-support.tar.gz --dry-run
 ```
 
-Run the full Fedora developer-alpha gate from a checkout:
+Run the full Fedora gate from a checkout:
 
 ```bash
-./scripts/run_fedora_alpha_gate.sh --dry-run
-./scripts/run_fedora_alpha_gate.sh --reset-user-services --dry-run
-./scripts/run_fedora_alpha_gate.sh --support-bundle-out /tmp/operance-release-support.tar.gz --dry-run
+./scripts/run_fedora_gate.sh --dry-run
+./scripts/run_fedora_gate.sh --reset-user-services --dry-run
+./scripts/run_fedora_gate.sh --support-bundle-out /tmp/operance-release-support.tar.gz --dry-run
 ```
 
 Run the beta-readiness gate from a checkout:
@@ -529,7 +529,7 @@ python3 -m operance.cli --tray-run
 
 ## CLI
 
-Most developers only need `--version`, `--doctor`, `--supported-commands --supported-commands-available-only`, `--transcript`, `--mvp-launch`, and `--support-bundle`. In the current developer alpha, `--supported-commands --supported-commands-available-only` is intentionally conservative: it prints only the commands that are both environment-ready and release-verified for the Fedora KDE Wayland target. The rest of this section is the lower-level CLI reference surface.
+Most developers only need `--version`, `--doctor`, `--supported-commands --supported-commands-available-only`, `--transcript`, `--mvp-launch`, and `--support-bundle`. In the current developer beta, `--supported-commands --supported-commands-available-only` is intentionally conservative: it prints only the commands that are both environment-ready and release-verified for the Fedora KDE Wayland target. The rest of this section is the lower-level CLI reference surface.
 
 Print the effective config:
 

@@ -16,9 +16,9 @@ dry_run=0
 
 usage() {
     cat <<'EOF'
-Usage: scripts/run_fedora_alpha_gate.sh [options]
+Usage: scripts/run_fedora_gate.sh [options]
 
-Run the current Fedora developer-alpha gate from a source checkout.
+Run the current Fedora release gate from a source checkout.
 
 Options:
   --python PATH                    Python executable to use for pytest and beta smoke.
@@ -51,7 +51,7 @@ require_release_prerequisites() {
         fail "rpmbuild not found; install RPM packaging tools with ./scripts/install_packaging_tools.sh --rpm"
     fi
     if ! command -v dnf >/dev/null 2>&1; then
-        fail "dnf not found; run this Fedora alpha gate on a host with dnf available"
+        fail "dnf not found; run this Fedora gate on a host with dnf available"
     fi
 }
 

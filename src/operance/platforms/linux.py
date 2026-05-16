@@ -23,7 +23,7 @@ from .base import (
 )
 
 
-CURRENT_RELEASE_VERIFICATION_TARGET = "fedora_kde_wayland_developer_alpha"
+CURRENT_RELEASE_VERIFICATION_TARGET = "fedora_kde_wayland_beta"
 CURRENT_RELEASE_VERIFIED_TOOLS = frozenset(
     {
         ToolName.APPS_FOCUS,
@@ -1106,7 +1106,7 @@ def _build_setup_actions(
     install_rpm_packaging_tools_command = "./scripts/install_packaging_tools.sh --rpm"
     run_beta_readiness_gate_command = "./scripts/run_beta_readiness_gate.sh"
     run_installed_desktop_smoke_command = "./scripts/run_installed_desktop_smoke.sh"
-    run_fedora_alpha_gate_command = "./scripts/run_fedora_alpha_gate.sh --reset-user-services"
+    run_fedora_gate_command = "./scripts/run_fedora_gate.sh --reset-user-services"
     run_installed_rpm_beta_smoke_command = shlex.join(
         [
             "./scripts/run_installed_beta_smoke.sh",
@@ -1618,9 +1618,9 @@ def _build_setup_actions(
             blocker_checks=("linux_platform", "systemctl_user_available"),
         ),
         build_action(
-            action_id="run_fedora_alpha_gate",
-            label="Run Fedora alpha gate",
-            command=run_fedora_alpha_gate_command,
+            action_id="run_fedora_gate",
+            label="Run Fedora gate",
+            command=run_fedora_gate_command,
             available=(
                 linux_ready
                 and str(checks_by_name.get("python_3_12_plus", {}).get("status")) == "ok"
@@ -1629,7 +1629,7 @@ def _build_setup_actions(
                 and str(checks_by_name.get("rpm_packaging_cli_available", {}).get("status")) == "ok"
                 and str(checks_by_name.get("rpm_package_installer_available", {}).get("status")) == "ok"
             ),
-            recommended=run_fedora_alpha_gate_command in recommended_set,
+            recommended=run_fedora_gate_command in recommended_set,
             blocker_checks=(
                 "linux_platform",
                 "python_3_12_plus",
@@ -2061,12 +2061,12 @@ def _build_setup_next_steps(
         and str(checks_by_name.get("rpm_packaging_cli_available", {}).get("status")) == "ok"
         and str(checks_by_name.get("rpm_package_installer_available", {}).get("status")) == "ok"
     )
-    fedora_alpha_gate_ready = (
+    fedora_gate_ready = (
         fedora_release_smoke_ready
         and str(checks_by_name.get("python_3_12_plus", {}).get("status")) == "ok"
         and str(checks_by_name.get("virtualenv_active", {}).get("status")) == "ok"
     )
-    if fedora_alpha_gate_ready:
+    if fedora_gate_ready:
         insert_index = 3 if tray_run_ready else 2 if click_to_talk_ready else 0
         next_steps.insert(
             insert_index,
@@ -2085,8 +2085,8 @@ def _build_setup_next_steps(
         next_steps.insert(
             insert_index + 2,
             PlatformSetupNextStep(
-                label="Run Fedora alpha gate",
-                command="./scripts/run_fedora_alpha_gate.sh --reset-user-services",
+                label="Run Fedora gate",
+                command="./scripts/run_fedora_gate.sh --reset-user-services",
             ),
         )
     elif fedora_release_smoke_ready:

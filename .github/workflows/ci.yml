@@ -59,4 +59,4 @@ jobs:
           bash scripts/build_package_artifacts.sh --rpm --dry-run > /dev/null
           bash scripts/run_installed_beta_smoke.sh --dry-run > /dev/null
           bash scripts/run_fedora_release_smoke.sh --dry-run > /dev/null
-          bash scripts/run_fedora_alpha_gate.sh --dry-run > /dev/null
+          bash scripts/run_fedora_gate.sh --dry-run > /dev/null

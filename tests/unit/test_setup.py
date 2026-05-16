@@ -314,7 +314,7 @@ def test_build_setup_snapshot_reports_partial_ready_state() -> None:
         "build_rpm_package_artifact",
         "run_beta_readiness_gate",
         "run_installed_desktop_smoke",
-        "run_fedora_alpha_gate",
+        "run_fedora_gate",
         "run_fedora_release_smoke",
         "install_deb_package_artifact",
         "install_rpm_package_artifact",
@@ -2564,11 +2564,11 @@ def test_build_setup_snapshot_exposes_package_actions_when_tooling_is_ready(
         "label": "Run installed desktop smoke",
         "recommended": False,
     }
-    assert actions["run_fedora_alpha_gate"] == {
-        "action_id": "run_fedora_alpha_gate",
+    assert actions["run_fedora_gate"] == {
+        "action_id": "run_fedora_gate",
         "available": True,
-        "command": "./scripts/run_fedora_alpha_gate.sh --reset-user-services",
-        "label": "Run Fedora alpha gate",
+        "command": "./scripts/run_fedora_gate.sh --reset-user-services",
+        "label": "Run Fedora gate",
         "recommended": False,
     }
     assert actions["install_deb_package_artifact"]["available"] is False
@@ -2692,7 +2692,7 @@ def test_build_setup_snapshot_exposes_package_install_and_uninstall_actions(
     }
 
 
-def test_build_setup_snapshot_exposes_fedora_alpha_gate_next_step_when_checkout_and_packaging_are_ready() -> None:
+def test_build_setup_snapshot_exposes_fedora_gate_next_step_when_checkout_and_packaging_are_ready() -> None:
     from operance.ui import build_setup_snapshot
 
     snapshot = build_setup_snapshot(
@@ -2728,9 +2728,9 @@ def test_build_setup_snapshot_exposes_fedora_alpha_gate_next_step_when_checkout_
         "label": "Run installed desktop smoke",
         "command": "./scripts/run_installed_desktop_smoke.sh",
     }
-    assert next_steps["Run Fedora alpha gate"] == {
-        "label": "Run Fedora alpha gate",
-        "command": "./scripts/run_fedora_alpha_gate.sh --reset-user-services",
+    assert next_steps["Run Fedora gate"] == {
+        "label": "Run Fedora gate",
+        "command": "./scripts/run_fedora_gate.sh --reset-user-services",
     }
 
 

@@ -8,8 +8,9 @@ Audience: Maintainers, contributors
 
 ## 1. Position
 
-Operance is not beta yet. It is close enough that the work should now be
-organized around beta-readiness batches rather than isolated alpha fixes.
+Operance is now targeting the first Fedora KDE Wayland developer beta. Beta
+work should stay organized around release-quality batches instead of isolated
+polish fixes.
 
 For this project, beta means:
 
@@ -39,7 +40,7 @@ That gate runs:
 - the full unit test suite
 - the old-brand reference guard
 - the source-checkout beta smoke
-- the reset-aware Fedora alpha package gate in dry-run mode
+- the reset-aware Fedora package gate in dry-run mode
 - the installed desktop smoke checklist in dry-run mode
 
 Before tagging a beta candidate, run the full package gate as well:
