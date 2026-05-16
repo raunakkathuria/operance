@@ -75,10 +75,13 @@ random commands.”
 
 That work should focus on:
 
+- keeping fresh `mvp` RPM rebuilds repeatable before every beta candidate
 - tightening the packaged tray plus click-to-talk path after the `mvp` runtime gate
 - widening the release-verified command subset one command family at a time
 - keeping tray plus click-to-talk reliable from the installed product
 - improving outside-developer onboarding and failure capture
+- keeping Windows and macOS as scaffolded adapter targets until native adapters
+  and release gates exist
 
 ---
 
@@ -96,7 +99,7 @@ Do not treat these as blockers for `v0.1.0-alpha.1`:
 
 ## 6. Recommended Next Maintainer Step
 
-After `v0.1.0-alpha.4`:
+After `v0.1.0-alpha.5`:
 
 1. work in larger beta-readiness batches
 2. keep each batch behind a PR and release-quality validation

@@ -50,6 +50,12 @@ Before tagging a beta candidate, run the full package gate as well:
 
 The full package gate keeps the RPM installed so the installed desktop smoke and
 manual tray click-to-talk checks can run against the same package payload.
+Fresh beta-candidate package rebuilds must also pass:
+
+```bash
+./scripts/build_package_artifacts.sh --rpm --bundle-profile mvp
+rpm -Kv dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm
+```
 
 Use `--support-bundle-out <path>` when the gate is being run for a release
 handoff and the source-checkout smoke should write a predictable support bundle
@@ -75,6 +81,8 @@ The first beta should require all of the following:
 
 - `./scripts/run_beta_readiness_gate.sh --run-package-gate` passes on the target
   Fedora KDE Wayland machine
+- a fresh `./scripts/build_package_artifacts.sh --rpm --bundle-profile mvp`
+  rebuild completes and the normalized RPM passes `rpm -Kv`
 - a fresh installed RPM can launch the tray app from the desktop session
 - `./scripts/run_installed_desktop_smoke.sh` passes against that installed RPM
 - tray click-to-talk can open Firefox from a spoken command
@@ -83,6 +91,8 @@ The first beta should require all of the following:
   commands that have been smoke-tested on the target machine
 - README and Linux docs describe only the supported beta path, with deeper
   diagnostics kept in the Linux requirements document
+- Windows and macOS remain clearly documented as unverified provider scaffolds
+  until native adapters and release gates exist
 
 Manual desktop-session checks remain part of the stop line because microphone
 capture, KDE tray state, and real app launching cannot be fully proven in CI.

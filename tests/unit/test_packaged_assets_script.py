@@ -237,6 +237,64 @@ def test_packaged_assets_script_can_bundle_mvp_runtime_from_source_site_packages
     )
 
 
+def test_packaged_assets_script_strips_native_library_execute_bits_and_resolves_symlinks(
+    tmp_path: Path,
+) -> None:
+    output_dir = tmp_path / "packaged-assets"
+    source_site_packages = tmp_path / "source-site-packages"
+    qt_lib_dir = source_site_packages / "PySide6" / "Qt" / "lib"
+    source_site_packages.mkdir()
+    qt_lib_dir.mkdir(parents=True)
+    native_lib = qt_lib_dir / "libQt6Core.so.6"
+    native_lib.write_text("native library", encoding="utf-8")
+    native_lib.chmod(0o755)
+    (qt_lib_dir / "libQt6Core.so").symlink_to(native_lib.name)
+
+    _write_fake_distribution(
+        source_site_packages,
+        name="PySide6",
+        package_dir="PySide6",
+        requires=["shiboken6"],
+        extra_files=[
+            ("PySide6/Qt/lib/libQt6Core.so.6", "native library", 0o755),
+            ("PySide6/Qt/lib/libQt6Widgets.so.6", "widgets library", 0o755),
+        ],
+    )
+    record_path = source_site_packages / "PySide6-1.0.dist-info" / "RECORD"
+    record_path.write_text(
+        record_path.read_text(encoding="utf-8")
+        + "PySide6/Qt/lib/libQt6Core.so,,\n",
+        encoding="utf-8",
+    )
+    _write_fake_distribution(source_site_packages, name="shiboken6", package_dir="shiboken6")
+    _write_fake_distribution(
+        source_site_packages,
+        name="moonshine-voice",
+        package_dir="moonshine_voice",
+    )
+
+    _run_render_script(
+        "--output-dir",
+        str(output_dir),
+        "--bundle-profile",
+        "mvp",
+        "--bundle-python",
+        sys.executable,
+        "--bundle-source-site-packages",
+        str(source_site_packages),
+    )
+
+    packaged_site_packages = output_dir / "lib" / "operance" / "site-packages"
+    packaged_native_lib = packaged_site_packages / "PySide6" / "Qt" / "lib" / "libQt6Core.so.6"
+    packaged_resolved_link = packaged_site_packages / "PySide6" / "Qt" / "lib" / "libQt6Core.so"
+
+    assert packaged_native_lib.exists()
+    assert packaged_resolved_link.exists()
+    assert not packaged_resolved_link.is_symlink()
+    assert not os.access(packaged_native_lib, os.X_OK)
+    assert not os.access(packaged_resolved_link, os.X_OK)
+
+
 def test_packaged_voice_loop_launcher_can_load_args_file_and_forward_extra_args(tmp_path: Path) -> None:
     output_dir = tmp_path / "packaged-assets"
     fake_entrypoint = tmp_path / "bin" / "operance"

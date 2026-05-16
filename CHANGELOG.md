@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Hardened the `mvp` bundled-runtime packager so RECORD symlink entries are copied into stable package paths while bundled native libraries remain non-executable for the noarch RPM payload, preventing PySide6 shared-library failures during fresh RPM rebuilds.
+- Added explicit unverified Windows and macOS platform-provider scaffolds, giving future OS adapters a stable readiness and release-verification seam without claiming live desktop automation support yet.
+- Updated beta-readiness and architecture docs to make the current stop line explicit: Linux/Fedora KDE Wayland is the supported runtime target, while Windows and macOS remain scaffolded future adapter targets.
 - Changed tray voice-loop warning behavior so a missing continuous-loop status file does not suppress click-to-talk result notifications in the packaged MVP path.
 - Changed installed desktop smoke to enable and start the packaged tray user service before checking status, so inactive tray services fail before manual click-to-talk checks.
 - Fixed the full beta-readiness package gate so it keeps the RPM installed before running installed desktop smoke, and added an RPM changelog entry to avoid source-date build warnings.

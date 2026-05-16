@@ -114,9 +114,10 @@ def _copy_distribution_tree(
     copied_files: set[Path],
 ) -> None:
     for relative_entry in distribution.files or []:
-        source_path = Path(distribution.locate_file(relative_entry)).resolve()
+        raw_source_path = Path(distribution.locate_file(relative_entry))
+        source_path = raw_source_path.resolve()
         try:
-            relative_path = source_path.relative_to(source_site_packages)
+            relative_path = raw_source_path.relative_to(source_site_packages)
         except ValueError:
             continue
         destination_path = output_dir / relative_path
@@ -130,7 +131,6 @@ def _copy_distribution_tree(
         destination_mode = destination_path.stat().st_mode
         destination_path.chmod(destination_mode & ~0o111)
         copied_files.add(destination_path)
-
 
 
 def main() -> int:

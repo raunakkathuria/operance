@@ -68,6 +68,8 @@ the portable core:
 Current provider modules:
 
 - `src/operance/platforms/linux.py`
+- `src/operance/platforms/windows.py`
+- `src/operance/platforms/macos.py`
 - `src/operance/platforms/unsupported.py`
 
 That split is intentional:
@@ -75,8 +77,10 @@ That split is intentional:
 - the portable core keeps one shared tool and safety model
 - providers decide what the current host can support without rewriting core
   planner, validator, daemon, or MCP code
-- future Windows and macOS work should start with a provider plus adapters, not
-  with new branching in `doctor.py`, `supported_commands.py`, or `ui/setup.py`
+- Windows and macOS currently have unverified provider scaffolds only
+- future live Windows and macOS work should add native adapters behind those
+  providers, not new branching in `doctor.py`, `supported_commands.py`, or
+  `ui/setup.py`
 
 Read [adapter-authoring.md](./adapter-authoring.md) before widening the
 cross-platform surface.
