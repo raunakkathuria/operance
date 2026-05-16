@@ -42,6 +42,12 @@ Apply these engineering principles in every slice:
 - `YAGNI`: do not add future-phase abstractions, options, or integrations before the current milestone needs them.
 - `DRY`: remove duplication when it improves clarity, but do not force premature abstractions that make a small slice harder to follow.
 
+Treat these principles as active acceptance criteria, not background advice.
+Before implementing, identify the smallest runnable change that preserves the
+portable-core, provider, and adapter boundaries. During review, reject designs
+that add speculative abstraction, duplicate platform logic in the core, or
+generalize beyond the current tested requirement.
+
 ## Testing Guidelines
 
 Use `pytest` and follow TDD: write or update a failing test first, implement the smallest fix, then rerun `.venv/bin/python -m pytest`. Name tests `test_<behavior>.py` and keep them under `tests/unit/`. Add regression coverage for new CLI flags, planner contracts, validator rules, and adapter-facing executor behavior.
@@ -73,11 +79,17 @@ Keep `README.md`, `docs/requirements/linux.md`, and `CHANGELOG.md` in sync with 
 
 Before calling a feature complete:
 
+- confirm the portable core remains decoupled from OS-native adapters
+- confirm platform readiness or setup behavior lives in platform providers, not shared core modules
+- confirm OS-native execution details stay in adapters
+- confirm the implementation follows `KISS`, `YAGNI`, and `DRY`
 - update relevant documentation, or explicitly state that no documentation change is needed and why
 - ensure `README.md` reflects any changed public/user workflow
 - ensure `docs/requirements/linux.md` reflects any changed Linux setup, packaging, service, or integration behavior
 - ensure `CHANGELOG.md` records completed implementation slices
 - verify docs do not claim unsupported or untested behavior
+- run the relevant tests, including architecture-boundary tests when provider,
+  adapter, or core boundaries are touched
 
 When using Codex or other coding agents on this repo, treat these as enforcement rules:
 
@@ -85,3 +97,5 @@ When using Codex or other coding agents on this repo, treat these as enforcement
 - require failing-test-first behavior for non-trivial changes
 - require docs updates in the same change when behavior or workflow changes
 - reject speculative abstractions unless the current tests or current Linux integration path need them
+- reject changes that put platform transport details into portable core modules
+- reject feature completion if architecture, tests, or docs are not verified
