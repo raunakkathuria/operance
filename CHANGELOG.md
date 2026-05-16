@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added `operance --installed-smoke`, a package-local installed runtime diagnostic that checks live-mode config, packaged desktop or user-unit files, tray/STT runtime availability, tray service state, stale source-checkout service shadowing, and concrete next-step commands.
+- Wired installed package and desktop smoke scripts to run `operance --installed-smoke`, so release gates validate the same diagnostic users can run after installing the RPM.
 - Promoted the current public handoff docs and release verification target to the Fedora KDE Wayland developer release path, with versioned release notes and an explicit support contract.
 - Renamed the Fedora checkout release gate to the stable `scripts/run_fedora_gate.sh` surface and removed the old phase-named gate instead of keeping a pre-public compatibility wrapper.
 - Hardened the `mvp` bundled-runtime packager so RECORD symlink entries are copied into stable package paths while bundled native libraries remain non-executable for the noarch RPM payload, preventing PySide6 shared-library failures during fresh RPM rebuilds.

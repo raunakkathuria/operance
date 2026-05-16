@@ -110,6 +110,7 @@ Success means all of the following are true:
 - `operance --version` runs from the installed command
 - `operance --doctor` runs from the installed command
 - `operance --print-config` reports `"developer_mode": false`
+- `operance --installed-smoke` runs from the installed command and reports package-local next steps
 - `scripts/check_installed_mvp_runtime.py --command operance` passes
 - the runnable supported-command subset can be projected from the installed command
 - the installed command can write a support bundle

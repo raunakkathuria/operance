@@ -20,6 +20,7 @@ Do not use this template for security issues. Follow `SECURITY.md` instead.
 - Python version:
 - Install method:
 - Developer mode or live adapters:
+- Installed smoke, if using an RPM (`operance --installed-smoke`):
 
 ## Reproduction
 
@@ -40,6 +41,7 @@ Describe what happened instead.
 - [ ] `.venv/bin/python -m pytest`
 - [ ] `.venv/bin/python -m operance.cli --version`
 - [ ] `.venv/bin/python -m operance.cli --doctor`
+- [ ] `operance --installed-smoke` when reporting an installed package issue
 - [ ] `.venv/bin/python -m operance.cli --support-bundle`
 
 ## Notes

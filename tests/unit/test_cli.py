@@ -806,6 +806,45 @@ def test_cli_doctor_prints_environment_report(capsys) -> None:
     assert "checks" in payload
 
 
+def test_cli_installed_smoke_prints_payload_and_returns_success(monkeypatch, capsys) -> None:
+    class _FakeInstalledSmokeResult:
+        status = "ok"
+
+        def to_dict(self) -> dict[str, object]:
+            return {"status": "ok", "checks": [], "next_steps": [], "manual_checks": []}
+
+    monkeypatch.setattr("operance.cli.build_installed_smoke_result", lambda **kwargs: _FakeInstalledSmokeResult())
+
+    exit_code = main(["--installed-smoke"])
+
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert json.loads(captured.out) == {
+        "checks": [],
+        "manual_checks": [],
+        "next_steps": [],
+        "status": "ok",
+    }
+
+
+def test_cli_installed_smoke_returns_failure_when_smoke_fails(monkeypatch, capsys) -> None:
+    class _FakeInstalledSmokeResult:
+        status = "failed"
+
+        def to_dict(self) -> dict[str, object]:
+            return {"status": "failed", "checks": [], "next_steps": ["operance --support-bundle"], "manual_checks": []}
+
+    monkeypatch.setattr("operance.cli.build_installed_smoke_result", lambda **kwargs: _FakeInstalledSmokeResult())
+
+    exit_code = main(["--installed-smoke"])
+
+    captured = capsys.readouterr()
+
+    assert exit_code == 1
+    assert json.loads(captured.out)["status"] == "failed"
+
+
 def test_cli_support_snapshot_prints_aggregated_debug_payload(monkeypatch, capsys) -> None:
     snapshot = {
         "doctor": {
