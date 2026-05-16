@@ -11,13 +11,13 @@ dry_run=0
 
 usage() {
     cat <<'EOF'
-Usage: scripts/run_beta_readiness_gate.sh [options]
+Usage: scripts/run_release_readiness_gate.sh [options]
 
-Run the current beta-readiness gate from a source checkout.
+Run the current release-readiness gate from a source checkout.
 
 Options:
   --python PATH              Python executable to use. Defaults to .venv/bin/python.
-  --support-bundle-out PATH  Forward an output path to the source-checkout beta smoke.
+  --support-bundle-out PATH  Forward an output path to the source-checkout smoke.
   --run-package-gate         Run the full reset-aware Fedora package gate instead of
                              only dry-running it.
   --dry-run                  Print the gate commands without executing them.
@@ -105,13 +105,13 @@ cd "${repo_root}"
 run_step "${python_bin} -m pytest" "${python_bin}" "-m" "pytest"
 run_old_brand_guard
 
-beta_smoke_display="./scripts/run_beta_smoke.sh --python ${python_bin}"
-beta_smoke_args=("./scripts/run_beta_smoke.sh" "--python" "${python_bin}")
+checkout_smoke_display="./scripts/run_checkout_smoke.sh --python ${python_bin}"
+checkout_smoke_args=("./scripts/run_checkout_smoke.sh" "--python" "${python_bin}")
 if [[ -n "${support_bundle_out}" ]]; then
-    beta_smoke_display="${beta_smoke_display} --support-bundle-out ${support_bundle_out}"
-    beta_smoke_args+=("--support-bundle-out" "${support_bundle_out}")
+    checkout_smoke_display="${checkout_smoke_display} --support-bundle-out ${support_bundle_out}"
+    checkout_smoke_args+=("--support-bundle-out" "${support_bundle_out}")
 fi
-run_step "${beta_smoke_display}" bash "${beta_smoke_args[@]}"
+run_step "${checkout_smoke_display}" bash "${checkout_smoke_args[@]}"
 
 package_gate_display="./scripts/run_fedora_gate.sh --reset-user-services"
 package_gate_args=("./scripts/run_fedora_gate.sh" "--reset-user-services")

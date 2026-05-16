@@ -21,7 +21,7 @@ Usage: scripts/run_fedora_gate.sh [options]
 Run the current Fedora release gate from a source checkout.
 
 Options:
-  --python PATH                    Python executable to use for pytest and beta smoke.
+  --python PATH                    Python executable to use for pytest and source-checkout smoke.
                                    Defaults to .venv/bin/python.
   --support-bundle-out PATH        Forward an output path to the installed-package
                                    support-bundle step in the release smoke helper.
@@ -135,13 +135,13 @@ cd "${repo_root}"
 
 run_step "${python_bin} -m pytest" "${python_bin}" "-m" "pytest"
 
-beta_smoke_display="./scripts/run_beta_smoke.sh --python ${python_bin}"
-beta_smoke_args=("./scripts/run_beta_smoke.sh" "--python" "${python_bin}")
+checkout_smoke_display="./scripts/run_checkout_smoke.sh --python ${python_bin}"
+checkout_smoke_args=("./scripts/run_checkout_smoke.sh" "--python" "${python_bin}")
 if [[ "${dry_run}" -eq 1 ]]; then
-    beta_smoke_display="${beta_smoke_display} --dry-run"
-    beta_smoke_args+=("--dry-run")
+    checkout_smoke_display="${checkout_smoke_display} --dry-run"
+    checkout_smoke_args+=("--dry-run")
 fi
-run_step "${beta_smoke_display}" bash "${beta_smoke_args[@]}"
+run_step "${checkout_smoke_display}" bash "${checkout_smoke_args[@]}"
 
 release_smoke_display="./scripts/run_fedora_release_smoke.sh --bundle-profile ${bundle_profile}"
 release_smoke_args=("./scripts/run_fedora_release_smoke.sh" "--bundle-profile" "${bundle_profile}")

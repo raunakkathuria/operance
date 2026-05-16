@@ -207,7 +207,7 @@ Therefore, macOS work should focus on portable core logic and simulated platform
 ## 10. Licensing and packaging cautions
 
 - `openWakeWord` code is Apache-2.0, but bundled pre-trained models carry non-commercial restrictions. ([github.com](https://github.com/dscripka/openWakeWord))
-- `moonshine-voice` is currently alpha, and model licensing differs by language. ([pypi.org](https://pypi.org/project/moonshine-voice/))
+- `moonshine-voice` is currently early-stage, and model licensing differs by language. ([pypi.org](https://pypi.org/project/moonshine-voice/))
 - Commercial builds must not silently depend on non-commercial assets.
 
 ---

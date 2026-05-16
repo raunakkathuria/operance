@@ -312,13 +312,13 @@ def test_build_setup_snapshot_reports_partial_ready_state() -> None:
         "install_rpm_packaging_tools",
         "build_deb_package_artifact",
         "build_rpm_package_artifact",
-        "run_beta_readiness_gate",
+        "run_release_readiness_gate",
         "run_installed_desktop_smoke",
         "run_fedora_gate",
         "run_fedora_release_smoke",
         "install_deb_package_artifact",
         "install_rpm_package_artifact",
-        "run_installed_rpm_beta_smoke",
+        "run_installed_rpm_package_smoke",
         "uninstall_deb_package",
         "uninstall_rpm_package",
     ]
@@ -512,7 +512,7 @@ def test_build_setup_snapshot_reports_partial_ready_state() -> None:
     assert actions["run_fedora_release_smoke"]["available"] is False
     assert actions["install_deb_package_artifact"]["available"] is False
     assert actions["install_rpm_package_artifact"]["available"] is False
-    assert actions["run_installed_rpm_beta_smoke"]["available"] is False
+    assert actions["run_installed_rpm_package_smoke"]["available"] is False
     assert actions["uninstall_deb_package"]["available"] is False
     assert actions["uninstall_rpm_package"]["available"] is False
 
@@ -2550,11 +2550,11 @@ def test_build_setup_snapshot_exposes_package_actions_when_tooling_is_ready(
         "label": "Run Fedora release smoke",
         "recommended": False,
     }
-    assert actions["run_beta_readiness_gate"] == {
-        "action_id": "run_beta_readiness_gate",
+    assert actions["run_release_readiness_gate"] == {
+        "action_id": "run_release_readiness_gate",
         "available": True,
-        "command": "./scripts/run_beta_readiness_gate.sh",
-        "label": "Run beta readiness gate",
+        "command": "./scripts/run_release_readiness_gate.sh",
+        "label": "Run release readiness gate",
         "recommended": False,
     }
     assert actions["run_installed_desktop_smoke"] == {
@@ -2573,7 +2573,7 @@ def test_build_setup_snapshot_exposes_package_actions_when_tooling_is_ready(
     }
     assert actions["install_deb_package_artifact"]["available"] is False
     assert actions["install_rpm_package_artifact"]["available"] is False
-    assert actions["run_installed_rpm_beta_smoke"]["available"] is False
+    assert actions["run_installed_rpm_package_smoke"]["available"] is False
 
 
 def test_build_setup_snapshot_exposes_package_install_and_uninstall_actions(
@@ -2658,14 +2658,14 @@ def test_build_setup_snapshot_exposes_package_install_and_uninstall_actions(
         "label": "Install RPM packaging tools",
         "recommended": True,
     }
-    assert actions["run_installed_rpm_beta_smoke"] == {
-        "action_id": "run_installed_rpm_beta_smoke",
+    assert actions["run_installed_rpm_package_smoke"] == {
+        "action_id": "run_installed_rpm_package_smoke",
         "available": True,
         "command": (
-            f"./scripts/run_installed_beta_smoke.sh --package {rpm_artifact} --installer dnf "
+            f"./scripts/run_installed_package_smoke.sh --package {rpm_artifact} --installer dnf "
             "--require-mvp-runtime --reset-user-services --uninstall-after"
         ),
-        "label": "Run installed RPM beta smoke",
+        "label": "Run installed RPM package smoke",
         "recommended": False,
     }
     assert actions["run_fedora_release_smoke"] == {
@@ -2720,9 +2720,9 @@ def test_build_setup_snapshot_exposes_fedora_gate_next_step_when_checkout_and_pa
 
     next_steps = _next_step_map(snapshot.to_dict())
 
-    assert next_steps["Run beta readiness gate"] == {
-        "label": "Run beta readiness gate",
-        "command": "./scripts/run_beta_readiness_gate.sh",
+    assert next_steps["Run release readiness gate"] == {
+        "label": "Run release readiness gate",
+        "command": "./scripts/run_release_readiness_gate.sh",
     }
     assert next_steps["Run installed desktop smoke"] == {
         "label": "Run installed desktop smoke",
@@ -2769,10 +2769,10 @@ def test_build_setup_snapshot_prefers_installed_rpm_smoke_next_step_when_artifac
 
     next_steps = _next_step_map(snapshot.to_dict())
 
-    assert next_steps["Run installed RPM beta smoke"] == {
-        "label": "Run installed RPM beta smoke",
+    assert next_steps["Run installed RPM package smoke"] == {
+        "label": "Run installed RPM package smoke",
         "command": (
-            f"./scripts/run_installed_beta_smoke.sh --package {rpm_artifact} "
+            f"./scripts/run_installed_package_smoke.sh --package {rpm_artifact} "
             "--installer dnf --require-mvp-runtime --reset-user-services --uninstall-after"
         ),
     }

@@ -1,6 +1,6 @@
-# Beta Readiness
+# Release Readiness
 
-Status: Current beta target  
+Status: Current release target  
 Type: Release criteria  
 Audience: Maintainers, contributors
 
@@ -8,11 +8,11 @@ Audience: Maintainers, contributors
 
 ## 1. Position
 
-Operance is now targeting the first Fedora KDE Wayland developer beta. Beta
-work should stay organized around release-quality batches instead of isolated
-polish fixes.
+Operance is targeting a narrow Fedora KDE Wayland developer release. Release
+work should stay organized around coherent, validated batches instead of
+isolated polish fixes.
 
-For this project, beta means:
+For this project, release-ready means:
 
 - a new Fedora KDE Wayland developer can install, run, and validate the product
   from documented commands
@@ -22,36 +22,36 @@ For this project, beta means:
 - support bundles and setup output are sufficient for maintainers to debug most
   external reports
 
-Beta does not mean broad distro support, Windows or macOS support, or a
-consumer-grade zero-setup installer.
+Release-ready does not mean broad distro support, Windows or macOS support, or
+a consumer-grade zero-setup installer.
 
 ---
 
-## 2. Current Beta Gate
+## 2. Current Gate
 
-Use the fast beta-readiness gate during normal development:
+Use the fast release-readiness gate during normal development:
 
 ```bash
-./scripts/run_beta_readiness_gate.sh
+./scripts/run_release_readiness_gate.sh
 ```
 
 That gate runs:
 
 - the full unit test suite
 - the old-brand reference guard
-- the source-checkout beta smoke
+- the source-checkout smoke
 - the reset-aware Fedora package gate in dry-run mode
 - the installed desktop smoke checklist in dry-run mode
 
-Before tagging a beta candidate, run the full package gate as well:
+Before tagging a release candidate, run the full package gate as well:
 
 ```bash
-./scripts/run_beta_readiness_gate.sh --run-package-gate
+./scripts/run_release_readiness_gate.sh --run-package-gate
 ```
 
 The full package gate keeps the RPM installed so the installed desktop smoke and
 manual tray click-to-talk checks can run against the same package payload.
-Fresh beta-candidate package rebuilds must also pass:
+Fresh release-candidate package rebuilds must also pass:
 
 ```bash
 ./scripts/build_package_artifacts.sh --rpm --bundle-profile mvp
@@ -76,12 +76,12 @@ a human microphone and desktop session.
 
 ---
 
-## 3. Beta Stop Line
+## 3. Stop Line
 
-The first beta should require all of the following:
+The current public release should require all of the following:
 
-- `./scripts/run_beta_readiness_gate.sh --run-package-gate` passes on the target
-  Fedora KDE Wayland machine
+- `./scripts/run_release_readiness_gate.sh --run-package-gate` passes on the
+  target Fedora KDE Wayland machine
 - a fresh `./scripts/build_package_artifacts.sh --rpm --bundle-profile mvp`
   rebuild completes and the normalized RPM passes `rpm -Kv`
 - a fresh installed RPM can launch the tray app from the desktop session
@@ -90,7 +90,7 @@ The first beta should require all of the following:
 - tray click-to-talk can open a localhost URL from a spoken command
 - `operance --supported-commands --supported-commands-available-only` lists only
   commands that have been smoke-tested on the target machine
-- README and Linux docs describe only the supported beta path, with deeper
+- README and Linux docs describe only the supported path, with deeper
   diagnostics kept in the Linux requirements document
 - Windows and macOS remain clearly documented as unverified provider scaffolds
   until native adapters and release gates exist
@@ -100,11 +100,11 @@ capture, KDE tray state, and real app launching cannot be fully proven in CI.
 
 ---
 
-## 4. Work Batches To Reach Beta
+## 4. Work Batches
 
 Prioritize larger coherent batches:
 
-- **Beta readiness gate and docs:** keep the beta stop line executable and
+- **Release readiness gate and docs:** keep the release stop line executable and
   discoverable from setup.
 - **Installed desktop smoke:** make packaged tray launch, service state, and
   click-to-talk verification easier to run and easier to diagnose.
@@ -113,5 +113,5 @@ Prioritize larger coherent batches:
 - **Onboarding and issue capture:** improve setup output, support bundle
   content, and troubleshooting docs based on real external failure modes.
 
-Avoid unrelated feature accumulation in beta branches. Each PR should represent
-one release-quality batch with tests, docs, and validation.
+Avoid unrelated feature accumulation in release branches. Each PR should
+represent one release-quality batch with tests, docs, and validation.

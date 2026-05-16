@@ -42,17 +42,17 @@ Current architecture note:
 - the Linux execution path itself remains in `src/operance/adapters/linux.py`
 - new OS work should start by adding a provider and adapters, not by adding more Linux branching to shared core modules
 
-### Current public developer beta state
+### Current public developer release state
 
 The current public support contract is:
 
 - Fedora KDE Plasma on Wayland
-- source checkout as the primary supported beta path
+- source checkout as the primary supported path
 - installed RPM as a secondary `mvp` runtime validation path
 - tray plus click-to-talk as the default interaction model
-- wake word and the continuous voice loop as secondary diagnostics, not the primary beta workflow
+- wake word and the continuous voice loop as secondary diagnostics, not the primary release workflow
 - the supported Fedora RPM path vendors the tray UI and STT runtime dependencies needed for click-to-talk
-- wake-word and TTS assets or backends remain optional and outside the packaged beta support contract
+- wake-word and TTS assets or backends remain optional and outside the packaged support contract
 
 Current supported command subset on that target:
 
@@ -64,11 +64,11 @@ Current supported command subset on that target:
 - `what is the volume`
 - `is audio muted`
 
-If you want the fastest iteration loop, use the source checkout. Treat the RPM path as the packaged beta handoff and run a human tray plus microphone smoke after the automated gate passes.
+If you want the fastest iteration loop, use the source checkout. Treat the RPM path as the packaged public handoff and run a human tray plus microphone smoke after the automated gate passes.
 
-Use [public-beta.md](../release/public-beta.md) for the outside-developer handoff and [fedora-checklist.md](../release/fedora-checklist.md) for the exact release gate.
+Use [public-handoff.md](../release/public-handoff.md) for the outside-developer handoff and [fedora-checklist.md](../release/fedora-checklist.md) for the exact release gate.
 
-### Fast developer beta bring-up
+### Fast developer release bring-up
 
 For the shortest current source-checkout path on the target Linux stack:
 
@@ -76,9 +76,9 @@ For the shortest current source-checkout path on the target Linux stack:
 ./scripts/install_linux_dev.sh --ui --voice
 .venv/bin/python -m operance.cli --version
 ./scripts/run_mvp.sh
-./scripts/run_beta_smoke.sh
+./scripts/run_checkout_smoke.sh
 ./scripts/run_fedora_gate.sh --reset-user-services --dry-run
-./scripts/run_beta_readiness_gate.sh --dry-run
+./scripts/run_release_readiness_gate.sh --dry-run
 ```
 
 If that path still fails and you need one issue artifact:
@@ -89,7 +89,7 @@ If that path still fails and you need one issue artifact:
 
 ### Try a few commands
 
-Use developer-mode mocks first when you only want to validate parsing and responses. These commands are simulated and do not touch the real desktop; the transcript payload now returns `"simulated": true` in this mode. The `--supported-commands --supported-commands-available-only` view is intentionally conservative: it shows only commands that are both environment-ready and release-verified for the current Fedora KDE beta target.
+Use developer-mode mocks first when you only want to validate parsing and responses. These commands are simulated and do not touch the real desktop; the transcript payload now returns `"simulated": true` in this mode. The `--supported-commands --supported-commands-available-only` view is intentionally conservative: it shows only commands that are both environment-ready and release-verified for the current Fedora KDE release target.
 
 ```bash
 .venv/bin/python -m operance.cli --supported-commands --supported-commands-available-only
@@ -371,7 +371,7 @@ Install the package-build tooling required by those helpers when `dpkg-deb` or `
 
 The RPM helper now copies the built artifact back into `dist/package-artifacts/rpm/`, so the documented install path no longer depends on the internal rpmbuild output tree. That copy step now tolerates Fedora-style internal filenames like `operance-0.1.0-1.fc43.noarch.rpm` while still writing the documented normalized output path. The Fedora release gate helpers now also fail fast with `./scripts/install_packaging_tools.sh --rpm` when `rpmbuild` is missing, so packaging-host blockers are surfaced before the longer gate steps start.
 
-The current Fedora `mvp` package installs `/usr/bin/operance`, the packaged Python source tree, and the tray UI plus STT Python runtime needed for the beta click-to-talk path under `/usr/lib/operance`. The packaged command defaults to live Linux adapters (`OPERANCE_DEVELOPER_MODE=0`) and `OPERANCE_ENVIRONMENT=production`, so installed-package transcript and tray commands should affect the desktop instead of returning developer-mode simulated success. Wake-word and TTS assets remain optional and outside the packaged beta contract.
+The current Fedora `mvp` package installs `/usr/bin/operance`, the packaged Python source tree, and the tray UI plus STT Python runtime needed for the click-to-talk path under `/usr/lib/operance`. The packaged command defaults to live Linux adapters (`OPERANCE_DEVELOPER_MODE=0`) and `OPERANCE_ENVIRONMENT=production`, so installed-package transcript and tray commands should affect the desktop instead of returning developer-mode simulated success. Wake-word and TTS assets remain optional and outside the packaged support contract.
 
 For the Fedora package path, use the `mvp` bundled-runtime profile:
 
@@ -380,7 +380,7 @@ For the Fedora package path, use the `mvp` bundled-runtime profile:
 ./scripts/build_rpm_package.sh --bundle-profile mvp --bundle-python .venv/bin/python
 ```
 
-That profile vendors the current tray UI and STT runtime Python dependencies into the RPM payload from the local virtualenv, so the artifact carries the packaged tray-plus-click-to-talk runtime checks. Wake-word and TTS assets or backends remain optional and outside the packaged beta contract.
+That profile vendors the current tray UI and STT runtime Python dependencies into the RPM payload from the local virtualenv, so the artifact carries the packaged tray-plus-click-to-talk runtime checks. Wake-word and TTS assets or backends remain optional and outside the packaged support contract.
 
 After installing the RPM, verify that the package is using live adapters before testing tray voice commands:
 
@@ -403,12 +403,12 @@ Install a built native package artifact through the matching distro package mana
 Use `--replace-existing` when installing a rebuilt local Fedora RPM that has the same package version as the already installed package. The helper detects whether the RPM package name is installed, removes it when present, and then installs the provided artifact, which prevents `dnf install` from silently leaving an older same-version payload in place.
 Use `--reset-user-services` when moving from source-checkout services to the packaged runtime. It stops, disables, and removes only user-scoped Operance systemd units under the current user's systemd config before install, then reloads the user manager so packaged units can be selected.
 
-Run the installed-package beta smoke when you want one install-to-run proof for a native artifact:
+Run the installed-package smoke when you want one install-to-run proof for a native artifact:
 
 ```bash
-./scripts/run_installed_beta_smoke.sh --dry-run
-./scripts/run_installed_beta_smoke.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --require-mvp-runtime --dry-run
-./scripts/run_installed_beta_smoke.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --require-mvp-runtime --reset-user-services --dry-run
+./scripts/run_installed_package_smoke.sh --dry-run
+./scripts/run_installed_package_smoke.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --require-mvp-runtime --dry-run
+./scripts/run_installed_package_smoke.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --require-mvp-runtime --reset-user-services --dry-run
 ```
 
 When `--require-mvp-runtime` is enabled, this smoke also forwards `--check-tray-service` to `scripts/check_installed_mvp_runtime.py`, so stale source-checkout tray units fail the package smoke instead of silently shadowing the installed runtime.
@@ -429,18 +429,18 @@ Run the full Fedora gate from the same checkout when you want one command that c
 ./scripts/run_fedora_gate.sh --support-bundle-out /tmp/operance-release-support.tar.gz --dry-run
 ```
 
-The setup surface now also exposes `run_beta_readiness_gate`, `run_installed_desktop_smoke`, `run_fedora_gate`, `run_fedora_release_smoke`, and `run_installed_rpm_beta_smoke` with reset-aware Fedora commands when the current machine has the right checkout and RPM build or install prerequisites, so the same package handoff path stays discoverable from `python3 -m operance.cli --setup-actions`. When Fedora beta prerequisites are present, setup next steps now surface the beta-readiness gate and installed desktop smoke directly.
-That same setup surface now also exposes `install_deb_packaging_tools` and `install_rpm_packaging_tools` when the corresponding package-build CLI is missing but the host can install it, so Fedora beta bring-up no longer stops at a passive `rpmbuild` warning.
+The setup surface now also exposes `run_release_readiness_gate`, `run_installed_desktop_smoke`, `run_fedora_gate`, `run_fedora_release_smoke`, and `run_installed_rpm_package_smoke` with reset-aware Fedora commands when the current machine has the right checkout and RPM build or install prerequisites, so the same package handoff path stays discoverable from `python3 -m operance.cli --setup-actions`. When Fedora prerequisites are present, setup next steps now surface the release-readiness gate and installed desktop smoke directly.
+That same setup surface now also exposes `install_deb_packaging_tools` and `install_rpm_packaging_tools` when the corresponding package-build CLI is missing but the host can install it, so Fedora bring-up no longer stops at a passive `rpmbuild` warning.
 
-Run the beta-readiness gate when validating a larger beta batch:
+Run the release-readiness gate when validating a larger release batch:
 
 ```bash
-./scripts/run_beta_readiness_gate.sh --dry-run
-./scripts/run_beta_readiness_gate.sh
-./scripts/run_beta_readiness_gate.sh --run-package-gate
+./scripts/run_release_readiness_gate.sh --dry-run
+./scripts/run_release_readiness_gate.sh
+./scripts/run_release_readiness_gate.sh --run-package-gate
 ```
 
-The default beta-readiness gate runs the package portion as a dry-run so it stays usable during normal development. Use `--run-package-gate` before a beta candidate or when explicitly validating a full installed RPM path on the target Fedora KDE Wayland machine. The full package gate keeps the RPM installed so the installed desktop smoke and manual tray click-to-talk checks run against the same package payload.
+The default release-readiness gate runs the package portion as a dry-run so it stays usable during normal development. Use `--run-package-gate` before a release candidate or when explicitly validating a full installed RPM path on the target Fedora KDE Wayland machine. The full package gate keeps the RPM installed so the installed desktop smoke and manual tray click-to-talk checks run against the same package payload.
 
 Run the installed desktop smoke after installing the RPM in the active KDE session:
 
@@ -542,9 +542,9 @@ It now also reports whether the current machine exposes the command-line surface
 - `kokoro-onnx` plus `soundfile` in the current Python environment for the optional TTS probe
 - `upower` or battery sysfs for battery status
 
-The CLI now also exposes `python3 -m operance.cli --supported-commands`, which projects the typed command catalog with example transcripts, current live blockers from doctor/setup state, and release-verification status. Use that when a developer needs to answer both “what can I say?” and “why is this command not live on this machine?” from one surface. When a beta tester only needs the current launch-safe subset, `python3 -m operance.cli --supported-commands --supported-commands-available-only` filters the catalog down to commands that are both live on the current machine and release-verified for the Fedora KDE developer-beta target. That filtered view is now also the preferred next-step path from setup, and the repo-local MVP wrapper can print it through `./scripts/run_mvp.sh --supported-commands --supported-commands-available-only`, so developers can reach the same conservative discovery path from the main bring-up flow instead of remembering a separate raw CLI flag.
+The CLI now also exposes `python3 -m operance.cli --supported-commands`, which projects the typed command catalog with example transcripts, current live blockers from doctor/setup state, and release-verification status. Use that when a developer needs to answer both “what can I say?” and “why is this command not live on this machine?” from one surface. When a tester only needs the current launch-safe subset, `python3 -m operance.cli --supported-commands --supported-commands-available-only` filters the catalog down to commands that are both live on the current machine and release-verified for the Fedora KDE developer target. That filtered view is now also the preferred next-step path from setup, and the repo-local MVP wrapper can print it through `./scripts/run_mvp.sh --supported-commands --supported-commands-available-only`, so developers can reach the same conservative discovery path from the main bring-up flow instead of remembering a separate raw CLI flag.
 That same text-input surface now also covers a small allowlist of developer-oriented modifier chords like `Ctrl+C`, `Ctrl+L`, `Ctrl+R`, `Ctrl+T`, `Ctrl+W`, and `Ctrl+Shift+P` on the existing `keys.press` path instead of stopping at only bare keys like Enter or Escape.
-The CLI now also exposes `python3 -m operance.cli --version`, which prints the current Operance version plus the current git commit when checkout metadata is available. Use that first in Linux issue reports or beta handoff notes when you need to identify exactly which source tree or package build is running without bootstrapping the daemon.
+The CLI now also exposes `python3 -m operance.cli --version`, which prints the current Operance version plus the current git commit when checkout metadata is available. Use that first in Linux issue reports or public handoff notes when you need to identify exactly which source tree or package build is running without bootstrapping the daemon.
 The CLI now also exposes `python3 -m operance.cli --support-snapshot`, which aggregates doctor, setup, the full supported-command catalog, the release-verified runnable subset, and voice-loop state into one JSON payload for issue reports and remote debugging. Home-directory paths are redacted by default so the payload is safer to paste into public issues, `--support-snapshot-raw` opts back into exact paths when maintainers need them, and `--support-snapshot-out <path>` can persist that same JSON to a file without changing stdout behavior.
 That same support snapshot now also includes build identity metadata, including the Operance version plus git branch, commit, and dirty-state details when those checkout details are available, so Linux bug reports can be matched to an exact source tree instead of relying on free-form prose.
 That same support snapshot now also carries a bounded tail of recent audit-log entries, so Linux issue reports include recent runtime turns alongside environment and setup state instead of requiring a second `--audit-log` dump.
@@ -684,7 +684,7 @@ Still deferred in the repo at the moment:
 - broader KDE desktop execution coverage beyond the current implemented action slice
 - richer tray UI beyond the current minimal status surface
 
-The current repository contains a broader implemented Linux runtime beyond the supported beta command subset above, including voice probes, planner tooling, tray surfaces, and additional KDE action paths. Those broader surfaces remain implementation inventory, not part of the supported beta contract, until they are live-verified and graduate into `--supported-commands --supported-commands-available-only`.
+The current repository contains a broader implemented Linux runtime beyond the supported verified command subset above, including voice probes, planner tooling, tray surfaces, and additional KDE action paths. Those broader surfaces remain implementation inventory, not part of the supported support contract, until they are live-verified and graduate into `--supported-commands --supported-commands-available-only`.
 
 Broader implemented Linux-backed paths that are not all release-verified yet:
 
@@ -720,8 +720,8 @@ Broader implemented Linux-backed paths that are not all release-verified yet:
 - the setup next-step surface now points at one-command support-bundle collection, and `./scripts/run_mvp.sh` exposes the same bundle path, so Linux bring-up can jump straight into one redacted issue-report artifact when something still fails after doctor or setup checks
 - the setup action surface now also exposes both `Collect support bundle` and `Collect support snapshot`, so the setup app and structured action API can execute the preferred archive path directly while keeping the raw JSON fallback available for inline issue reports
 - packaging-ready Fedora hosts now also see the right release path in setup next steps, surfacing either `./scripts/run_fedora_release_smoke.sh` or the installed-RPM smoke command when the default RPM artifact already exists instead of leaving that release gate buried only in the action catalog
-- once the current checkout is also running from a ready Python environment, that same setup next-step surface now prefers `./scripts/run_fedora_gate.sh`, so Fedora developer-beta validation becomes one explicit command instead of a manual chain of `pytest`, beta smoke, and release smoke steps
-- the repo now also includes `./scripts/run_beta_smoke.sh`, which runs `--version`, `--doctor`, `--setup-actions`, the runnable-only supported-command subset, and `--support-bundle` in one fail-fast sequence for Linux contributor bring-up and issue reproduction
+- once the current checkout is also running from a ready Python environment, that same setup next-step surface now prefers `./scripts/run_fedora_gate.sh`, so Fedora developer validation becomes one explicit command instead of a manual chain of `pytest`, source-checkout smoke, and release smoke steps
+- the repo now also includes `./scripts/run_checkout_smoke.sh`, which runs `--version`, `--doctor`, `--setup-actions`, the runnable-only supported-command subset, and `--support-bundle` in one fail-fast sequence for Linux contributor bring-up and issue reproduction
 - the runtime snapshot can now be projected into a tray-state model, and an optional PySide6 tray app can expose state, pending confirmation, a real confirmation dialog for gated actions, failure notifications, and undo actions from the same daemon session
 - that same tray app now also exposes a one-shot click-to-talk action on both the tray menu and primary tray activation, running a bounded manual voice session against the tray daemon itself so last-command preview, confirmation replies, and undo stay in the same session
 - that same tray-state model now also includes repo-local voice-loop runtime state, activity, and heartbeat warnings, so background-loop health is visible from the same tray surface instead of being limited to doctor or setup output

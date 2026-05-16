@@ -18,9 +18,9 @@ dry_run=0
 
 usage() {
     cat <<'EOF'
-Usage: scripts/run_fedora_release_smoke.sh [options] [-- extra run_installed_beta_smoke.sh args]
+Usage: scripts/run_fedora_release_smoke.sh [options] [-- extra run_installed_package_smoke.sh args]
 
-Build the current RPM artifact and run the installed-package beta smoke flow
+Build the current RPM artifact and run the installed-package smoke flow
 against it on Fedora-style hosts.
 
 Options:
@@ -39,7 +39,7 @@ Options:
   --dry-run                        Print the build and smoke commands without executing them.
   -h, --help                       Show this help text.
 
-Any arguments after `--` are forwarded to `run_installed_beta_smoke.sh`.
+Any arguments after `--` are forwarded to `run_installed_package_smoke.sh`.
 EOF
 }
 
@@ -178,9 +178,9 @@ if [[ "${dry_run}" -eq 1 ]]; then
 fi
 run_step "${build_display}" bash "${build_args[@]}"
 
-smoke_display="./scripts/run_installed_beta_smoke.sh --package ${package_path} --installer dnf"
+smoke_display="./scripts/run_installed_package_smoke.sh --package ${package_path} --installer dnf"
 smoke_args=(
-    "./scripts/run_installed_beta_smoke.sh"
+    "./scripts/run_installed_package_smoke.sh"
     "--package" "${package_path}"
     "--installer" "dnf"
 )

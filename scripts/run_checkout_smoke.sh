@@ -10,9 +10,9 @@ support_bundle_out=""
 
 usage() {
     cat <<'EOF'
-Usage: scripts/run_beta_smoke.sh [options]
+Usage: scripts/run_checkout_smoke.sh [options]
 
-Run the current safe beta smoke sequence for a source checkout.
+Run the current safe smoke sequence for a source checkout.
 
 Options:
   --python PATH              Python executable to use. Defaults to .venv/bin/python.

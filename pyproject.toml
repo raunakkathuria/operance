@@ -12,7 +12,6 @@ requires-python = ">=3.12"
 authors = [{ name = "Operance" }]
 keywords = ["desktop", "linux", "voice", "automation", "mcp", "wayland", "kde"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: POSIX :: Linux",

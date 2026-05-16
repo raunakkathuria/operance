@@ -539,7 +539,7 @@ def test_cli_supported_commands_prints_catalog_with_live_blockers(monkeypatch, c
         "open <app name> | open http://localhost:3000 | browse to localhost 3000"
     )
     assert commands["windows.list"]["live_runtime_status"] == "unverified"
-    assert commands["windows.list"]["release_verification_target"] == "fedora_kde_wayland_beta"
+    assert commands["windows.list"]["release_verification_target"] == "fedora_kde_wayland"
     assert commands["text.type"]["live_runtime_status"] == "blocked"
     assert commands["text.type"]["live_runtime_blockers"] == ["Wayland text input CLI"]
     assert commands["text.type"]["live_runtime_suggested_command"] == (

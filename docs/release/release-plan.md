@@ -8,8 +8,8 @@ Audience: Founder, maintainers
 
 ## 1. Immediate Goal
 
-Publish `v0.1.0-beta.1` as the first Fedora KDE Wayland developer beta without
-over-claiming the current product maturity.
+Publish narrow Fedora KDE Wayland developer releases without over-claiming the
+current product maturity.
 
 The public release line has already established:
 
@@ -24,29 +24,28 @@ The public release line has already established:
 
 ## 2. Release Sequence
 
-### Phase A: Public repo export
+### Phase A: Public Repo Export
 
 - create the public `operance` repository
 - export the current tree with one initial public commit
 - apply the GitHub metadata from
   [public-repo-metadata.md](./public-repo-metadata.md)
 
-### Phase B: Developer alpha baseline
+### Phase B: Historical Baseline
 
-- publish the initial public alpha tag
-- attach the release notes from [v0.1.0-alpha.1.md](./v0.1.0-alpha.1.md)
-- keep this phase historical; do not add new alpha-named release gates
+- keep already-published release-note files as history
+- do not add new phase-named release gates or current handoff docs
+- keep current workflow names purpose-based
 
-### Phase C: Fedora developer beta
+### Phase C: Fedora Developer Release
 
-- keep the beta stop line in [beta-readiness.md](./beta-readiness.md)
-- run `./scripts/run_beta_readiness_gate.sh` during normal beta work
-- run `./scripts/run_beta_readiness_gate.sh --run-package-gate` before tagging
+- keep the stop line in [release-readiness.md](./release-readiness.md)
+- run `./scripts/run_release_readiness_gate.sh` during normal release work
+- run `./scripts/run_release_readiness_gate.sh --run-package-gate` before tagging
 - run a human installed tray plus microphone smoke before tagging
-- publish `v0.1.0-beta.1` with the notes from
-  [v0.1.0-beta.1.md](./v0.1.0-beta.1.md)
+- publish release notes from the corresponding versioned release-note file
 
-### Phase D: Early feedback loop
+### Phase D: Early Feedback Loop
 
 - collect issues with support bundles
 - focus on Fedora KDE bring-up, packaging, and MVP runtime reliability
@@ -55,9 +54,9 @@ The public release line has already established:
 
 ---
 
-## 3. What Counts As Good Enough For Beta
+## 3. What Counts As Good Enough For Release
 
-For `v0.1.0-beta.1`, the repo is good enough when:
+The repo is good enough for the current Fedora developer release when:
 
 - the architecture boundary is honest and documented
 - the test suite passes
@@ -65,20 +64,20 @@ For `v0.1.0-beta.1`, the repo is good enough when:
 - the Fedora gate passes on the target Fedora KDE Wayland machine
 - the packaged `mvp` RPM validates the installed tray plus STT runtime
 - a human click-to-talk smoke can open Firefox and a localhost URL
-- public docs describe only the verified beta support contract
+- public docs describe only the verified support contract
 
-Do not block the beta on a broader packaged consumer path.
+Do not block the release on a broader packaged consumer path.
 
 ---
 
-## 4. What Comes After Beta
+## 4. What Comes After This Release
 
-The next meaningful release goal after `v0.1.0-beta.1` is broader reliability,
-not a larger speculative command surface.
+The next meaningful release goal is broader reliability, not a larger
+speculative command surface.
 
 That work should focus on:
 
-- keeping fresh `mvp` RPM rebuilds repeatable before every beta candidate
+- keeping fresh `mvp` RPM rebuilds repeatable before every release candidate
 - tightening the packaged tray plus click-to-talk path after the runtime gate
 - widening the release-verified command subset one command family at a time
 - improving outside-developer onboarding and failure capture
@@ -88,9 +87,9 @@ That work should focus on:
 
 ---
 
-## 5. Explicit Non-goals For Beta
+## 5. Explicit Non-goals For Release
 
-Do not treat these as blockers for `v0.1.0-beta.1`:
+Do not treat these as blockers for the current Fedora developer release:
 
 - Windows or macOS support
 - broad distro or desktop-environment support
@@ -103,10 +102,10 @@ Do not treat these as blockers for `v0.1.0-beta.1`:
 
 ## 6. Recommended Maintainer Step
 
-For every beta candidate:
+For every release candidate:
 
 1. work in a branch and PR
 2. keep each batch release-quality and documented
-3. run `./scripts/run_beta_readiness_gate.sh` as the fast local stop line
-4. run `./scripts/run_beta_readiness_gate.sh --run-package-gate` before tagging
+3. run `./scripts/run_release_readiness_gate.sh` as the fast local stop line
+4. run `./scripts/run_release_readiness_gate.sh --run-package-gate` before tagging
 5. tag only after the manual installed tray plus click-to-talk smoke passes

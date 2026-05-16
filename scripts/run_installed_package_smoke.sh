@@ -20,9 +20,9 @@ reset_user_services=0
 
 usage() {
     cat <<'EOF'
-Usage: scripts/run_installed_beta_smoke.sh [options]
+Usage: scripts/run_installed_package_smoke.sh [options]
 
-Run the current safe beta smoke sequence against an installed Operance package.
+Run the current safe smoke sequence against an installed Operance package.
 
 Options:
   --command PATH             Installed operance command to use. Defaults to operance.

@@ -1073,7 +1073,7 @@ Do not proceed if:
 
 ---
 
-## Phase 1 — Local planner beta
+## Phase 1 — Local planner release
 
 ### Goal
 
@@ -1132,7 +1132,7 @@ Do not proceed if:
 
 ---
 
-## Phase 2 — Distribution beta
+## Phase 2 — Distribution release
 
 ### Goal
 
@@ -1166,7 +1166,7 @@ Make installation and daily use easy.
 
 - first successful command within 5 minutes of install for a new tester
 - stable 8-hour dogfood sessions
-- installation support burden low enough for open beta
+- installation support burden low enough for open release
 
 ### Stop criteria
 
@@ -1252,7 +1252,7 @@ Add monetizable cloud features without weakening the OSS local core.
 
 ### Exit criteria
 
-- first paid beta customers can use hosted convenience features
+- first paid preview customers can use hosted convenience features
 - self-hosted users can ignore cloud completely
 
 ### Stop criteria
@@ -1566,7 +1566,7 @@ Current implementation slice:
 - the current deterministic command surface now includes app focus and `audio.get_volume` inspection in addition to the earlier launch, notification, battery, audio mutation, network, and file actions
 - the current deterministic command surface now also includes `windows.list` and `windows.switch`, backed by KWin `WindowsRunner` on Linux
 
-### Milestone M4 — Planner beta
+### Milestone M4 — Planner release
 
 - local planner
 - preview and 2-step plans
@@ -1591,7 +1591,7 @@ Current implementation slice:
 - exported JSON schema helpers now cover the current `ActionPlan` and `ActionResult` contracts
 - the developer CLI can now print the exported `ActionPlan` and `ActionResult` schemas directly
 
-### Milestone M5 — Installer beta
+### Milestone M5 — Installer release
 
 - setup wizard
 - distro packaging

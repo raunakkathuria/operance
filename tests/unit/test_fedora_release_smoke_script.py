@@ -33,7 +33,7 @@ def test_fedora_release_smoke_script_dry_run_prints_default_steps() -> None:
 
     assert result.stdout.splitlines() == [
         "+ ./scripts/build_package_artifacts.sh --rpm --root-dir /tmp/operance-release --version 1.2.3 --bundle-profile mvp --dry-run",
-        "+ ./scripts/run_installed_beta_smoke.sh --package /tmp/operance-release/rpm/operance-1.2.3-1.noarch.rpm --installer dnf --require-mvp-runtime --uninstall-after --dry-run",
+        "+ ./scripts/run_installed_package_smoke.sh --package /tmp/operance-release/rpm/operance-1.2.3-1.noarch.rpm --installer dnf --require-mvp-runtime --uninstall-after --dry-run",
     ]
     assert result.stderr == ""
 
@@ -57,7 +57,7 @@ def test_fedora_release_smoke_script_can_forward_smoke_options_and_keep_install(
     assert result.stdout.splitlines() == [
         "+ ./scripts/build_package_artifacts.sh --rpm --root-dir /tmp/operance-release --version 2.0.0 --bundle-profile mvp --dry-run",
         (
-            "+ ./scripts/run_installed_beta_smoke.sh --package /tmp/operance-release/rpm/operance-2.0.0-1.noarch.rpm "
+            "+ ./scripts/run_installed_package_smoke.sh --package /tmp/operance-release/rpm/operance-2.0.0-1.noarch.rpm "
             "--installer dnf --support-bundle-out /tmp/operance-release-support.tar.gz --no-sudo "
             "--require-mvp-runtime --dry-run "
             "--command /tmp/fake-operance"
@@ -79,7 +79,7 @@ def test_fedora_release_smoke_script_can_forward_user_service_reset() -> None:
     assert result.stdout.splitlines() == [
         "+ ./scripts/build_package_artifacts.sh --rpm --root-dir /tmp/operance-release --version 2.1.0 --bundle-profile mvp --dry-run",
         (
-            "+ ./scripts/run_installed_beta_smoke.sh --package /tmp/operance-release/rpm/operance-2.1.0-1.noarch.rpm "
+            "+ ./scripts/run_installed_package_smoke.sh --package /tmp/operance-release/rpm/operance-2.1.0-1.noarch.rpm "
             "--installer dnf --reset-user-services --require-mvp-runtime --uninstall-after --dry-run"
         ),
     ]
@@ -101,7 +101,7 @@ def test_fedora_release_smoke_script_forwards_bundle_profile_options() -> None:
 
     assert result.stdout.splitlines() == [
         "+ ./scripts/build_package_artifacts.sh --rpm --root-dir /tmp/operance-release --version 0.1.0 --bundle-profile mvp --bundle-python /tmp/operance-python --bundle-source-site-packages /tmp/operance-site-packages --dry-run",
-        "+ ./scripts/run_installed_beta_smoke.sh --package /tmp/operance-release/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --require-mvp-runtime --uninstall-after --dry-run",
+        "+ ./scripts/run_installed_package_smoke.sh --package /tmp/operance-release/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --require-mvp-runtime --uninstall-after --dry-run",
     ]
     assert result.stderr == ""
 

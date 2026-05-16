@@ -130,7 +130,7 @@ Exit criteria:
 - reversible actions have undo or explicit rationale if not possible
 - destructive actions remain disabled
 
-Phase 1: Local planner beta
+Phase 1: Local planner release
 In scope:
 - local LLM via llama.cpp
 - schema-constrained JSON outputs
