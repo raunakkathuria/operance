@@ -111,7 +111,7 @@ What works now:
 - Core runtime: typed action models, deterministic intent matching, validator and policy enforcement, local audit logging, planner fallback, and MCP-compatible control surfaces.
 - Verified verified command subset on Fedora KDE Wayland: `open <app name>` or URL targets, `focus <app name>`, `what time is it`, `what is my battery level`, `wifi status`, `what is the volume`, and `is audio muted`.
 - Voice and tray MVP: tray app, bounded click-to-talk, confirmation flows, last-interaction reporting, optional wake-word, STT, and TTS probe paths, plus repo-local background voice-loop support.
-- Diagnostics and support: doctor, setup actions, runnable-command catalog, runtime status resources, support snapshot, support bundle, audit inspection, and source-checkout smoke scripts.
+- Diagnostics and support: doctor, setup actions, installed readiness checks, runnable-command catalog, runtime status resources, support snapshot, support bundle, audit inspection, and source-checkout smoke scripts.
 - Packaging and release gates: reproducible Linux bootstrap, source-checkout install or uninstall helpers, repo-local systemd helpers, Debian or RPM scaffolds, installed-package smoke, and the Fedora gate.
 
 What is intentionally not implemented yet:
@@ -562,6 +562,7 @@ python3 scripts/check_installed_mvp_runtime.py --command operance --check-tray-s
 
 `operance --print-config` should report `"developer_mode": false`. `operance --installed-smoke` summarizes installed package readiness, warns when the tray service is not active, fails when packaged runtime dependencies are missing or the packaged service is shadowed by a stale repo-local user unit, and prints concrete next-step commands. If stale user units are reported, reinstall with `./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --replace-existing --reset-user-services`. In `systemctl --user status`, `preset: disabled` is normal on Fedora; `Loaded`, `Active`, and the `ExecStart` command path are the parts to verify.
 `./scripts/run_installed_desktop_smoke.sh` starts/enables the packaged tray user service before checking status, so `Active: inactive (dead)` is a smoke failure rather than a successful desktop state.
+The tray menu also exposes `Show installed readiness`, which presents the same installed-smoke summary and next steps without requiring a terminal.
 
 Run the built-in deterministic corpus and print a summary:
 

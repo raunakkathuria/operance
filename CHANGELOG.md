@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added installed-package readiness to the tray menu, rendering the same `operance --installed-smoke` status, next steps, and manual click-to-talk checks from the product surface.
 - Added `operance --installed-smoke`, a package-local installed runtime diagnostic that checks live-mode config, packaged desktop or user-unit files, tray/STT runtime availability, tray service state, stale source-checkout service shadowing, and concrete next-step commands.
 - Wired installed package and desktop smoke scripts to run `operance --installed-smoke`, so release gates validate the same diagnostic users can run after installing the RPM.
 - Promoted the current public handoff docs and release verification target to the Fedora KDE Wayland developer release path, with versioned release notes and an explicit support contract.
