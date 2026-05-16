@@ -10,15 +10,16 @@ def test_environment_report_includes_platform_and_checks() -> None:
     assert report["checks"]
 
 
-def test_environment_report_marks_linux_requirements_when_not_on_linux() -> None:
+def test_environment_report_uses_macos_provider_for_darwin() -> None:
     from operance.doctor import build_environment_report
 
     report = build_environment_report(system_name="Darwin")
 
     statuses = {check["name"]: check["status"] for check in report["checks"]}
 
-    assert statuses["linux_platform"] == "warn"
-    assert statuses["kde_wayland_target"] == "warn"
+    assert report["platform_provider"] == "macos_desktop"
+    assert statuses["macos_platform"] in {"ok", "warn"}
+    assert statuses["macos_desktop_adapter"] == "warn"
 
 
 def test_environment_report_includes_linux_tooling_checks() -> None:

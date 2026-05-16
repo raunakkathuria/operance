@@ -92,7 +92,7 @@ tool contract stabilizes.
 
 The current goal is:
 
-- easy in-repo addition of Windows and macOS backends
+- easy in-repo completion of the scaffolded Windows and macOS backends
 - minimal churn in portable core modules
 
 The current non-goal is:
@@ -114,7 +114,7 @@ When adding a provider or adapter:
 
 ## 6. Practical example
 
-For a future Windows backend:
+For the scaffolded Windows backend:
 
 - `src/operance/platforms/windows.py` should own Windows environment checks,
   setup-step metadata, setup actions, release-gate guidance, and verified-tool metadata
@@ -122,3 +122,12 @@ For a future Windows backend:
   protocols using Windows-native automation APIs
 - `supported_commands.py`, `doctor.py`, and `ui/setup.py` should not need
   Windows-specific branching beyond the provider seam
+
+For the scaffolded macOS backend:
+
+- `src/operance/platforms/macos.py` should own macOS environment checks,
+  setup-step metadata, setup actions, release-gate guidance, and verified-tool metadata
+- `src/operance/adapters/macos.py` should implement the existing adapter
+  protocols using macOS Accessibility and Automation APIs
+- consent and permission handling should stay provider or adapter-owned instead
+  of leaking into shared planner, policy, daemon, or MCP modules

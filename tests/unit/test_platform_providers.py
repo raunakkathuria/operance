@@ -11,6 +11,32 @@ def test_get_platform_provider_returns_linux_provider_for_linux_host() -> None:
     assert provider.provider_id == "linux_kde_wayland"
 
 
+def test_get_platform_provider_returns_windows_provider_for_windows_host() -> None:
+    from operance.platforms import get_platform_provider
+
+    provider = get_platform_provider(system_name="Windows")
+
+    assert provider.provider_id == "windows_desktop"
+    assert provider.release_verification_target == "windows_desktop_unverified"
+    assert provider.release_verified_tools == frozenset()
+    assert provider.tool_live_runtime_blockers(ToolName.APPS_LAUNCH, {}) == [
+        "Windows desktop adapter"
+    ]
+
+
+def test_get_platform_provider_returns_macos_provider_for_darwin_host() -> None:
+    from operance.platforms import get_platform_provider
+
+    provider = get_platform_provider(system_name="Darwin")
+
+    assert provider.provider_id == "macos_desktop"
+    assert provider.release_verification_target == "macos_desktop_unverified"
+    assert provider.release_verified_tools == frozenset()
+    assert provider.tool_live_runtime_blockers(ToolName.APPS_LAUNCH, {}) == [
+        "macOS desktop adapter"
+    ]
+
+
 def test_build_setup_snapshot_uses_platform_provider_check_metadata(monkeypatch) -> None:
     from operance.platforms.base import CheckMetadata
     from operance.ui.setup import build_setup_snapshot

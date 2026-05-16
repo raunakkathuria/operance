@@ -19,6 +19,8 @@ Platform roadmap:
 
 The implementation stays Linux-first today. The portable core remains shared across platforms, including the voice pipeline orchestration, planner, typed action schema, safety model, and MCP server, while platform providers own host-specific readiness, setup workflow, and release-verification rules and OS-specific execution or input translation stays behind per-platform adapters. That keeps the current delivery scope KISS and YAGNI-compliant without closing off the later Windows and macOS paths.
 
+Windows and macOS provider scaffolds exist for adapter authors, but they are intentionally unverified and block live desktop commands until native adapters are implemented.
+
 ## Developer Alpha Quickstart
 
 This is the primary supported public-alpha path today:
@@ -73,6 +75,7 @@ Operance is ready for a **Fedora KDE Wayland developer alpha** for outside devel
 - Wake word and the continuous voice loop remain secondary to click-to-talk for alpha reliability
 - The supported Fedora package path now vendors the tray UI and STT runtime dependencies needed for the MVP tray plus click-to-talk path
 - Wake-word and TTS assets or backends remain optional and are not part of the packaged alpha support contract
+- Windows and macOS are architecture targets only; their current providers are scaffolds, not supported runtimes
 
 Not yet claimed:
 
@@ -114,10 +117,10 @@ What is intentionally not implemented yet:
 
 This is still a developer alpha. The main remaining gaps are bundling, broader platform coverage, and deeper Linux coverage, not the absence of a basic runnable product path. Broader implemented commands remain out of the supported alpha subset until they are live-verified and graduate into `--supported-commands --supported-commands-available-only`.
 
-- A supported native package path that bundles the optional UI and voice Python backends out of the box
+- Native package coverage beyond the current Fedora RPM `mvp` runtime path
 - A bundled Operance wake-word model and tuned default wake-word behavior
 - Richer STT and TTS beyond the current optional bounded paths
-- Broader KDE execution coverage and later Windows or macOS adapters
+- Broader KDE execution coverage and live Windows or macOS adapters beyond the current unverified provider scaffolds
 - Richer tray UI and planner recovery beyond the current bounded implementation
 
 ## Development and Diagnostics
