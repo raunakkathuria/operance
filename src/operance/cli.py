@@ -15,6 +15,7 @@ from .audio import build_default_audio_capture_source, build_default_audio_playb
 from .corpus import run_default_corpus
 from .daemon import OperanceDaemon
 from .doctor import build_environment_report
+from .installed_smoke import build_installed_smoke_result
 from .mcp import MCPServer, run_mcp_fixture
 from .mcp.stdio import run_stdio_session
 from .planner import (
@@ -233,6 +234,16 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--action-plan-schema", action="store_true", help="Print the ActionPlan JSON schema")
     parser.add_argument("--action-result-schema", action="store_true", help="Print the ActionResult JSON schema")
     parser.add_argument("--doctor", action="store_true", help="Print environment readiness checks")
+    parser.add_argument(
+        "--installed-smoke",
+        action="store_true",
+        help="Run installed-package readiness checks and print explicit next steps",
+    )
+    parser.add_argument(
+        "--installed-smoke-systemctl-command",
+        default="systemctl",
+        help=argparse.SUPPRESS,
+    )
     parser.add_argument("--replay-file", help="Run a JSONL transcript replay fixture")
     parser.add_argument("--planner-fixture", help="Run a JSONL planner payload regression fixture")
     parser.add_argument("--planner-schema", action="store_true", help="Print the planner payload schema")
@@ -898,6 +909,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.doctor:
         print(json.dumps(build_environment_report(), sort_keys=True))
         return 0
+
+    if args.installed_smoke:
+        result = build_installed_smoke_result(systemctl_command=args.installed_smoke_systemctl_command)
+        print(json.dumps(result.to_dict(), sort_keys=True))
+        return 1 if result.status == "failed" else 0
 
     if args.replay_file:
         print(json.dumps(run_replay_fixture(Path(args.replay_file)), sort_keys=True))

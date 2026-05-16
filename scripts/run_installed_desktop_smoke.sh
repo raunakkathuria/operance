@@ -93,6 +93,7 @@ run_step "${systemctl_command} --user enable --now operance-tray.service" \
     "${systemctl_command}" --user enable --now operance-tray.service
 run_step "${systemctl_command} --user status operance-tray.service --no-pager" \
     "${systemctl_command}" --user status operance-tray.service --no-pager
+run_step "${command_path} --installed-smoke" "${command_path}" --installed-smoke
 run_step "${command_path} --print-config" "${command_path}" --print-config
 run_step "${command_path} --supported-commands --supported-commands-available-only" \
     "${command_path}" --supported-commands --supported-commands-available-only

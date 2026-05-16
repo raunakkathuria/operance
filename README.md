@@ -74,6 +74,7 @@ Operance is ready for a **Fedora KDE Wayland developer release** for outside dev
 - Default interaction: tray plus click-to-talk
 - Wake word and the continuous voice loop remain secondary to click-to-talk for release reliability
 - The supported Fedora package path now vendors the tray UI and STT runtime dependencies needed for the MVP tray plus click-to-talk path
+- First installed-package diagnostic: `operance --installed-smoke`
 - Wake-word and TTS assets or backends remain optional and are not part of the packaged support contract
 - Windows and macOS are architecture targets only; their current providers are scaffolds, not supported runtimes
 
@@ -415,7 +416,7 @@ Smoke-test an installed native package, optionally installing the artifact first
 ./scripts/run_installed_package_smoke.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --require-mvp-runtime --reset-user-services --dry-run
 ```
 
-When `--require-mvp-runtime` is enabled, the installed smoke also checks that the active tray service is not shadowed by a stale source-checkout user unit.
+The installed package smoke runs the same package-local diagnostic users can run with `operance --installed-smoke`. When `--require-mvp-runtime` is enabled, it also checks that the active tray service is not shadowed by a stale source-checkout user unit.
 
 Run the full Fedora-first release gate from a checkout:
 
@@ -555,10 +556,11 @@ Installed packages are different: the packaged `/usr/bin/operance` entrypoint de
 
 ```bash
 operance --print-config
+operance --installed-smoke
 python3 scripts/check_installed_mvp_runtime.py --command operance --check-tray-service
 ```
 
-`operance --print-config` should report `"developer_mode": false`; the installed MVP runtime check fails if the packaged command is still in developer-mode simulation. With `--check-tray-service`, it also fails when an active `operance-tray.service` is shadowed by a stale repo-local user unit. If that happens, reinstall with `./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --replace-existing --reset-user-services`. In `systemctl --user status`, `preset: disabled` is normal on Fedora; `Loaded`, `Active`, and the `ExecStart` command path are the parts to verify.
+`operance --print-config` should report `"developer_mode": false`. `operance --installed-smoke` summarizes installed package readiness, warns when the tray service is not active, fails when packaged runtime dependencies are missing or the packaged service is shadowed by a stale repo-local user unit, and prints concrete next-step commands. If stale user units are reported, reinstall with `./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --replace-existing --reset-user-services`. In `systemctl --user status`, `preset: disabled` is normal on Fedora; `Loaded`, `Active`, and the `ExecStart` command path are the parts to verify.
 `./scripts/run_installed_desktop_smoke.sh` starts/enables the packaged tray user service before checking status, so `Active: inactive (dead)` is a smoke failure rather than a successful desktop state.
 
 Run the built-in deterministic corpus and print a summary:

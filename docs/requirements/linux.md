@@ -52,6 +52,7 @@ The current public support contract is:
 - tray plus click-to-talk as the default interaction model
 - wake word and the continuous voice loop as secondary diagnostics, not the primary release workflow
 - the supported Fedora RPM path vendors the tray UI and STT runtime dependencies needed for click-to-talk
+- first installed-package diagnostic: `operance --installed-smoke`
 - wake-word and TTS assets or backends remain optional and outside the packaged support contract
 
 Current supported command subset on that target:
@@ -386,10 +387,11 @@ After installing the RPM, verify that the package is using live adapters before 
 
 ```bash
 operance --print-config
+operance --installed-smoke
 python3 scripts/check_installed_mvp_runtime.py --command operance --check-tray-service
 ```
 
-`operance --print-config` should report `"developer_mode": false`. The installed MVP runtime check now fails if the packaged command is still in developer-mode simulation. With `--check-tray-service`, it also fails when `operance-tray.service` is shadowed by a stale repo-local user unit instead of using the installed package command. `preset: disabled` in `systemctl --user status` is normal Fedora preset metadata; verify `Loaded`, `Active`, and the `ExecStart` path instead. `./scripts/run_installed_desktop_smoke.sh` starts/enables the packaged tray user service before checking status, so `Active: inactive (dead)` is a smoke failure.
+`operance --print-config` should report `"developer_mode": false`. `operance --installed-smoke` summarizes installed package readiness, warns when the tray service is not active, fails when packaged runtime dependencies are missing or `operance-tray.service` is shadowed by a stale repo-local user unit, and prints concrete next-step commands. `preset: disabled` in `systemctl --user status` is normal Fedora preset metadata; verify `Loaded`, `Active`, and the `ExecStart` path instead. `./scripts/run_installed_desktop_smoke.sh` starts/enables the packaged tray user service before checking status, so `Active: inactive (dead)` is a smoke failure.
 
 Install a built native package artifact through the matching distro package manager:
 
@@ -411,7 +413,7 @@ Run the installed-package smoke when you want one install-to-run proof for a nat
 ./scripts/run_installed_package_smoke.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --require-mvp-runtime --reset-user-services --dry-run
 ```
 
-When `--require-mvp-runtime` is enabled, this smoke also forwards `--check-tray-service` to `scripts/check_installed_mvp_runtime.py`, so stale source-checkout tray units fail the package smoke instead of silently shadowing the installed runtime.
+This smoke runs the same package-local diagnostic users can run with `operance --installed-smoke`. When `--require-mvp-runtime` is enabled, it also forwards `--check-tray-service` to `scripts/check_installed_mvp_runtime.py`, so stale source-checkout tray units fail the package smoke instead of silently shadowing the installed runtime.
 
 Run the Fedora-first release gate when you want one source-checkout command that builds the RPM artifact and then smokes the installed package:
 
