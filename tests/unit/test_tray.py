@@ -281,6 +281,127 @@ def test_build_tray_startup_notification_skips_attention_states() -> None:
     assert build_startup_notification(snapshot) is None
 
 
+def test_build_installed_readiness_report_summarizes_ok_result() -> None:
+    from operance.installed_smoke import InstalledSmokeCheck, InstalledSmokeResult
+    from operance.ui.tray import (
+        build_installed_readiness_notification,
+        build_installed_readiness_report,
+    )
+
+    report = build_installed_readiness_report(
+        InstalledSmokeResult(
+            status="ok",
+            checks=[
+                InstalledSmokeCheck(
+                    name="installed_live_mode",
+                    status="ok",
+                    detail={"developer_mode": False},
+                )
+            ],
+            next_steps=["systemctl --user status operance-tray.service --no-pager"],
+            manual_checks=["Click the tray icon and say: open firefox"],
+        )
+    )
+
+    assert report.to_dict() == {
+        "details": [
+            "All installed package checks passed.",
+            "Next steps:",
+            "- systemctl --user status operance-tray.service --no-pager",
+            "Manual click-to-talk checks:",
+            "- Click the tray icon and say: open firefox",
+        ],
+        "status": "ok",
+        "summary": "Installed package is ready for tray click-to-talk.",
+        "title": "Installed package readiness",
+    }
+    assert build_installed_readiness_notification(report) is None
+
+
+def test_build_installed_readiness_report_surfaces_next_steps_for_failures() -> None:
+    from operance.installed_smoke import InstalledSmokeCheck, InstalledSmokeResult
+    from operance.ui.tray import (
+        build_installed_readiness_notification,
+        build_installed_readiness_report,
+    )
+
+    report = build_installed_readiness_report(
+        InstalledSmokeResult(
+            status="failed",
+            checks=[
+                InstalledSmokeCheck(
+                    name="tray_user_service_not_shadowed",
+                    status="failed",
+                    detail={"fragment_path": "/home/test/.config/systemd/user/operance-tray.service"},
+                    suggested_command="Remove stale user units or reinstall with --reset-user-services.",
+                )
+            ],
+            next_steps=["Remove stale user units or reinstall with --reset-user-services."],
+            manual_checks=["Click the tray icon and say: open firefox"],
+        )
+    )
+
+    notification = build_installed_readiness_notification(report)
+
+    assert report.status == "failed"
+    assert report.summary == "Installed package is not ready for the supported tray path."
+    assert report.details == [
+        "Checks needing attention:",
+        "- failed: tray_user_service_not_shadowed: fragment_path=/home/test/.config/systemd/user/operance-tray.service; next: Remove stale user units or reinstall with --reset-user-services.",
+        "Next steps:",
+        "- Remove stale user units or reinstall with --reset-user-services.",
+        "Manual click-to-talk checks:",
+        "- Click the tray icon and say: open firefox",
+    ]
+    assert notification is not None
+    assert notification.to_dict() == {
+        "event_id": (
+            "installed_readiness:failed:"
+            "Installed package is not ready for the supported tray path."
+        ),
+        "level": "error",
+        "message": "Installed package is not ready for the supported tray path.",
+        "title": "Installed package needs attention",
+    }
+
+
+def test_tray_controller_can_build_installed_readiness_report(monkeypatch, tmp_path: Path) -> None:
+    from operance.daemon import OperanceDaemon
+    from operance.installed_smoke import InstalledSmokeResult
+    from operance.ui import TrayController
+
+    seen_env: list[object] = []
+
+    def fake_smoke_result(*, env=None):
+        seen_env.append(env)
+        return InstalledSmokeResult(
+            status="warn",
+            checks=[],
+            next_steps=["systemctl --user enable --now operance-tray.service"],
+            manual_checks=[],
+        )
+
+    monkeypatch.setattr("operance.ui.tray.build_installed_smoke_result", fake_smoke_result)
+    env = {
+        "OPERANCE_DATA_DIR": str(tmp_path / "data"),
+        "OPERANCE_DESKTOP_DIR": str(tmp_path / "Desktop"),
+        "OPERANCE_DEVELOPER_MODE": "0",
+    }
+    daemon = OperanceDaemon.build_default(env)
+
+    controller = TrayController(daemon, env=env)
+    report = controller.installed_readiness_report()
+
+    assert seen_env == [env]
+    assert report.status == "warn"
+    assert report.summary == "Installed package is usable, but one or more checks need attention."
+    assert report.details == [
+        "No individual check failures were reported.",
+        "Next steps:",
+        "- systemctl --user enable --now operance-tray.service",
+    ]
+
+
 def test_build_click_to_talk_started_notification() -> None:
     from operance.ui.tray import build_click_to_talk_started_notification
 

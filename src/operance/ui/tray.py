@@ -13,6 +13,11 @@ from typing import Any, Callable, Mapping, TextIO
 
 from ..audio import build_default_audio_capture_source
 from ..daemon import OperanceDaemon
+from ..installed_smoke import (
+    InstalledSmokeCheck,
+    InstalledSmokeResult,
+    build_installed_smoke_result,
+)
 from ..models.events import RuntimeState
 from ..project_info import project_version
 from ..status import StatusSnapshot
@@ -74,6 +79,22 @@ class TrayInteractionReport:
 
     def to_dict(self) -> dict[str, object]:
         return {
+            "title": self.title,
+            "summary": self.summary,
+            "details": list(self.details),
+        }
+
+
+@dataclass(slots=True, frozen=True)
+class TrayInstalledReadinessReport:
+    status: str
+    title: str
+    summary: str
+    details: list[str]
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "status": self.status,
             "title": self.title,
             "summary": self.summary,
             "details": list(self.details),
@@ -212,6 +233,9 @@ class TrayController:
 
     def restart_voice_loop_service(self) -> SetupRunResult:
         return run_setup_action("restart_voice_loop_service")
+
+    def installed_readiness_report(self) -> TrayInstalledReadinessReport:
+        return build_installed_readiness_report(build_installed_smoke_result(env=self.env))
 
     def start_click_to_talk(
         self,
@@ -434,6 +458,66 @@ def build_click_to_talk_started_notification() -> TrayNotification:
     )
 
 
+def build_installed_readiness_report(
+    result: InstalledSmokeResult,
+) -> TrayInstalledReadinessReport:
+    if result.status == "ok":
+        summary = "Installed package is ready for tray click-to-talk."
+    elif result.status == "warn":
+        summary = "Installed package is usable, but one or more checks need attention."
+    else:
+        summary = "Installed package is not ready for the supported tray path."
+
+    details: list[str] = []
+    attention_checks = [check for check in result.checks if check.status != "ok"]
+    if attention_checks:
+        details.append("Checks needing attention:")
+        details.extend(_format_installed_readiness_check(check) for check in attention_checks)
+    elif result.status == "ok":
+        details.append("All installed package checks passed.")
+    else:
+        details.append("No individual check failures were reported.")
+
+    if result.next_steps:
+        details.append("Next steps:")
+        details.extend(f"- {step}" for step in result.next_steps)
+
+    if result.manual_checks:
+        details.append("Manual click-to-talk checks:")
+        details.extend(f"- {check}" for check in result.manual_checks)
+
+    return TrayInstalledReadinessReport(
+        status=result.status,
+        title="Installed package readiness",
+        summary=summary,
+        details=details,
+    )
+
+
+def build_installed_readiness_notification(
+    report: TrayInstalledReadinessReport,
+) -> TrayNotification | None:
+    if report.status == "ok":
+        return None
+    return TrayNotification(
+        level="warning" if report.status == "warn" else "error",
+        title="Installed package needs attention",
+        message=report.summary,
+        event_id=f"installed_readiness:{report.status}:{report.summary}",
+    )
+
+
+def _format_installed_readiness_check(check: InstalledSmokeCheck) -> str:
+    detail = check.detail
+    if isinstance(detail, dict):
+        detail_text = ", ".join(f"{key}={value}" for key, value in detail.items())
+    else:
+        detail_text = str(detail)
+    if check.suggested_command:
+        return f"- {check.status}: {check.name}: {detail_text}; next: {check.suggested_command}"
+    return f"- {check.status}: {check.name}: {detail_text}"
+
+
 def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     QApplication, QAction, QIcon, QMenu, QMessageBox, QStyle, QSystemTrayIcon, QTimer = _load_pyside6_api()
 
@@ -459,6 +543,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     state_action.setEnabled(False)
     click_to_talk_action = QAction("Click to talk", menu)
     supported_commands_action = QAction("Show supported commands", menu)
+    installed_readiness_action = QAction("Show installed readiness", menu)
     support_snapshot_action = QAction("Show support snapshot", menu)
     save_support_snapshot_action = QAction("Save support snapshot", menu)
     save_support_bundle_action = QAction("Save support bundle", menu)
@@ -481,6 +566,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     menu.addAction(state_action)
     menu.addAction(click_to_talk_action)
     menu.addAction(supported_commands_action)
+    menu.addAction(installed_readiness_action)
     menu.addAction(support_snapshot_action)
     menu.addAction(save_support_snapshot_action)
     menu.addAction(save_support_bundle_action)
@@ -630,6 +716,24 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
             details=details if isinstance(details, str) and details else None,
         )
 
+    def show_installed_readiness() -> None:
+        try:
+            report = controller.installed_readiness_report()
+        except Exception as exc:
+            tray.showMessage(
+                "Installed readiness unavailable",
+                str(exc),
+                _resolve_notification_icon(QSystemTrayIcon, "warning"),
+            )
+            return
+        _show_information_dialog(
+            QMessageBox,
+            title=report.title,
+            summary=report.summary,
+            informative_text=f"Status: {report.status}",
+            details="\n".join(report.details) if report.details else None,
+        )
+
     def show_support_snapshot() -> None:
         try:
             help_text = build_support_snapshot_help_text(
@@ -726,6 +830,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     tray.activated.connect(on_tray_activated)
     click_to_talk_action.triggered.connect(start_click_to_talk)
     supported_commands_action.triggered.connect(show_supported_commands)
+    installed_readiness_action.triggered.connect(show_installed_readiness)
     support_snapshot_action.triggered.connect(show_support_snapshot)
     save_support_snapshot_action.triggered.connect(save_support_snapshot)
     save_support_bundle_action.triggered.connect(save_support_bundle)
@@ -750,6 +855,19 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
             startup_notification.message,
             _resolve_notification_icon(QSystemTrayIcon, startup_notification.level),
         )
+    if not daemon.config.runtime.developer_mode:
+        try:
+            installed_notification = build_installed_readiness_notification(
+                controller.installed_readiness_report()
+            )
+        except Exception:
+            installed_notification = None
+        if installed_notification is not None:
+            tray.showMessage(
+                installed_notification.title,
+                installed_notification.message,
+                _resolve_notification_icon(QSystemTrayIcon, installed_notification.level),
+            )
 
     try:
         app.exec()

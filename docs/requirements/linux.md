@@ -315,6 +315,7 @@ The tray app now also shows that same guidance once at startup with an `Operance
 Deterministic `open ...`, `launch ...`, `focus ...`, and `switch to ...` app commands now also accept simple app names beyond the original Firefox and Terminal examples, while still leaving chained phrases like `open firefox and notify me` to the planner path instead of over-matching them as one app launch.
 Those same deterministic app commands now also accept the more voice-like variants `please open ...`, `open app ...`, `focus app ...`, and `switch to app ...`, which reduces filler-word brittleness in the current MVP path without widening the execution surface itself.
 That same supported-command catalog and tray help now also render generic app patterns like `open <app name>` and `quit <app name>` instead of implying those commands are limited to the example app names used in the underlying registry metadata.
+The tray menu now also exposes `Show installed readiness`, which runs the same installed-package diagnostic as `operance --installed-smoke` and renders check failures, warnings, next-step commands, and manual click-to-talk checks from the product surface.
 That same repo-local config can now also be applied to wake-word probes, idle evaluation, composite voice self-test, and direct `operance.cli --voice-loop` or `--voice-session-frames` runs with `--use-voice-loop-config`, and those outputs now distinguish between config that was requested versus config that was actually applied, so diagnostics no longer label a missing args file as an active config source.
 When `~/.config/operance/voice-loop.args` is already present, the structured setup actions now automatically use that same config for wake-word probe, calibration, idle evaluation, and voice self-test commands instead of pointing setup users at default-threshold diagnostics.
 Doctor and setup now also expose one explicit `voice_loop_wakeword_customized` check that warns when the loop is still on raw defaults and points back at `python3 -m operance.cli --voice-loop-config` for the effective threshold, mode, and selected args file.
@@ -392,6 +393,7 @@ python3 scripts/check_installed_mvp_runtime.py --command operance --check-tray-s
 ```
 
 `operance --print-config` should report `"developer_mode": false`. `operance --installed-smoke` summarizes installed package readiness, warns when the tray service is not active, fails when packaged runtime dependencies are missing or `operance-tray.service` is shadowed by a stale repo-local user unit, and prints concrete next-step commands. `preset: disabled` in `systemctl --user status` is normal Fedora preset metadata; verify `Loaded`, `Active`, and the `ExecStart` path instead. `./scripts/run_installed_desktop_smoke.sh` starts/enables the packaged tray user service before checking status, so `Active: inactive (dead)` is a smoke failure.
+The packaged tray shows the same diagnostic from `Show installed readiness`, so users can inspect readiness and next steps after install without finding the CLI command first.
 
 Install a built native package artifact through the matching distro package manager:
 
