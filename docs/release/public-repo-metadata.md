@@ -53,7 +53,7 @@ Avoid adding Windows or macOS topics until those adapters actually exist in publ
 
 This repo is currently positioned as:
 
-- Fedora KDE Wayland developer alpha
+- Fedora KDE Wayland developer beta
 - source checkout first
 - RPM `mvp` runtime second
 - tray plus click-to-talk first

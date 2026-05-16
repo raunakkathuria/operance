@@ -113,8 +113,8 @@ if [[ -n "${support_bundle_out}" ]]; then
 fi
 run_step "${beta_smoke_display}" bash "${beta_smoke_args[@]}"
 
-package_gate_display="./scripts/run_fedora_alpha_gate.sh --reset-user-services"
-package_gate_args=("./scripts/run_fedora_alpha_gate.sh" "--reset-user-services")
+package_gate_display="./scripts/run_fedora_gate.sh --reset-user-services"
+package_gate_args=("./scripts/run_fedora_gate.sh" "--reset-user-services")
 if [[ "${run_package_gate}" -eq 0 ]]; then
     package_gate_display="${package_gate_display} --dry-run"
     package_gate_args+=("--dry-run")

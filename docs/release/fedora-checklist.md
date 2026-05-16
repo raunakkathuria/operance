@@ -1,7 +1,7 @@
-# Fedora Alpha Checklist
+# Fedora Gate Checklist
 
 Status: Working release gate  
-Type: Fedora KDE alpha handoff checklist  
+Type: Fedora KDE release checklist  
 Audience: Founder, maintainers, first outside developers
 
 ---
@@ -10,8 +10,8 @@ Audience: Founder, maintainers, first outside developers
 
 This checklist defines the current Fedora-first release gate for Operance.
 
-Use it when deciding whether the repo is ready for an outside-developer alpha
-drop on the current target platform:
+Use it when deciding whether the repo is ready for a beta drop on the current
+target platform:
 
 - Fedora KDE Plasma
 - Wayland session
@@ -24,7 +24,7 @@ to prove Windows, macOS, or a fully bundled cross-platform install story.
 
 ## 2. Current Stop Line
 
-The current repo can now prove:
+The current repo can prove:
 
 - the source checkout passes the full test suite
 - the repo-local beta smoke path works
@@ -47,7 +47,7 @@ Known remaining gaps before a broader public launch:
 
 That means the realistic public position today is:
 
-`Linux first`, `Fedora KDE first`, `developer alpha`, `local-first`, and
+`Linux first`, `Fedora KDE first`, `developer beta`, `local-first`, and
 `click-to-talk before wake word`.
 
 ---
@@ -62,12 +62,12 @@ From the checked-out tree:
 ./scripts/run_fedora_release_smoke.sh --reset-user-services --dry-run
 ```
 
-All three must pass before a package-backed alpha candidate is considered.
+All three must pass before a package-backed beta candidate is considered.
 
 Or use the combined checkout gate:
 
 ```bash
-./scripts/run_fedora_alpha_gate.sh --reset-user-services
+./scripts/run_fedora_gate.sh --reset-user-services
 ```
 
 If that gate stops immediately with `rpmbuild not found`, install the Fedora
@@ -98,8 +98,8 @@ Or use the combined release gate:
 ./scripts/run_fedora_release_smoke.sh --reset-user-services
 ```
 
-The combined alpha gate above already covers both the source-checkout gate and this
-RPM gate in one command for a prepared Fedora checkout.
+The combined Fedora gate above already covers both the source-checkout gate and
+this RPM gate in one command for a prepared Fedora checkout.
 
 Success means all of the following are true:
 
@@ -142,18 +142,19 @@ Attach that bundle to the bug report together with:
 
 ---
 
-## 6. Alpha Decision Rule
+## 6. Beta Decision Rule
 
-The current repo is ready for a Fedora developer alpha only when:
+The current repo is ready for a Fedora developer beta only when:
 
 1. the source-checkout gate passes
 2. the RPM gate passes on the target Fedora machine
 3. the known limitations above are documented honestly in the launch notes
 4. the expected tester workflow is explicit:
    source checkout first, Fedora RPM `mvp` package second, and a human
-   tray-plus-microphone smoke before tagging a packaged alpha release
+   tray-plus-microphone smoke before tagging a packaged beta release
 
-If the goal changes from `developer alpha` to `wider public alpha`, the next
-required feature is not another desktop command. It is tightening the installed
-tray plus click-to-talk UX and collecting enough Fedora feedback to know whether
-the packaged `mvp` runtime is stable enough for non-developer testers.
+If the goal changes from `developer beta` to a broader public desktop launch,
+the next required feature is not another desktop command. It is tightening the
+installed tray plus click-to-talk UX and collecting enough Fedora feedback to
+know whether the packaged `mvp` runtime is stable enough for non-developer
+testers.
