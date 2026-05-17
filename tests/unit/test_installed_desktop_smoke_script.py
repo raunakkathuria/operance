@@ -29,6 +29,7 @@ def test_installed_desktop_smoke_dry_run_prints_default_steps() -> None:
         "Manual tray click-to-talk checks:",
         "- open firefox",
         "- open localhost:3000",
+        "- open firefox and load localhost:3000",
         "- what time is it",
         "- wifi status",
         "- what is the volume",

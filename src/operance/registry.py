@@ -68,6 +68,7 @@ def build_default_action_registry() -> ActionRegistry:
                 "open http://localhost:3000",
                 "browse to localhost 3000",
                 "browse to docs.python.org/3",
+                "open firefox and load localhost:3000",
             ),
             allowed_side_effects=("launch_app", "open_url"),
         )

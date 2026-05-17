@@ -87,6 +87,19 @@ def test_cli_process_transcript_prints_response_payload(capsys) -> None:
     assert payload["simulated"] is True
 
 
+def test_cli_processes_two_step_launch_transcript(capsys) -> None:
+    exit_code = main(["--transcript", "open firefox and load localhost:3000"])
+
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+
+    assert exit_code == 0
+    assert payload["transcript"] == "open firefox and load localhost:3000"
+    assert payload["response"] == "Launched firefox. Opened http://localhost:3000"
+    assert payload["status"] == "success"
+    assert payload["simulated"] is True
+
+
 def test_cli_version_prints_project_identity(monkeypatch, capsys) -> None:
     monkeypatch.setattr(
         "operance.cli.OperanceDaemon.build_default",
@@ -565,9 +578,10 @@ def test_cli_supported_commands_prints_catalog_with_live_blockers(monkeypatch, c
         "open http://localhost:3000",
         "browse to localhost 3000",
         "browse to docs.python.org/3",
+        "open firefox and load localhost:3000",
     ]
     assert commands["apps.launch"]["usage_pattern"] == (
-        "open <app name> | open http://localhost:3000 | browse to localhost 3000"
+        "open <app name> | open http://localhost:3000 | browse to localhost 3000 | open <app> and load <url>"
     )
     assert commands["windows.list"]["live_runtime_status"] == "unverified"
     assert commands["windows.list"]["release_verification_target"] == "fedora_kde_wayland"

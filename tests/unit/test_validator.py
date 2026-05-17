@@ -33,6 +33,7 @@ def test_default_action_registry_exposes_seed_command_specs() -> None:
         "open http://localhost:3000",
         "browse to localhost 3000",
         "browse to docs.python.org/3",
+        "open firefox and load localhost:3000",
     )
     assert launch_spec.allowed_side_effects == ("launch_app", "open_url")
     assert launch_spec.result_schema["properties"]["tool"] == {"type": "string", "const": "apps.launch"}

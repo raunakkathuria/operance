@@ -26,7 +26,7 @@ Current positioning:
 
 Current supported command subset on that target:
 
-- `open <app name>` and URL-like launch targets such as `open localhost:3000`
+- `open <app name>` and URL-like launch targets such as `open localhost:3000`, plus safe app and URL launch chains such as `open firefox and load localhost:3000`
 - `focus <app name>`
 - `what time is it`
 - `what is my battery level`

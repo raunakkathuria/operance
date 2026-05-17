@@ -146,6 +146,23 @@ def test_executor_runs_seed_commands_against_mock_adapters(
     assert result.results[0].message == expected_message
 
 
+def test_executor_runs_two_step_launch_plan_against_mock_adapters(tmp_path: Path) -> None:
+    from operance.adapters.mock import build_mock_adapter_set
+    from operance.executor import ActionExecutor
+
+    matcher = DeterministicIntentMatcher()
+    plan = matcher.match("open firefox and load localhost:3000")
+    assert plan is not None
+
+    executor = ActionExecutor(adapters=build_mock_adapter_set(desktop_dir=tmp_path / "Desktop"))
+
+    result = executor.execute(plan)
+
+    assert result.status == "success"
+    assert [item.tool for item in result.results] == [ToolName.APPS_LAUNCH, ToolName.APPS_LAUNCH]
+    assert [item.message for item in result.results] == ["Launched firefox", "Opened http://localhost:3000"]
+
+
 def test_executor_returns_failed_result_when_app_launch_adapter_fails() -> None:
     from operance.adapters.base import AdapterSet
     from operance.executor import ActionExecutor

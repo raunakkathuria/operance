@@ -58,6 +58,7 @@ The current public support contract is:
 Current supported command subset on that target:
 
 - `open <app name>` and URL-like launch targets such as `open localhost:3000`
+- safe two-step app plus URL launch phrases such as `open firefox and load localhost:3000`
 - `focus <app name>`
 - `what time is it`
 - `what is my battery level`
@@ -110,6 +111,7 @@ OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "what is
 OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "is audio muted"
 OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "open firefox"
 OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "open localhost:3000"
+OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "open firefox and load localhost:3000"
 ```
 
 ---
@@ -314,6 +316,7 @@ Click-to-talk startup failures now also fail closed across both the tray and CLI
 When the tray is otherwise idle, its tooltip now prefers the MVP hint `Left-click to talk` over the background loop’s benign `waiting_for_wake` activity text, so the first-run Linux interaction path stays explicit even when the optional voice loop is healthy.
 The tray app now also shows that same guidance once at startup with an `Operance is ready` info bubble that adds `Right-click for supported commands.`, and the tray menu now exposes a shared supported-command help view so developers can discover runnable commands from the product surface instead of dropping back to raw CLI JSON first.
 Deterministic `open ...`, `launch ...`, `focus ...`, and `switch to ...` app commands now also accept simple app names beyond the original Firefox and Terminal examples, while still leaving chained phrases like `open firefox and notify me` to the planner path instead of over-matching them as one app launch.
+Deterministic launch matching now also accepts narrow two-step app plus URL phrases such as `open firefox and load localhost:3000`; both steps remain the existing `apps.launch` tool, and non-URL chained phrases still stay out of the deterministic path.
 Those same deterministic app commands now also accept the more voice-like variants `please open ...`, `open app ...`, `focus app ...`, and `switch to app ...`, which reduces filler-word brittleness in the current MVP path without widening the execution surface itself.
 That same supported-command catalog and tray help now also render generic app patterns like `open <app name>` and `quit <app name>` instead of implying those commands are limited to the example app names used in the underlying registry metadata.
 The tray menu now also exposes `Show installed readiness`, which runs the same installed-package diagnostic as `operance --installed-smoke` and renders check failures, warnings, next-step commands, and manual click-to-talk checks from the product surface.
@@ -696,6 +699,7 @@ Broader implemented Linux-backed paths that are not all release-verified yet:
 - app focus prefers a KWin scripting bridge over the session bus
 - app launch reuses the existing executable, desktop-file, and `xdg-open` fallback path, and now also normalizes localhost dev-server targets like `localhost:3000` to `http://localhost:3000` before live launch
 - spoken dev-server phrases like `browse to localhost 3000` and `open url localhost port 3000` now normalize into that same launch path, which keeps the developer MVP usable without requiring literal punctuation in every voice transcript
+- two-step launch phrases like `open firefox and load localhost:3000` execute app launch first and then URL launch, while unrelated chains like `open firefox and notify me` still require planner support
 - explicit URL phrases like `browse to docs.python.org/3` and `open url github.com/openai/openai-python` now also normalize bare hostnames to `https://...`, so developer docs and repository browsing work without widening the generic app-launch path
 - app quit reuses the same KWin window-close path and now executes after an in-session confirmation reply
 - window listing and window switching prefer KWin `WindowsRunner` over the session bus
