@@ -20,6 +20,7 @@ install -Dpm0644 packaged-assets/etc/operance/voice-loop.args.example %{buildroo
 install -Dpm0644 packaged-assets/applications/operance.desktop %{buildroot}%{_datadir}/applications/operance.desktop
 install -Dpm0644 packaged-assets/icons/hicolor/scalable/apps/operance.svg %{buildroot}%{_datadir}/icons/hicolor/scalable/apps/operance.svg
 install -Dpm0644 packaged-assets/lib/operance/pyproject.toml %{buildroot}%{_prefix}/lib/operance/pyproject.toml
+install -Dpm0644 packaged-assets/lib/operance/build-info.json %{buildroot}%{_prefix}/lib/operance/build-info.json
 install -Dpm0755 packaged-assets/lib/operance/voice-loop-launcher %{buildroot}%{_prefix}/lib/operance/voice-loop-launcher
 install -d %{buildroot}%{_prefix}/lib/operance/site-packages
 cp -a packaged-assets/lib/operance/site-packages/. %{buildroot}%{_prefix}/lib/operance/site-packages/
