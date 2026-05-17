@@ -1,8 +1,26 @@
 import subprocess
 from pathlib import Path
 
+import pytest
+
 from operance.config import AppConfig
 from operance.installed_smoke import build_installed_smoke_result
+
+
+@pytest.fixture(autouse=True)
+def _packaged_identity(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "operance.installed_smoke.build_project_identity",
+        lambda: {
+            "name": "operance",
+            "version": "0.1.0",
+            "install_mode": "packaged",
+            "build_git_commit": "abcdef123456",
+            "build_git_commit_short": "abcdef1",
+            "package_profile": "mvp",
+            "install_root": "/usr/lib/operance",
+        },
+    )
 
 
 def _live_config() -> AppConfig:

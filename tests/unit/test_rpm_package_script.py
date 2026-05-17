@@ -39,7 +39,7 @@ def test_rpm_package_script_dry_run_prints_expected_steps() -> None:
     assert result.stdout.splitlines() == [
         "+ mkdir -p /tmp/operance-rpm/SOURCES",
         "+ render packaging/rpm/operance.spec.in -> /tmp/operance-rpm/operance.spec",
-        "+ ./scripts/render_packaged_assets.sh --output-dir /tmp/operance-rpm/SOURCES/packaged-assets --entrypoint /usr/bin/operance --bundle-profile base",
+        "+ ./scripts/render_packaged_assets.sh --output-dir /tmp/operance-rpm/SOURCES/packaged-assets --entrypoint /usr/bin/operance --bundle-profile base --package-version 1.2.3",
         "+ tar -czf /tmp/operance-rpm/SOURCES/operance-packaged-assets-1.2.3.tar.gz -C /tmp/operance-rpm/SOURCES packaged-assets",
         "+ rpmbuild --define _topdir /tmp/operance-rpm -bb /tmp/operance-rpm/operance.spec",
         "+ mkdir -p /tmp/operance-rpm",
@@ -61,7 +61,7 @@ def test_rpm_package_script_forwards_bundle_profile_options() -> None:
         "/tmp/operance-site-packages",
     )
 
-    assert "+ ./scripts/render_packaged_assets.sh --output-dir /tmp/operance-rpm/SOURCES/packaged-assets --entrypoint /usr/bin/operance --bundle-profile mvp --bundle-python /tmp/operance-python --bundle-source-site-packages /tmp/operance-site-packages" in result.stdout.splitlines()
+    assert "+ ./scripts/render_packaged_assets.sh --output-dir /tmp/operance-rpm/SOURCES/packaged-assets --entrypoint /usr/bin/operance --bundle-profile mvp --package-version 0.1.0 --bundle-python /tmp/operance-python --bundle-source-site-packages /tmp/operance-site-packages" in result.stdout.splitlines()
     assert result.stderr == ""
 
 
@@ -84,6 +84,7 @@ def test_rpm_package_script_can_render_spec_without_building(tmp_path: Path) -> 
     desktop_entry = spec_dir / "SOURCES" / "packaged-assets" / "applications" / "operance.desktop"
     packaged_icon = spec_dir / "SOURCES" / "packaged-assets" / "icons" / "hicolor" / "scalable" / "apps" / "operance.svg"
     packaged_pyproject = spec_dir / "SOURCES" / "packaged-assets" / "lib" / "operance" / "pyproject.toml"
+    packaged_build_info = spec_dir / "SOURCES" / "packaged-assets" / "lib" / "operance" / "build-info.json"
     packaged_runtime_dir = spec_dir / "SOURCES" / "packaged-assets" / "lib" / "operance" / "site-packages" / "operance"
     voice_loop_launcher = spec_dir / "SOURCES" / "packaged-assets" / "lib" / "operance" / "voice-loop-launcher"
     tray_service_unit = spec_dir / "SOURCES" / "packaged-assets" / "systemd" / "operance-tray.service"
@@ -97,6 +98,7 @@ def test_rpm_package_script_can_render_spec_without_building(tmp_path: Path) -> 
     assert desktop_entry.exists()
     assert packaged_icon.exists()
     assert packaged_pyproject.exists()
+    assert packaged_build_info.exists()
     assert packaged_runtime_dir.exists()
     assert voice_loop_launcher.exists()
     assert tray_service_unit.exists()
@@ -108,6 +110,7 @@ def test_rpm_package_script_can_render_spec_without_building(tmp_path: Path) -> 
     voice_loop_args_example_text = voice_loop_args_example.read_text(encoding="utf-8")
     desktop_text = desktop_entry.read_text(encoding="utf-8")
     packaged_pyproject_text = packaged_pyproject.read_text(encoding="utf-8")
+    packaged_build_info_text = packaged_build_info.read_text(encoding="utf-8")
     packaged_runtime_init_text = (packaged_runtime_dir / "__init__.py").read_text(encoding="utf-8")
     voice_loop_launcher_text = voice_loop_launcher.read_text(encoding="utf-8")
     tray_service_text = tray_service_unit.read_text(encoding="utf-8")
@@ -133,6 +136,8 @@ def test_rpm_package_script_can_render_spec_without_building(tmp_path: Path) -> 
     assert "Exec=/opt/operance/bin/operance --tray-run" in desktop_text
     assert "Icon=operance" in desktop_text
     assert 'version = "0.1.0"' in packaged_pyproject_text
+    assert '"package_version": "9.9.9"' in packaged_build_info_text
+    assert '"package_profile": "base"' in packaged_build_info_text
     assert '"""Operance package bootstrap."""' in packaged_runtime_init_text
     assert 'entrypoint="/opt/operance/bin/operance"' in voice_loop_launcher_text
     assert "ExecStart=/opt/operance/bin/operance --tray-run" in tray_service_text

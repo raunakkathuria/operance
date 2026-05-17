@@ -74,6 +74,7 @@ fi
 cd "${repo_root}"
 
 run_step "${python_bin} -m operance.cli --version" "${python_bin}" "-m" "operance.cli" "--version"
+run_step "${python_bin} -m operance.cli --about" "${python_bin}" "-m" "operance.cli" "--about"
 run_step "${python_bin} -m operance.cli --doctor" "${python_bin}" "-m" "operance.cli" "--doctor"
 run_step "${python_bin} -m operance.cli --setup-actions" "${python_bin}" "-m" "operance.cli" "--setup-actions"
 run_step \

@@ -108,9 +108,11 @@ Success means all of the following are true:
 - the packaged desktop entry exists
 - the packaged tray and voice-loop user units exist
 - `operance --version` runs from the installed command
+- `operance --about` runs from the installed command and reports packaged build identity
 - `operance --doctor` runs from the installed command
 - `operance --print-config` reports `"developer_mode": false`
 - `operance --installed-smoke` runs from the installed command and reports package-local next steps
+- `scripts/check_installed_build_identity.py --command operance --package-profile mvp` passes
 - `scripts/check_installed_mvp_runtime.py --command operance` passes
 - the runnable supported-command subset can be projected from the installed command
 - the installed command can write a support bundle

@@ -35,6 +35,8 @@ def test_installed_package_smoke_script_dry_run_prints_expected_steps() -> None:
         "+ test -f /usr/lib/systemd/user/operance-tray.service",
         "+ test -f /usr/lib/systemd/user/operance-voice-loop.service",
         "+ operance --version",
+        "+ operance --about",
+        "+ python3 scripts/check_installed_build_identity.py --command operance",
         "+ operance --doctor",
         "+ operance --installed-smoke",
         "+ operance --supported-commands --supported-commands-available-only",
@@ -51,8 +53,11 @@ def test_installed_package_smoke_script_can_require_mvp_runtime_in_dry_run() -> 
         "+ test -f /usr/lib/systemd/user/operance-tray.service",
         "+ test -f /usr/lib/systemd/user/operance-voice-loop.service",
         "+ operance --version",
+        "+ operance --about",
+        "+ python3 scripts/check_installed_build_identity.py --command operance",
         "+ operance --doctor",
         "+ operance --installed-smoke",
+        "+ python3 scripts/check_installed_build_identity.py --command operance --package-profile mvp",
         "+ python3 scripts/check_installed_mvp_runtime.py --command operance --check-tray-service",
         "+ operance --supported-commands --supported-commands-available-only",
         "+ operance --support-bundle",
@@ -133,6 +138,9 @@ def test_installed_package_smoke_script_can_install_run_and_uninstall_with_fake_
             "    : > \"${args[$((i + 1))]}\"\n"
             "  fi\n"
             "done\n"
+            "if [[ \"$*\" == \"--about\" ]]; then\n"
+            "  printf '%s\\n' '{\"install_mode\":\"packaged\",\"build_git_commit\":\"abcdef123456\",\"build_git_commit_short\":\"abcdef1\",\"build_time\":\"2026-05-17T00:00:00Z\",\"install_root\":\"/usr/lib/operance\",\"package_profile\":\"mvp\"}'\n"
+            "fi\n"
         ),
     )
 
@@ -170,6 +178,10 @@ def test_installed_package_smoke_script_can_install_run_and_uninstall_with_fake_
         f"+ test -f {tray_unit_path}",
         f"+ test -f {voice_loop_unit_path}",
         f"+ {fake_bin / 'operance'} --version",
+        f"+ {fake_bin / 'operance'} --about",
+        '{"install_mode":"packaged","build_git_commit":"abcdef123456","build_git_commit_short":"abcdef1","build_time":"2026-05-17T00:00:00Z","install_root":"/usr/lib/operance","package_profile":"mvp"}',
+        f"+ python3 scripts/check_installed_build_identity.py --command {fake_bin / 'operance'}",
+        '{"identity_checked": true, "status": "ok"}',
         f"+ {fake_bin / 'operance'} --doctor",
         f"+ {fake_bin / 'operance'} --installed-smoke",
         f"+ {fake_bin / 'operance'} --supported-commands --supported-commands-available-only",
@@ -184,6 +196,8 @@ def test_installed_package_smoke_script_can_install_run_and_uninstall_with_fake_
     ]
     assert operance_log.read_text(encoding="utf-8").splitlines() == [
         "--version",
+        "--about",
+        "--about",
         "--doctor",
         "--installed-smoke",
         "--supported-commands --supported-commands-available-only",

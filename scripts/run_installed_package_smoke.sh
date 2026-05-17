@@ -193,9 +193,16 @@ run_step "test -f ${tray_unit_path}" test -f "${tray_unit_path}"
 run_step "test -f ${voice_loop_unit_path}" test -f "${voice_loop_unit_path}"
 
 run_step "${command_path} --version" "${command_path}" "--version"
+run_step "${command_path} --about" "${command_path}" "--about"
+run_step \
+    "python3 scripts/check_installed_build_identity.py --command ${command_path}" \
+    python3 scripts/check_installed_build_identity.py --command "${command_path}"
 run_step "${command_path} --doctor" "${command_path}" "--doctor"
 run_step "${command_path} --installed-smoke" "${command_path}" "--installed-smoke"
 if [[ "${require_mvp_runtime}" -eq 1 ]]; then
+    run_step \
+        "python3 scripts/check_installed_build_identity.py --command ${command_path} --package-profile mvp" \
+        python3 scripts/check_installed_build_identity.py --command "${command_path}" --package-profile mvp
     run_step \
         "python3 scripts/check_installed_mvp_runtime.py --command ${command_path} --check-tray-service" \
         python3 scripts/check_installed_mvp_runtime.py --command "${command_path}" --check-tray-service

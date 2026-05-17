@@ -19,7 +19,7 @@ from ..installed_smoke import (
     build_installed_smoke_result,
 )
 from ..models.events import RuntimeState
-from ..project_info import project_version
+from ..project_info import build_project_identity, project_version
 from ..status import StatusSnapshot
 from ..stt import SpeechTranscriber, build_default_speech_transcriber
 from ..support_bundle import write_support_bundle_artifact
@@ -518,6 +518,33 @@ def _format_installed_readiness_check(check: InstalledSmokeCheck) -> str:
     return f"- {check.status}: {check.name}: {detail_text}"
 
 
+def _format_about_summary(identity: dict[str, object]) -> str:
+    name = str(identity.get("name") or "operance").capitalize()
+    version = str(identity.get("version") or "unknown")
+    install_mode = str(identity.get("install_mode") or "unknown")
+    return f"{name} {version} ({install_mode})"
+
+
+def _format_about_highlights(identity: dict[str, object]) -> str:
+    lines: list[str] = []
+    git_tag = identity.get("build_git_tag")
+    git_commit = identity.get("build_git_commit_short") or identity.get("git_commit")
+    package_profile = identity.get("package_profile")
+    install_root = identity.get("install_root")
+    build_time = identity.get("build_time")
+    if isinstance(git_tag, str) and git_tag:
+        lines.append(f"Tag: {git_tag}")
+    if isinstance(git_commit, str) and git_commit:
+        lines.append(f"Commit: {git_commit}")
+    if isinstance(package_profile, str) and package_profile:
+        lines.append(f"Package profile: {package_profile}")
+    if isinstance(install_root, str) and install_root:
+        lines.append(f"Install root: {install_root}")
+    if isinstance(build_time, str) and build_time:
+        lines.append(f"Built: {build_time}")
+    return "\n".join(lines)
+
+
 def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     QApplication, QAction, QIcon, QMenu, QMessageBox, QStyle, QSystemTrayIcon, QTimer = _load_pyside6_api()
 
@@ -543,6 +570,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     state_action.setEnabled(False)
     click_to_talk_action = QAction("Click to talk", menu)
     supported_commands_action = QAction("Show supported commands", menu)
+    about_action = QAction("About Operance", menu)
     installed_readiness_action = QAction("Show installed readiness", menu)
     support_snapshot_action = QAction("Show support snapshot", menu)
     save_support_snapshot_action = QAction("Save support snapshot", menu)
@@ -566,6 +594,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     menu.addAction(state_action)
     menu.addAction(click_to_talk_action)
     menu.addAction(supported_commands_action)
+    menu.addAction(about_action)
     menu.addAction(installed_readiness_action)
     menu.addAction(support_snapshot_action)
     menu.addAction(save_support_snapshot_action)
@@ -716,6 +745,16 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
             details=details if isinstance(details, str) and details else None,
         )
 
+    def show_about() -> None:
+        identity = build_project_identity()
+        _show_information_dialog(
+            QMessageBox,
+            title="About Operance",
+            summary=_format_about_summary(identity),
+            informative_text=_format_about_highlights(identity),
+            details=json.dumps(identity, indent=2, sort_keys=True),
+        )
+
     def show_installed_readiness() -> None:
         try:
             report = controller.installed_readiness_report()
@@ -830,6 +869,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     tray.activated.connect(on_tray_activated)
     click_to_talk_action.triggered.connect(start_click_to_talk)
     supported_commands_action.triggered.connect(show_supported_commands)
+    about_action.triggered.connect(show_about)
     installed_readiness_action.triggered.connect(show_installed_readiness)
     support_snapshot_action.triggered.connect(show_support_snapshot)
     save_support_snapshot_action.triggered.connect(save_support_snapshot)

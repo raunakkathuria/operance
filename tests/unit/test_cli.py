@@ -98,6 +98,7 @@ def test_cli_version_prints_project_identity(monkeypatch, capsys) -> None:
             "name": "operance",
             "version": "0.1.0",
             "version_source": "pyproject",
+            "install_mode": "source_checkout",
             "git_commit": "abc1234",
             "git_branch": "main",
             "git_dirty": False,
@@ -109,7 +110,37 @@ def test_cli_version_prints_project_identity(monkeypatch, capsys) -> None:
     captured = capsys.readouterr()
 
     assert exit_code == 0
-    assert captured.out.strip() == "operance 0.1.0 (abc1234)"
+    assert captured.out.strip() == "operance 0.1.0 (abc1234)\nmode: source_checkout"
+
+
+def test_cli_about_prints_project_identity(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(
+        "operance.cli.OperanceDaemon.build_default",
+        lambda env: (_ for _ in ()).throw(AssertionError("daemon should not be built for --about")),
+    )
+    monkeypatch.setattr(
+        "operance.cli.build_project_identity",
+        lambda: {
+            "name": "operance",
+            "version": "0.1.0",
+            "install_mode": "packaged",
+            "build_git_commit_short": "abc1234",
+            "package_profile": "mvp",
+        },
+    )
+
+    exit_code = main(["--about"])
+
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert json.loads(captured.out) == {
+        "build_git_commit_short": "abc1234",
+        "install_mode": "packaged",
+        "name": "operance",
+        "package_profile": "mvp",
+        "version": "0.1.0",
+    }
 
 
 def test_cli_process_generic_app_transcript_prints_response_payload(capsys) -> None:

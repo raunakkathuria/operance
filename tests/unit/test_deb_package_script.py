@@ -37,12 +37,13 @@ def test_deb_package_script_dry_run_prints_expected_steps() -> None:
         "+ mkdir -p /tmp/operance-deb/usr/lib/operance/site-packages",
         "+ mkdir -p /tmp/operance-deb/usr/lib/systemd/user",
         "+ render packaging/deb/control.in -> /tmp/operance-deb/DEBIAN/control",
-        "+ ./scripts/render_packaged_assets.sh --output-dir /tmp/operance-deb/.rendered --entrypoint /usr/bin/operance --bundle-profile base",
+        "+ ./scripts/render_packaged_assets.sh --output-dir /tmp/operance-deb/.rendered --entrypoint /usr/bin/operance --bundle-profile base --package-version 1.2.3",
         "+ cp /tmp/operance-deb/.rendered/bin/operance /tmp/operance-deb/usr/bin/operance",
         "+ cp /tmp/operance-deb/.rendered/etc/operance/voice-loop.args.example /tmp/operance-deb/etc/operance/voice-loop.args.example",
         "+ cp /tmp/operance-deb/.rendered/applications/operance.desktop /tmp/operance-deb/usr/share/applications/operance.desktop",
         "+ cp /tmp/operance-deb/.rendered/icons/hicolor/scalable/apps/operance.svg /tmp/operance-deb/usr/share/icons/hicolor/scalable/apps/operance.svg",
         "+ cp /tmp/operance-deb/.rendered/lib/operance/pyproject.toml /tmp/operance-deb/usr/lib/operance/pyproject.toml",
+        "+ cp /tmp/operance-deb/.rendered/lib/operance/build-info.json /tmp/operance-deb/usr/lib/operance/build-info.json",
         "+ cp -R /tmp/operance-deb/.rendered/lib/operance/site-packages/. /tmp/operance-deb/usr/lib/operance/site-packages",
         "+ cp /tmp/operance-deb/.rendered/lib/operance/voice-loop-launcher /tmp/operance-deb/usr/lib/operance/voice-loop-launcher",
         "+ cp /tmp/operance-deb/.rendered/systemd/operance-tray.service /tmp/operance-deb/usr/lib/systemd/user/operance-tray.service",
@@ -67,7 +68,7 @@ def test_deb_package_script_forwards_bundle_profile_options() -> None:
         "/tmp/operance-site-packages",
     )
 
-    assert "+ ./scripts/render_packaged_assets.sh --output-dir /tmp/operance-deb/.rendered --entrypoint /usr/bin/operance --bundle-profile mvp --bundle-python /tmp/operance-python --bundle-source-site-packages /tmp/operance-site-packages" in result.stdout.splitlines()
+    assert "+ ./scripts/render_packaged_assets.sh --output-dir /tmp/operance-deb/.rendered --entrypoint /usr/bin/operance --bundle-profile mvp --package-version 0.1.0 --bundle-python /tmp/operance-python --bundle-source-site-packages /tmp/operance-site-packages" in result.stdout.splitlines()
     assert result.stderr == ""
 
 
@@ -93,6 +94,7 @@ def test_deb_package_script_can_render_stage_without_building(tmp_path: Path) ->
     desktop_entry = staging_dir / "usr" / "share" / "applications" / "operance.desktop"
     packaged_icon = staging_dir / "usr" / "share" / "icons" / "hicolor" / "scalable" / "apps" / "operance.svg"
     packaged_pyproject = staging_dir / "usr" / "lib" / "operance" / "pyproject.toml"
+    packaged_build_info = staging_dir / "usr" / "lib" / "operance" / "build-info.json"
     packaged_runtime_dir = staging_dir / "usr" / "lib" / "operance" / "site-packages" / "operance"
     voice_loop_launcher = staging_dir / "usr" / "lib" / "operance" / "voice-loop-launcher"
     tray_service_unit = staging_dir / "usr" / "lib" / "systemd" / "user" / "operance-tray.service"
@@ -105,6 +107,7 @@ def test_deb_package_script_can_render_stage_without_building(tmp_path: Path) ->
     assert desktop_entry.exists()
     assert packaged_icon.exists()
     assert packaged_pyproject.exists()
+    assert packaged_build_info.exists()
     assert packaged_runtime_dir.exists()
     assert voice_loop_launcher.exists()
     assert tray_service_unit.exists()
@@ -115,6 +118,7 @@ def test_deb_package_script_can_render_stage_without_building(tmp_path: Path) ->
     voice_loop_args_example_text = voice_loop_args_example.read_text(encoding="utf-8")
     desktop_text = desktop_entry.read_text(encoding="utf-8")
     packaged_pyproject_text = packaged_pyproject.read_text(encoding="utf-8")
+    packaged_build_info_text = packaged_build_info.read_text(encoding="utf-8")
     packaged_runtime_init_text = (packaged_runtime_dir / "__init__.py").read_text(encoding="utf-8")
     voice_loop_launcher_text = voice_loop_launcher.read_text(encoding="utf-8")
     tray_service_text = tray_service_unit.read_text(encoding="utf-8")
@@ -127,6 +131,8 @@ def test_deb_package_script_can_render_stage_without_building(tmp_path: Path) ->
     assert "Exec=/opt/operance/bin/operance --tray-run" in desktop_text
     assert "Icon=operance" in desktop_text
     assert 'version = "0.1.0"' in packaged_pyproject_text
+    assert '"package_version": "9.9.9"' in packaged_build_info_text
+    assert '"package_profile": "base"' in packaged_build_info_text
     assert '"""Operance package bootstrap."""' in packaged_runtime_init_text
     assert 'entrypoint="/opt/operance/bin/operance"' in voice_loop_launcher_text
     assert "ExecStart=/opt/operance/bin/operance --tray-run" in tray_service_text

@@ -17,6 +17,7 @@ Do not use this template for security issues. Follow `SECURITY.md` instead.
 - OS:
 - Desktop session:
 - Operance version (`.venv/bin/python -m operance.cli --version`):
+- Operance about (`operance --about` for installed packages, or `.venv/bin/python -m operance.cli --about` for source checkouts):
 - Python version:
 - Install method:
 - Developer mode or live adapters:
@@ -40,6 +41,7 @@ Describe what happened instead.
 
 - [ ] `.venv/bin/python -m pytest`
 - [ ] `.venv/bin/python -m operance.cli --version`
+- [ ] `.venv/bin/python -m operance.cli --about`
 - [ ] `.venv/bin/python -m operance.cli --doctor`
 - [ ] `operance --installed-smoke` when reporting an installed package issue
 - [ ] `.venv/bin/python -m operance.cli --support-bundle`

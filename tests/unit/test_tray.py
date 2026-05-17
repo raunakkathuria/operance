@@ -300,6 +300,7 @@ def test_build_installed_readiness_report_summarizes_ok_result() -> None:
             ],
             next_steps=["systemctl --user status operance-tray.service --no-pager"],
             manual_checks=["Click the tray icon and say: open firefox"],
+            build={"name": "operance", "version": "0.1.0"},
         )
     )
 
@@ -316,6 +317,30 @@ def test_build_installed_readiness_report_summarizes_ok_result() -> None:
         "title": "Installed package readiness",
     }
     assert build_installed_readiness_notification(report) is None
+
+
+def test_format_about_text_summarizes_packaged_identity() -> None:
+    from operance.ui.tray import _format_about_highlights, _format_about_summary
+
+    identity = {
+        "name": "operance",
+        "version": "0.1.0",
+        "install_mode": "packaged",
+        "build_git_tag": "v0.1.0",
+        "build_git_commit_short": "abc1234",
+        "package_profile": "mvp",
+        "install_root": "/usr/lib/operance",
+        "build_time": "2026-05-17T00:00:00Z",
+    }
+
+    assert _format_about_summary(identity) == "Operance 0.1.0 (packaged)"
+    assert _format_about_highlights(identity) == (
+        "Tag: v0.1.0\n"
+        "Commit: abc1234\n"
+        "Package profile: mvp\n"
+        "Install root: /usr/lib/operance\n"
+        "Built: 2026-05-17T00:00:00Z"
+    )
 
 
 def test_build_installed_readiness_report_surfaces_next_steps_for_failures() -> None:
@@ -338,6 +363,7 @@ def test_build_installed_readiness_report_surfaces_next_steps_for_failures() -> 
             ],
             next_steps=["Remove stale user units or reinstall with --reset-user-services."],
             manual_checks=["Click the tray icon and say: open firefox"],
+            build={"name": "operance", "version": "0.1.0"},
         )
     )
 
@@ -379,6 +405,7 @@ def test_tray_controller_can_build_installed_readiness_report(monkeypatch, tmp_p
             checks=[],
             next_steps=["systemctl --user enable --now operance-tray.service"],
             manual_checks=[],
+            build={"name": "operance", "version": "0.1.0"},
         )
 
     monkeypatch.setattr("operance.ui.tray.build_installed_smoke_result", fake_smoke_result)

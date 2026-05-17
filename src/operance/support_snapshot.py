@@ -104,7 +104,7 @@ def build_support_snapshot_help_text(snapshot: dict[str, object]) -> dict[str, o
 def _format_build_highlight(build: dict[str, object]) -> str:
     name = build.get("name")
     version = build.get("version")
-    git_commit = build.get("git_commit")
+    git_commit = build.get("build_git_commit_short") or build.get("git_commit")
     if isinstance(name, str) and name and isinstance(version, str) and version:
         if isinstance(git_commit, str) and git_commit:
             return f"Build: {name} {version} ({git_commit})"

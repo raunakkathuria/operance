@@ -22,6 +22,7 @@ bundle_profile="base"
 bundle_python=""
 bundle_source_site_packages=""
 install_root="/usr/lib/operance"
+package_version=""
 dry_run=0
 
 usage() {
@@ -42,6 +43,7 @@ Options:
                                 when bundling a non-base runtime profile.
   --bundle-source-site-packages PATH
                                 Override the source site-packages directory for runtime bundling.
+  --package-version VALUE       Package version to record in build metadata.
   --dry-run                     Print the render steps without executing them.
   -h, --help                    Show this help text.
 EOF
@@ -106,6 +108,13 @@ while [[ $# -gt 0 ]]; do
             fi
             bundle_source_site_packages="$1"
             ;;
+        --package-version)
+            shift
+            if [[ $# -eq 0 ]]; then
+                fail "--package-version requires a value"
+            fi
+            package_version="$1"
+            ;;
         --dry-run)
             dry_run=1
             ;;
@@ -135,6 +144,12 @@ if [[ -z "${bundle_python}" ]]; then
         bundle_python="python3"
     fi
 fi
+if [[ -z "${package_version}" ]]; then
+    package_version="$(sed -n 's/^version = "\(.*\)"$/\1/p' pyproject.toml | head -n 1)"
+fi
+if [[ -z "${package_version}" ]]; then
+    fail "could not determine package version from pyproject.toml"
+fi
 
 desktop_dir="${output_dir%/}/applications"
 entrypoint_dir="${output_dir%/}/bin"
@@ -150,6 +165,7 @@ icon_path="${icon_dir}/operance.svg"
 entrypoint_path="${entrypoint_dir}/operance"
 voice_loop_args_path="${config_dir}/voice-loop.args.example"
 packaged_pyproject_path="${runtime_dir}/pyproject.toml"
+build_info_path="${runtime_dir}/build-info.json"
 voice_loop_launcher_path="${libexec_dir}/voice-loop-launcher"
 tray_service_unit_path="${systemd_dir}/operance-tray.service"
 voice_loop_service_unit_path="${systemd_dir}/operance-voice-loop.service"
@@ -194,6 +210,40 @@ if [[ "${dry_run}" -eq 0 ]]; then
 fi
 
 run_step "cp pyproject.toml ${packaged_pyproject_path}" cp "${pyproject_source_path}" "${packaged_pyproject_path}"
+
+echo "+ render packaged build metadata -> ${build_info_path}"
+if [[ "${dry_run}" -eq 0 ]]; then
+    git_commit="$(git rev-parse HEAD 2>/dev/null || true)"
+    git_commit_short="$(git rev-parse --short HEAD 2>/dev/null || true)"
+    git_branch="$(git branch --show-current 2>/dev/null || true)"
+    git_tag="$(git describe --tags --exact-match HEAD 2>/dev/null || true)"
+    git_dirty="false"
+    if [[ -n "$(git status --short 2>/dev/null || true)" ]]; then
+        git_dirty="true"
+    fi
+    build_time="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+    python3 - "${build_info_path}" <<PY
+import json
+import sys
+
+payload = {
+    "build_time": ${build_time@Q},
+    "entrypoint": ${entrypoint@Q},
+    "git_branch": ${git_branch@Q} or None,
+    "git_commit": ${git_commit@Q} or None,
+    "git_commit_short": ${git_commit_short@Q} or None,
+    "git_dirty": ${git_dirty@Q} == "true",
+    "git_tag": ${git_tag@Q} or None,
+    "install_root": ${install_root@Q},
+    "package_profile": ${bundle_profile@Q},
+    "package_version": ${package_version@Q},
+    "python_bin": ${python_bin@Q},
+}
+with open(sys.argv[1], "w", encoding="utf-8") as file_handle:
+    json.dump(payload, file_handle, indent=2, sort_keys=True)
+    file_handle.write("\\n")
+PY
+fi
 run_step "cp -R src/operance/. ${site_packages_dir}" cp -R "${runtime_source_dir}/." "${site_packages_dir}"
 
 if [[ "${bundle_profile}" != "base" ]]; then

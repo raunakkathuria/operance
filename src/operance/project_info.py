@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 import importlib.metadata
+import json
 from pathlib import Path
 import subprocess
 import tomllib
@@ -29,14 +30,35 @@ def build_project_identity() -> dict[str, object]:
         version_source = "pyproject"
 
     repo_root = _repo_root()
-    return {
+    build_info = _read_build_info(repo_root)
+    install_mode = "packaged" if build_info else "source_checkout"
+
+    identity = {
         "name": _PROJECT_NAME,
         "version": version,
         "version_source": version_source,
+        "install_mode": install_mode,
         "git_commit": _git_output(repo_root, "rev-parse", "--short", "HEAD"),
         "git_branch": _git_output(repo_root, "branch", "--show-current"),
         "git_dirty": _git_dirty(repo_root),
     }
+    if build_info:
+        identity.update(
+            {
+                "build_git_commit": build_info.get("git_commit"),
+                "build_git_commit_short": build_info.get("git_commit_short"),
+                "build_git_branch": build_info.get("git_branch"),
+                "build_git_tag": build_info.get("git_tag"),
+                "build_git_dirty": build_info.get("git_dirty"),
+                "build_time": build_info.get("build_time"),
+                "package_profile": build_info.get("package_profile"),
+                "package_version": build_info.get("package_version"),
+                "install_root": build_info.get("install_root"),
+                "entrypoint": build_info.get("entrypoint"),
+                "python_bin": build_info.get("python_bin"),
+            }
+        )
+    return identity
 
 
 def _read_pyproject_version() -> str:
@@ -54,6 +76,21 @@ def _repo_root() -> Path | None:
     if (candidate / "pyproject.toml").exists():
         return candidate
     return None
+
+
+def _read_build_info(repo_root: Path | None) -> dict[str, object] | None:
+    if repo_root is None:
+        return None
+    build_info_path = repo_root / "build-info.json"
+    if not build_info_path.exists():
+        return None
+    try:
+        payload = json.loads(build_info_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    return payload
 
 
 def _git_output(repo_root: Path | None, *args: str) -> str | None:
