@@ -110,7 +110,7 @@ Operance already has a coherent Linux-first developer release path: a typed and 
 What works now:
 
 - Core runtime: typed action models, deterministic intent matching, validator and policy enforcement, local audit logging, planner fallback, and MCP-compatible control surfaces.
-- Verified verified command subset on Fedora KDE Wayland: `open <app name>` or URL targets, `focus <app name>`, `what time is it`, `what is my battery level`, `wifi status`, `what is the volume`, and `is audio muted`.
+- Verified verified command subset on Fedora KDE Wayland: `open <app name>` or URL targets, safe two-step app plus URL launch phrases such as `open firefox and load localhost:3000`, `focus <app name>`, `what time is it`, `what is my battery level`, `wifi status`, `what is the volume`, and `is audio muted`.
 - Voice and tray MVP: tray app, bounded click-to-talk, confirmation flows, last-interaction reporting, optional wake-word, STT, and TTS probe paths, plus repo-local background voice-loop support.
 - Diagnostics and support: version/about provenance, doctor, setup actions, installed readiness checks, runnable-command catalog, runtime status resources, support snapshot, support bundle, audit inspection, and source-checkout smoke scripts.
 - Packaging and release gates: reproducible Linux bootstrap, source-checkout install or uninstall helpers, repo-local systemd helpers, Debian or RPM scaffolds, installed-package smoke, and the Fedora gate.
@@ -472,6 +472,7 @@ OPERANCE_DEVELOPER_MODE=0 python3 -m operance.cli --doctor
 OPERANCE_DEVELOPER_MODE=0 python3 -m operance.cli --transcript "what is my battery level"
 OPERANCE_DEVELOPER_MODE=0 python3 -m operance.cli --transcript "open firefox"
 OPERANCE_DEVELOPER_MODE=0 python3 -m operance.cli --transcript "open localhost:3000"
+OPERANCE_DEVELOPER_MODE=0 python3 -m operance.cli --transcript "open firefox and load localhost:3000"
 OPERANCE_DEVELOPER_MODE=0 python3 -m operance.cli --transcript "browse to localhost 3000"
 OPERANCE_DEVELOPER_MODE=0 python3 -m operance.cli --transcript "browse to docs.python.org/3"
 OPERANCE_DEVELOPER_MODE=0 python3 -m operance.cli --transcript "open file on desktop called notes.txt"

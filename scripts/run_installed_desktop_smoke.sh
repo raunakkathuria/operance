@@ -42,6 +42,7 @@ print_manual_checks() {
 Manual tray click-to-talk checks:
 - open firefox
 - open localhost:3000
+- open firefox and load localhost:3000
 - what time is it
 - wifi status
 - what is the volume

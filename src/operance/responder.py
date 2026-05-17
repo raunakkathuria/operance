@@ -14,7 +14,12 @@ class ResponseBuilder:
     def from_action_result(self, result: ActionResult) -> tuple[str, str]:
         if not result.results:
             return ("Request completed.", result.status)
-        return (result.results[0].message, result.status)
+        if len(result.results) == 1:
+            return (result.results[0].message, result.status)
+        messages = [item.message.rstrip(".") for item in result.results if item.message]
+        if not messages:
+            return ("Request completed.", result.status)
+        return (". ".join(messages), result.status)
 
     def unmatched(self) -> tuple[str, str]:
         return (UNMATCHED_RESPONSE, "unmatched")

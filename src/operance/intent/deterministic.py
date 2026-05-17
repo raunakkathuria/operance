@@ -57,6 +57,15 @@ def _is_simple_app_phrase(value: str, *, allow_url_like: bool = False) -> bool:
     return not bool(re.search(r"\b(and|then)\b", candidate))
 
 
+def _normalize_chain_url_target(verb: str, target: str) -> str | None:
+    normalized_target = _normalize_spoken_launch_target(target)
+    if verb == "open":
+        return normalized_target if is_url_like_target(normalized_target) else None
+
+    explicit_target = normalize_explicit_url_target(normalized_target)
+    return explicit_target if is_url_like_target(explicit_target) else None
+
+
 @dataclass(slots=True)
 class DeterministicIntentMatcher:
     """Map known transcript strings to a single typed action plan."""
@@ -64,6 +73,10 @@ class DeterministicIntentMatcher:
     def match(self, text: str) -> ActionPlan | None:
         normalized = _normalize_text(text)
         explicit_url_text = _normalize_explicit_url_text(text)
+
+        two_step_launch_plan = self._two_step_launch_plan(text, normalized)
+        if two_step_launch_plan is not None:
+            return two_step_launch_plan
 
         if normalized in {"open firefox", "launch firefox"}:
             return self._single_action_plan(
@@ -541,6 +554,28 @@ class DeterministicIntentMatcher:
             )
 
         return None
+
+    def _two_step_launch_plan(self, original_text: str, normalized: str) -> ActionPlan | None:
+        launch_chain_match = re.fullmatch(
+            r"(?:please )?(?:open|launch)(?: app)? (.+?) (?:and|then) (open url|browse to|load|open) (.+)",
+            normalized,
+        )
+        if not launch_chain_match:
+            return None
+
+        app_target = _normalize_spoken_launch_target(launch_chain_match.group(1))
+        url_target = _normalize_chain_url_target(launch_chain_match.group(2), launch_chain_match.group(3))
+        if url_target is None or not _is_simple_app_phrase(app_target):
+            return None
+
+        return ActionPlan(
+            source=PlanSource.DETERMINISTIC,
+            original_text=original_text,
+            actions=[
+                TypedAction(tool=ToolName.APPS_LAUNCH, args={"app": app_target}),
+                TypedAction(tool=ToolName.APPS_LAUNCH, args={"app": url_target}),
+            ],
+        )
 
     def _single_action_plan(
         self,
