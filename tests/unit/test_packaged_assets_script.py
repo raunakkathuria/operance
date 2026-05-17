@@ -1,4 +1,5 @@
 import os
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -85,6 +86,7 @@ def test_packaged_assets_script_dry_run_prints_expected_steps() -> None:
         "+ render packaging/etc/voice-loop.args.example.in -> /tmp/operance-packaged-assets/etc/operance/voice-loop.args.example",
         "+ render packaging/bin/operance-voice-loop-launcher.in -> /tmp/operance-packaged-assets/lib/operance/voice-loop-launcher",
         "+ cp pyproject.toml /tmp/operance-packaged-assets/lib/operance/pyproject.toml",
+        "+ render packaged build metadata -> /tmp/operance-packaged-assets/lib/operance/build-info.json",
         "+ cp -R src/operance/. /tmp/operance-packaged-assets/lib/operance/site-packages/operance",
         "+ render packaging/systemd/operance-tray-packaged.service.in -> /tmp/operance-packaged-assets/systemd/operance-tray.service",
         "+ render packaging/systemd/operance-voice-loop-packaged.service.in -> /tmp/operance-packaged-assets/systemd/operance-voice-loop.service",
@@ -107,6 +109,7 @@ def test_packaged_assets_script_renders_desktop_entry_and_service(tmp_path: Path
     packaged_icon = output_dir / "icons" / "hicolor" / "scalable" / "apps" / "operance.svg"
     voice_loop_args_example = output_dir / "etc" / "operance" / "voice-loop.args.example"
     packaged_pyproject = output_dir / "lib" / "operance" / "pyproject.toml"
+    packaged_build_info = output_dir / "lib" / "operance" / "build-info.json"
     packaged_runtime_dir = output_dir / "lib" / "operance" / "site-packages" / "operance"
     voice_loop_launcher = output_dir / "lib" / "operance" / "voice-loop-launcher"
     tray_service_unit = output_dir / "systemd" / "operance-tray.service"
@@ -126,6 +129,7 @@ def test_packaged_assets_script_renders_desktop_entry_and_service(tmp_path: Path
         f"+ render packaging/etc/voice-loop.args.example.in -> {voice_loop_args_example}",
         f"+ render packaging/bin/operance-voice-loop-launcher.in -> {voice_loop_launcher}",
         f"+ cp pyproject.toml {packaged_pyproject}",
+        f"+ render packaged build metadata -> {packaged_build_info}",
         f"+ cp -R src/operance/. {packaged_runtime_dir}",
         f"+ render packaging/systemd/operance-tray-packaged.service.in -> {tray_service_unit}",
         f"+ render packaging/systemd/operance-voice-loop-packaged.service.in -> {voice_loop_service_unit}",
@@ -136,6 +140,7 @@ def test_packaged_assets_script_renders_desktop_entry_and_service(tmp_path: Path
     assert packaged_icon.exists()
     assert voice_loop_args_example.exists()
     assert packaged_pyproject.exists()
+    assert packaged_build_info.exists()
     assert packaged_runtime_dir.exists()
     assert voice_loop_launcher.exists()
     assert tray_service_unit.exists()
@@ -145,6 +150,7 @@ def test_packaged_assets_script_renders_desktop_entry_and_service(tmp_path: Path
     packaged_entrypoint_text = packaged_entrypoint.read_text(encoding="utf-8")
     voice_loop_args_example_text = voice_loop_args_example.read_text(encoding="utf-8")
     packaged_pyproject_text = packaged_pyproject.read_text(encoding="utf-8")
+    packaged_build_info_payload = json.loads(packaged_build_info.read_text(encoding="utf-8"))
     packaged_runtime_init_text = (packaged_runtime_dir / "__init__.py").read_text(encoding="utf-8")
     voice_loop_launcher_text = voice_loop_launcher.read_text(encoding="utf-8")
     tray_service_text = tray_service_unit.read_text(encoding="utf-8")
@@ -162,6 +168,12 @@ def test_packaged_assets_script_renders_desktop_entry_and_service(tmp_path: Path
     assert "--wakeword-model" in voice_loop_args_example_text
     assert "--voice-loop-max-commands" in voice_loop_args_example_text
     assert 'version = "0.1.0"' in packaged_pyproject_text
+    assert packaged_build_info_payload["entrypoint"] == "/opt/operance/bin/operance"
+    assert packaged_build_info_payload["install_root"] == "/usr/lib/operance"
+    assert packaged_build_info_payload["package_profile"] == "base"
+    assert packaged_build_info_payload["package_version"] == "0.1.0"
+    assert packaged_build_info_payload["python_bin"] == "/usr/bin/python3"
+    assert packaged_build_info_payload["git_commit_short"]
     assert '"""Operance package bootstrap."""' in packaged_runtime_init_text
     assert 'entrypoint="/opt/operance/bin/operance"' in voice_loop_launcher_text
     assert 'default_user_args_file="${XDG_CONFIG_HOME:-${HOME}/.config}/operance/voice-loop.args"' in voice_loop_launcher_text

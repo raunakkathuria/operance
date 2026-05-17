@@ -159,8 +159,8 @@ if [[ "${dry_run}" -eq 0 ]]; then
         "${spec_template}" > "${spec_path}"
 fi
 
-render_display="./scripts/render_packaged_assets.sh --output-dir ${assets_dir} --entrypoint ${entrypoint} --bundle-profile ${bundle_profile}"
-render_args=("./scripts/render_packaged_assets.sh" "--output-dir" "${assets_dir}" "--entrypoint" "${entrypoint}" "--bundle-profile" "${bundle_profile}")
+render_display="./scripts/render_packaged_assets.sh --output-dir ${assets_dir} --entrypoint ${entrypoint} --bundle-profile ${bundle_profile} --package-version ${version}"
+render_args=("./scripts/render_packaged_assets.sh" "--output-dir" "${assets_dir}" "--entrypoint" "${entrypoint}" "--bundle-profile" "${bundle_profile}" "--package-version" "${version}")
 if [[ -n "${bundle_python}" ]]; then
     render_display="${render_display} --bundle-python ${bundle_python}"
     render_args+=("--bundle-python" "${bundle_python}")

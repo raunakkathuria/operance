@@ -148,6 +148,7 @@ voice_loop_args_example_path="${config_dir}/voice-loop.args.example"
 desktop_entry_path="${applications_dir}/operance.desktop"
 icon_path="${icons_dir}/operance.svg"
 packaged_pyproject_path="${lib_dir}/pyproject.toml"
+packaged_build_info_path="${lib_dir}/build-info.json"
 packaged_site_packages_root="${assets_dir}/lib/operance/site-packages"
 voice_loop_launcher_path="${lib_dir}/voice-loop-launcher"
 service_unit_path="${systemd_dir}/operance-tray.service"
@@ -172,8 +173,8 @@ if [[ "${dry_run}" -eq 0 ]]; then
     sed -e "s/__VERSION__/$(escape_sed "${version}")/g" "${control_template}" > "${control_path}"
 fi
 
-render_display="./scripts/render_packaged_assets.sh --output-dir ${assets_dir} --entrypoint ${entrypoint} --bundle-profile ${bundle_profile}"
-render_args=("./scripts/render_packaged_assets.sh" "--output-dir" "${assets_dir}" "--entrypoint" "${entrypoint}" "--bundle-profile" "${bundle_profile}")
+render_display="./scripts/render_packaged_assets.sh --output-dir ${assets_dir} --entrypoint ${entrypoint} --bundle-profile ${bundle_profile} --package-version ${version}"
+render_args=("./scripts/render_packaged_assets.sh" "--output-dir" "${assets_dir}" "--entrypoint" "${entrypoint}" "--bundle-profile" "${bundle_profile}" "--package-version" "${version}")
 if [[ -n "${bundle_python}" ]]; then
     render_display="${render_display} --bundle-python ${bundle_python}"
     render_args+=("--bundle-python" "${bundle_python}")
@@ -192,6 +193,7 @@ run_step "cp ${assets_dir}/etc/operance/voice-loop.args.example ${voice_loop_arg
 run_step "cp ${assets_dir}/applications/operance.desktop ${desktop_entry_path}" cp "${assets_dir}/applications/operance.desktop" "${desktop_entry_path}"
 run_step "cp ${assets_dir}/icons/hicolor/scalable/apps/operance.svg ${icon_path}" cp "${assets_dir}/icons/hicolor/scalable/apps/operance.svg" "${icon_path}"
 run_step "cp ${assets_dir}/lib/operance/pyproject.toml ${packaged_pyproject_path}" cp "${assets_dir}/lib/operance/pyproject.toml" "${packaged_pyproject_path}"
+run_step "cp ${assets_dir}/lib/operance/build-info.json ${packaged_build_info_path}" cp "${assets_dir}/lib/operance/build-info.json" "${packaged_build_info_path}"
 run_step "cp -R ${packaged_site_packages_root}/. ${site_packages_root}" cp -R "${packaged_site_packages_root}/." "${site_packages_root}"
 run_step "cp ${assets_dir}/lib/operance/voice-loop-launcher ${voice_loop_launcher_path}" cp "${assets_dir}/lib/operance/voice-loop-launcher" "${voice_loop_launcher_path}"
 run_step "cp ${assets_dir}/systemd/operance-tray.service ${service_unit_path}" cp "${assets_dir}/systemd/operance-tray.service" "${service_unit_path}"

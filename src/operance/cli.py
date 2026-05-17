@@ -71,7 +71,8 @@ from .wakeword import build_default_wakeword_detector
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Operance developer CLI")
-    parser.add_argument("--version", action="store_true", help="Print the current Operance version")
+    parser.add_argument("--version", action="store_true", help="Print the current Operance version and build identity")
+    parser.add_argument("--about", action="store_true", help="Print detailed Operance runtime identity as JSON")
     parser.add_argument("--print-config", action="store_true", help="Print the effective configuration")
     parser.add_argument("--supported-commands", action="store_true", help="Print the current supported command catalog")
     parser.add_argument(
@@ -305,11 +306,11 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.version:
         identity = build_project_identity()
-        version_text = f"{identity['name']} {identity['version']}"
-        git_commit = identity.get("git_commit")
-        if isinstance(git_commit, str) and git_commit:
-            version_text = f"{version_text} ({git_commit})"
-        print(version_text)
+        print(_format_version_text(identity))
+        return 0
+
+    if args.about:
+        print(json.dumps(build_project_identity(), sort_keys=True))
         return 0
 
     daemon = OperanceDaemon.build_default(env)
@@ -1367,6 +1368,33 @@ def _build_tray_already_running_payload(message: str) -> dict[str, str]:
         "supported_commands_command": "python3 -m operance.cli --supported-commands",
         "runnable_commands_command": "python3 -m operance.cli --supported-commands --supported-commands-available-only",
     }
+
+
+def _format_version_text(identity: dict[str, object]) -> str:
+    name = str(identity.get("name") or "operance")
+    version = str(identity.get("version") or "unknown")
+    install_mode = str(identity.get("install_mode") or "unknown")
+    package_profile = identity.get("package_profile")
+    git_tag = identity.get("build_git_tag") or identity.get("git_tag")
+    git_commit = identity.get("build_git_commit_short") or identity.get("git_commit")
+
+    suffix_parts: list[str] = []
+    if isinstance(git_tag, str) and git_tag:
+        suffix_parts.append(git_tag)
+    if isinstance(git_commit, str) and git_commit:
+        suffix_parts.append(git_commit)
+    if suffix_parts:
+        version_line = f"{name} {version} ({' '.join(suffix_parts)})"
+    else:
+        version_line = f"{name} {version}"
+
+    detail_parts = [f"mode: {install_mode}"]
+    if isinstance(package_profile, str) and package_profile:
+        detail_parts.append(f"profile: {package_profile}")
+    install_root = identity.get("install_root")
+    if isinstance(install_root, str) and install_root:
+        detail_parts.append(f"install_root: {install_root}")
+    return version_line + "\n" + "\n".join(detail_parts)
 
 
 def _run_click_to_talk_launch(

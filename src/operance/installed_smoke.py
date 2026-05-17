@@ -9,6 +9,7 @@ from typing import Any, Mapping
 
 from .config import AppConfig
 from .doctor import build_environment_report
+from .project_info import build_project_identity
 
 
 DEFAULT_REQUIRED_CHECKS = ("tray_ui_available", "stt_backend_available")
@@ -41,9 +42,11 @@ class InstalledSmokeResult:
     checks: list[InstalledSmokeCheck]
     next_steps: list[str]
     manual_checks: list[str]
+    build: dict[str, object]
 
     def to_dict(self) -> dict[str, object]:
         return {
+            "build": dict(self.build),
             "checks": [check.to_dict() for check in self.checks],
             "manual_checks": list(self.manual_checks),
             "next_steps": list(self.next_steps),
@@ -64,9 +67,11 @@ def build_installed_smoke_result(
 ) -> InstalledSmokeResult:
     config = AppConfig.from_env(env) if config is None else config
     report = build_environment_report() if report is None else report
+    build_identity = build_project_identity()
     checks_by_name = _checks_by_name(report)
 
     checks: list[InstalledSmokeCheck] = [
+        _build_identity_check(build_identity),
         _runtime_mode_check(config),
         _path_check("desktop_entry_installed", desktop_entry_path),
         _path_check("tray_user_service_unit_installed", tray_unit_path),
@@ -85,6 +90,7 @@ def build_installed_smoke_result(
             "Click the tray icon and say: open localhost:3000",
             "Click the tray icon and say: what time is it",
         ],
+        build=build_identity,
     )
 
 
@@ -111,6 +117,34 @@ def _runtime_mode_check(config: AppConfig) -> InstalledSmokeCheck:
         status="failed",
         detail={"developer_mode": config.runtime.developer_mode},
         suggested_command="Use the packaged operance command or set OPERANCE_DEVELOPER_MODE=0.",
+    )
+
+
+def _build_identity_check(identity: dict[str, object]) -> InstalledSmokeCheck:
+    missing = []
+    if identity.get("install_mode") != "packaged":
+        missing.append(f"install_mode={identity.get('install_mode')!r}")
+    if not identity.get("build_git_commit"):
+        missing.append("build_git_commit")
+    if not identity.get("package_profile"):
+        missing.append("package_profile")
+    if not identity.get("install_root"):
+        missing.append("install_root")
+    if not missing:
+        return InstalledSmokeCheck(
+            name="packaged_build_identity_available",
+            status="ok",
+            detail={
+                "build_git_commit_short": identity.get("build_git_commit_short"),
+                "build_git_tag": identity.get("build_git_tag"),
+                "package_profile": identity.get("package_profile"),
+            },
+        )
+    return InstalledSmokeCheck(
+        name="packaged_build_identity_available",
+        status="failed",
+        detail={"missing": missing},
+        suggested_command="Rebuild and reinstall the package from the current release tag.",
     )
 
 

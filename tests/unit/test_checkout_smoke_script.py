@@ -21,6 +21,7 @@ def test_checkout_smoke_script_dry_run_prints_default_steps() -> None:
 
     assert result.stdout.splitlines() == [
         "+ .venv/bin/python -m operance.cli --version",
+        "+ .venv/bin/python -m operance.cli --about",
         "+ .venv/bin/python -m operance.cli --doctor",
         "+ .venv/bin/python -m operance.cli --setup-actions",
         "+ .venv/bin/python -m operance.cli --supported-commands --supported-commands-available-only",
@@ -38,6 +39,7 @@ def test_checkout_smoke_script_can_forward_bundle_output_path() -> None:
 
     assert result.stdout.splitlines() == [
         "+ .venv/bin/python -m operance.cli --version",
+        "+ .venv/bin/python -m operance.cli --about",
         "+ .venv/bin/python -m operance.cli --doctor",
         "+ .venv/bin/python -m operance.cli --setup-actions",
         "+ .venv/bin/python -m operance.cli --supported-commands --supported-commands-available-only",
