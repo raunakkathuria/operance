@@ -138,6 +138,8 @@ Voice and planner work should follow the same rule:
 - model invocation and OS integration remain replaceable
 - external model assets stay optional and must not be assumed to exist by
   default
+- local AI planners return typed action plans only; validation, policy,
+  confirmation, and adapter dispatch remain owned by the portable runtime
 
 ## 7. Open-source boundary
 

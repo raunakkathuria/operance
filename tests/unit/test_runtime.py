@@ -201,6 +201,46 @@ def test_daemon_routes_high_confidence_unknown_transcript_to_planner_when_enable
     assert daemon.state_machine.current_state == RuntimeState.RESPONDING
 
 
+def test_daemon_requires_confirmation_for_destructive_planner_action(tmp_path: Path) -> None:
+    class StubPlannerClient:
+        def plan(self, transcript: str, **_: object) -> dict[str, object]:
+            return {
+                "actions": [
+                    {
+                        "tool": "apps.quit",
+                        "args": {"app": "firefox"},
+                    }
+                ]
+            }
+
+    daemon = OperanceDaemon.build_default(
+        {
+            "OPERANCE_DATA_DIR": str(tmp_path / "data"),
+            "OPERANCE_DESKTOP_DIR": str(tmp_path / "Desktop"),
+            "OPERANCE_PLANNER_ENABLED": "1",
+        }
+    )
+    daemon.planner_client = StubPlannerClient()
+    responses: list[ResponseEvent] = []
+    result_events: list[ActionResultEvent] = []
+    daemon.event_bus.subscribe(ResponseEvent, responses.append)
+    daemon.event_bus.subscribe(ActionResultEvent, result_events.append)
+
+    daemon.start()
+    daemon.emit_wake_detected("operance")
+    daemon.emit_transcript("please quit my browser", confidence=0.93, is_final=True)
+
+    snapshot = daemon.status_snapshot()
+    assert responses[-1].status == "awaiting_confirmation"
+    assert result_events == []
+    assert snapshot.pending_confirmation is True
+    assert snapshot.pending_source == "planner"
+    assert snapshot.pending_action["tool"] == "apps.quit"
+    assert snapshot.last_plan_source == "planner"
+    assert snapshot.last_routing_reason == "fallback_to_planner"
+    assert daemon.state_machine.current_state == RuntimeState.AWAITING_CONFIRMATION
+
+
 def test_daemon_keeps_unmatched_response_when_planner_is_disabled(tmp_path: Path) -> None:
     daemon = OperanceDaemon.build_default(
         {

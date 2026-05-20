@@ -112,7 +112,7 @@ Operance already has a coherent Linux-first developer release path: a typed and 
 
 What works now:
 
-- Core runtime: typed action models, deterministic intent matching, validator and policy enforcement, local audit logging, planner fallback, and MCP-compatible control surfaces.
+- Core runtime: typed action models, deterministic intent matching, validator and policy enforcement, local audit logging, bounded local planner fallback, and MCP-compatible control surfaces.
 - Verified command subset on Fedora KDE Wayland: `open <app name>` or URL targets, safe two-step app plus URL launch phrases such as `open firefox and load localhost:3000`, `focus <app name>`, confirmation-gated `quit <app name>`, `what time is it`, `what is my battery level`, `wifi status`, `what is the volume`, `is audio muted`, `set volume to 50 percent`, `mute audio`, and `unmute audio`.
 - Voice and tray MVP: tray app, bounded click-to-talk, confirmation flows, last-interaction reporting, optional wake-word, STT, and TTS probe paths, plus repo-local background voice-loop support.
 - Diagnostics and support: version/about provenance, explicit release-channel checks, doctor, setup actions, installed readiness checks, runnable-command catalog, runtime status resources, support snapshot, support bundle, audit inspection, and source-checkout smoke scripts.
@@ -500,7 +500,14 @@ Enable planner fallback against a local chat-completions endpoint:
 
 ```bash
 OPERANCE_PLANNER_ENABLED=1 python3 -m operance.cli --print-config
+python3 -m operance.cli --planner-health
+python3 -m operance.cli --planner-smoke "open firefox and notify me"
 ```
+
+`--planner-smoke` calls the configured local OpenAI-compatible endpoint, parses
+the returned plan, validates it against the same typed action registry used by
+runtime execution, applies policy, and deliberately does not execute the plan.
+Use it before enabling planner fallback in a live tray or voice session.
 
 Inspect or run the tray surface:
 
@@ -726,6 +733,7 @@ Run a planner payload regression fixture:
 
 ```bash
 python3 -m operance.cli --planner-fixture planner_fixture.jsonl
+python3 -m operance.cli --planner-fixture tests/fixtures/planner_mvp.jsonl
 ```
 
 Print the planner payload schema:
@@ -752,6 +760,12 @@ Probe the local planner endpoint health:
 
 ```bash
 python3 -m operance.cli --planner-health
+```
+
+Run a non-executing local planner smoke against the configured endpoint:
+
+```bash
+python3 -m operance.cli --planner-smoke "open firefox and notify me"
 ```
 
 Print the planner fallback routing decision for a transcript:

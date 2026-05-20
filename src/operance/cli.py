@@ -21,7 +21,9 @@ from .mcp import MCPServer, run_mcp_fixture
 from .mcp.stdio import run_stdio_session
 from .planner import (
     build_plan_preview,
+    PlannerClientError,
     PlannerContextWindow,
+    PlannerParseError,
     build_planner_payload_schema,
     PlannerRoutingPolicy,
     PlannerServiceClient,
@@ -269,6 +271,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="Add one planner context message as role:content for --planner-prompt or --planner-request",
     )
     parser.add_argument("--planner-health", action="store_true", help="Probe local planner endpoint health")
+    parser.add_argument(
+        "--planner-smoke",
+        help="Call the local planner endpoint for one transcript, validate the typed plan, and do not execute it",
+    )
     parser.add_argument("--planner-route", help="Print the fallback routing decision for a transcript")
     parser.add_argument("--planner-confidence", type=float, default=1.0, help="Transcript confidence for --planner-route")
     parser.add_argument(
@@ -985,6 +991,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(json.dumps(result, sort_keys=True))
         return 0 if result.get("status") == "ok" else 1
 
+    if args.planner_smoke:
+        result = _run_planner_smoke(daemon, args.planner_smoke)
+        print(json.dumps(result, sort_keys=True))
+        return 0 if result.get("status") == "ok" else 1
+
     if args.planner_route:
         decision = PlannerRoutingPolicy().decide(
             transcript=args.planner_route,
@@ -1094,6 +1105,59 @@ def _planner_service_config_from_daemon(daemon: OperanceDaemon) -> PlannerServic
         timeout_seconds=daemon.config.planner.timeout_seconds,
         max_retries=daemon.config.planner.max_retries,
     )
+
+
+def _run_planner_smoke(daemon: OperanceDaemon, transcript: str) -> dict[str, object]:
+    planner_client = PlannerServiceClient(
+        daemon.planner_client.config
+        if daemon.planner_client is not None
+        else _planner_service_config_from_daemon(daemon)
+    )
+    base_payload: dict[str, object] = {
+        "transcript": transcript,
+        "endpoint": planner_client.config.endpoint,
+        "model": planner_client.config.model,
+        "execution": "not_executed",
+    }
+
+    try:
+        planner_payload = planner_client.plan(transcript)
+        plan = parse_planner_payload(planner_payload, original_text=transcript)
+    except (PlannerClientError, PlannerParseError, ValueError) as exc:
+        return {
+            **base_payload,
+            "status": "failed",
+            "error": str(exc),
+        }
+
+    validation_result = daemon.validator.validate(plan)
+    validation_payload = {
+        "valid": validation_result.valid,
+        "errors": validation_result.errors,
+    }
+    if not validation_result.valid or validation_result.normalized_plan is None:
+        return {
+            **base_payload,
+            "status": "failed",
+            "planner_payload": planner_payload,
+            "plan": plan.to_dict(),
+            "validation": validation_payload,
+        }
+
+    normalized_plan = validation_result.normalized_plan
+    policy_decision = daemon.policy.decide(normalized_plan)
+    return {
+        **base_payload,
+        "status": "ok",
+        "planner_payload": planner_payload,
+        "plan": normalized_plan.to_dict(),
+        "preview": build_plan_preview(normalized_plan),
+        "validation": validation_payload,
+        "policy": {
+            "action": policy_decision.action,
+            "reason": policy_decision.reason,
+        },
+    }
 
 
 def _parse_json_object(raw_json: str, label: str) -> dict[str, object]:

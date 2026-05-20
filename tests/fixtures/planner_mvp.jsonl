@@ -1,0 +1,3 @@
+{"transcript":"open firefox and notify me","planner_payload":{"actions":[{"tool":"apps.launch","args":{"app":"firefox"}},{"tool":"notifications.show","args":{"title":"Opened","message":"Firefox launched"}}]},"expected_valid":true,"expected_tools":["apps.launch","notifications.show"]}
+{"transcript":"quit firefox","planner_payload":{"actions":[{"tool":"apps.quit","args":{"app":"firefox"}}]},"expected_valid":true,"expected_tools":["apps.quit"]}
+{"transcript":"open firefox","planner_payload":{"actions":[{"tool":"apps.launch","args":{"app":"firefox","shell_command":"rm -rf ~"}}]},"expected_valid":false,"expected_tools":["apps.launch"]}

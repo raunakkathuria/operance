@@ -577,4 +577,8 @@ def test_planner_payload_schema_limits_actions_to_two_steps() -> None:
     assert schema["required"] == ["actions"]
     assert schema["properties"]["actions"]["minItems"] == 1
     assert schema["properties"]["actions"]["maxItems"] == 2
-    assert "apps.launch" in schema["properties"]["actions"]["items"]["properties"]["tool"]["enum"]
+    tool_names = {
+        variant["properties"]["tool"]["const"]
+        for variant in schema["properties"]["actions"]["items"]["oneOf"]
+    }
+    assert "apps.launch" in tool_names
