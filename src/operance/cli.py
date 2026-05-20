@@ -21,6 +21,8 @@ from .mcp import MCPServer, run_mcp_fixture
 from .mcp.stdio import run_stdio_session
 from .planner import (
     build_plan_preview,
+    build_planner_readiness_report,
+    DEFAULT_PLANNER_READINESS_TRANSCRIPT,
     PlannerClientError,
     PlannerContextWindow,
     PlannerParseError,
@@ -274,6 +276,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--planner-smoke",
         help="Call the local planner endpoint for one transcript, validate the typed plan, and do not execute it",
+    )
+    parser.add_argument(
+        "--planner-readiness",
+        nargs="?",
+        const=DEFAULT_PLANNER_READINESS_TRANSCRIPT,
+        help="Run local planner health and non-executing smoke checks for an optional transcript",
     )
     parser.add_argument("--planner-route", help="Print the fallback routing decision for a transcript")
     parser.add_argument("--planner-confidence", type=float, default=1.0, help="Transcript confidence for --planner-route")
@@ -993,6 +1001,22 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.planner_smoke:
         result = _run_planner_smoke(daemon, args.planner_smoke)
+        print(json.dumps(result, sort_keys=True))
+        return 0 if result.get("status") == "ok" else 1
+
+    if args.planner_readiness:
+        planner_client = PlannerServiceClient(
+            daemon.planner_client.config
+            if daemon.planner_client is not None
+            else _planner_service_config_from_daemon(daemon)
+        )
+        result = build_planner_readiness_report(
+            daemon.config.planner,
+            client=planner_client,
+            validator=daemon.validator,
+            policy=daemon.policy,
+            transcript=args.planner_readiness,
+        )
         print(json.dumps(result, sort_keys=True))
         return 0 if result.get("status") == "ok" else 1
 

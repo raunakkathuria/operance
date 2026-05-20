@@ -19,6 +19,12 @@ from ..installed_smoke import (
     build_installed_smoke_result,
 )
 from ..models.events import RuntimeState
+from ..planner import (
+    DEFAULT_PLANNER_READINESS_TRANSCRIPT,
+    PlannerServiceClient,
+    PlannerServiceConfig,
+    build_planner_readiness_report,
+)
 from ..project_info import build_project_identity, project_version
 from ..release_channel import build_release_update_status
 from ..status import StatusSnapshot
@@ -240,6 +246,28 @@ class TrayController:
 
     def release_update_status(self) -> dict[str, object]:
         return build_release_update_status(env=self.env)
+
+    def planner_readiness_report(
+        self,
+        transcript: str = DEFAULT_PLANNER_READINESS_TRANSCRIPT,
+    ) -> dict[str, object]:
+        planner_client = PlannerServiceClient(
+            self.daemon.planner_client.config
+            if self.daemon.planner_client is not None
+            else PlannerServiceConfig(
+                endpoint=self.daemon.config.planner.endpoint,
+                model=self.daemon.config.planner.model,
+                timeout_seconds=self.daemon.config.planner.timeout_seconds,
+                max_retries=self.daemon.config.planner.max_retries,
+            )
+        )
+        return build_planner_readiness_report(
+            self.daemon.config.planner,
+            client=planner_client,
+            validator=self.daemon.validator,
+            policy=self.daemon.policy,
+            transcript=transcript,
+        )
 
     def start_click_to_talk(
         self,
@@ -566,6 +594,28 @@ def _format_release_update_highlights(status: dict[str, object]) -> str:
     return "\n".join(lines)
 
 
+def _format_planner_readiness_summary(report: dict[str, object]) -> str:
+    status = str(report.get("status") or "unknown")
+    if status == "ok" and report.get("runtime_fallback_enabled") is True:
+        return "Planner endpoint and smoke are valid; live fallback is enabled."
+    if status == "ok":
+        return "Planner endpoint and smoke are valid; live fallback is still disabled."
+    return "Planner readiness needs attention before enabling live fallback."
+
+
+def _format_planner_readiness_highlights(report: dict[str, object]) -> str:
+    lines = [
+        f"Status: {report.get('status') or 'unknown'}",
+        f"Safe to enable: {'yes' if report.get('safe_to_enable') is True else 'no'}",
+        f"Live fallback enabled: {'yes' if report.get('runtime_fallback_enabled') is True else 'no'}",
+        f"Smoke checked: {'yes' if report.get('smoke_checked') is True else 'no'}",
+    ]
+    next_steps = report.get("next_steps")
+    if isinstance(next_steps, list) and next_steps:
+        lines.append("Next: " + str(next_steps[0]))
+    return "\n".join(lines)
+
+
 def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     QApplication, QAction, QIcon, QMenu, QMessageBox, QStyle, QSystemTrayIcon, QTimer = _load_pyside6_api()
 
@@ -593,6 +643,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     supported_commands_action = QAction("Show supported commands", menu)
     about_action = QAction("About Operance", menu)
     check_updates_action = QAction("Check for updates", menu)
+    planner_readiness_action = QAction("Show planner readiness", menu)
     installed_readiness_action = QAction("Show installed readiness", menu)
     support_snapshot_action = QAction("Show support snapshot", menu)
     save_support_snapshot_action = QAction("Save support snapshot", menu)
@@ -618,6 +669,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     menu.addAction(supported_commands_action)
     menu.addAction(about_action)
     menu.addAction(check_updates_action)
+    menu.addAction(planner_readiness_action)
     menu.addAction(installed_readiness_action)
     menu.addAction(support_snapshot_action)
     menu.addAction(save_support_snapshot_action)
@@ -814,6 +866,24 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
             details="\n".join(report.details) if report.details else None,
         )
 
+    def show_planner_readiness() -> None:
+        try:
+            report = controller.planner_readiness_report()
+        except Exception as exc:
+            tray.showMessage(
+                "Planner readiness unavailable",
+                str(exc),
+                _resolve_notification_icon(QSystemTrayIcon, "warning"),
+            )
+            return
+        _show_information_dialog(
+            QMessageBox,
+            title="Planner readiness",
+            summary=_format_planner_readiness_summary(report),
+            informative_text=_format_planner_readiness_highlights(report),
+            details=json.dumps(report, indent=2, sort_keys=True),
+        )
+
     def show_support_snapshot() -> None:
         try:
             help_text = build_support_snapshot_help_text(
@@ -912,6 +982,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     supported_commands_action.triggered.connect(show_supported_commands)
     about_action.triggered.connect(show_about)
     check_updates_action.triggered.connect(show_update_status)
+    planner_readiness_action.triggered.connect(show_planner_readiness)
     installed_readiness_action.triggered.connect(show_installed_readiness)
     support_snapshot_action.triggered.connect(show_support_snapshot)
     save_support_snapshot_action.triggered.connect(save_support_snapshot)

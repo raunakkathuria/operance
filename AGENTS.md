@@ -14,7 +14,7 @@ source .venv/bin/activate
 python3 -m pip install -e ".[dev]"
 ```
 
-Run the full test suite with `.venv/bin/python -m pytest`. Run the CLI locally with `.venv/bin/python -m operance.cli --print-config` or `.venv/bin/python -m operance.cli --doctor`. Use `.venv/bin/python -m operance.cli --planner-request "open firefox"` to inspect planner payloads during development, and `.venv/bin/python -m operance.cli --planner-smoke "open firefox and notify me"` to validate a local planner endpoint without executing actions.
+Run the full test suite with `.venv/bin/python -m pytest`. Run the CLI locally with `.venv/bin/python -m operance.cli --print-config` or `.venv/bin/python -m operance.cli --doctor`. Use `.venv/bin/python -m operance.cli --planner-request "open firefox"` to inspect planner payloads during development, and `.venv/bin/python -m operance.cli --planner-readiness "open firefox and notify me"` to validate local planner health plus non-executing smoke before enabling live fallback.
 
 ## Coding Style & Naming Conventions
 

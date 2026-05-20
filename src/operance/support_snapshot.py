@@ -9,6 +9,7 @@ from pathlib import Path
 from .audit import AuditStore
 from .config import AppConfig
 from .doctor import build_environment_report
+from .planner import build_planner_readiness_snapshot
 from .project_info import build_project_identity
 from .release_channel import build_release_update_status
 from .supported_commands import build_supported_command_catalog
@@ -33,6 +34,10 @@ def build_support_snapshot(
         "runnable_supported_commands": build_supported_command_catalog(doctor_report, available_only=True),
         "voice_loop_config": build_voice_loop_config_snapshot(env=env).to_dict(),
         "voice_loop_service": build_voice_loop_service_snapshot(env=env, report=doctor_report).to_dict(),
+        "planner_readiness": build_planner_readiness_snapshot(
+            AppConfig.from_env(env).planner,
+            report=doctor_report,
+        ),
         "release": build_release_update_status(identity=identity, check_remote=False),
         "audit": _build_recent_audit_payload(env=env),
     }

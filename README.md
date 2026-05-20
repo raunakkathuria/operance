@@ -499,15 +499,21 @@ python3 -m operance.cli --voice-session-frames 40 --wakeword-model /path/to/oper
 Enable planner fallback against a local chat-completions endpoint:
 
 ```bash
-OPERANCE_PLANNER_ENABLED=1 python3 -m operance.cli --print-config
+export OPERANCE_PLANNER_ENDPOINT=http://127.0.0.1:8080/v1/chat/completions
+export OPERANCE_PLANNER_MODEL=qwen2.5-7b-instruct
+export OPERANCE_PLANNER_TIMEOUT_SECONDS=30
+export OPERANCE_PLANNER_MAX_RETRIES=1
+python3 -m operance.cli --print-config
 python3 -m operance.cli --planner-health
-python3 -m operance.cli --planner-smoke "open firefox and notify me"
+python3 -m operance.cli --planner-readiness "open firefox and notify me"
+export OPERANCE_PLANNER_ENABLED=1
 ```
 
-`--planner-smoke` calls the configured local OpenAI-compatible endpoint, parses
-the returned plan, validates it against the same typed action registry used by
-runtime execution, applies policy, and deliberately does not execute the plan.
-Use it before enabling planner fallback in a live tray or voice session.
+`--planner-readiness` calls the configured local OpenAI-compatible endpoint,
+checks health, runs a non-executing planner smoke, validates the returned plan
+against the same typed action registry used by runtime execution, applies
+policy, and preserves confirmation gates. Use it before enabling planner
+fallback in a live tray or voice session.
 
 Inspect or run the tray surface:
 
@@ -766,6 +772,12 @@ Run a non-executing local planner smoke against the configured endpoint:
 
 ```bash
 python3 -m operance.cli --planner-smoke "open firefox and notify me"
+```
+
+Run the full local planner readiness check before enabling live fallback:
+
+```bash
+python3 -m operance.cli --planner-readiness "open firefox and notify me"
 ```
 
 Print the planner fallback routing decision for a transcript:

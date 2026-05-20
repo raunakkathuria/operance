@@ -300,6 +300,7 @@ def test_build_setup_snapshot_reports_partial_ready_state() -> None:
         "probe_tts_path",
         "run_voice_self_test",
         "probe_planner_health",
+        "check_planner_readiness",
         "install_voice_loop_service",
         "enable_voice_loop_service",
         "restart_voice_loop_service",
@@ -475,6 +476,13 @@ def test_build_setup_snapshot_reports_partial_ready_state() -> None:
         "command": "python3 -m operance.cli --planner-health",
         "label": "Probe planner endpoint",
         "recommended": True,
+    }
+    assert actions["check_planner_readiness"] == {
+        "action_id": "check_planner_readiness",
+        "available": True,
+        "command": "python3 -m operance.cli --planner-readiness",
+        "label": "Check planner readiness",
+        "recommended": False,
     }
     assert actions["install_voice_loop_user_config"] == {
         "action_id": "install_voice_loop_user_config",
@@ -1305,6 +1313,47 @@ def test_run_setup_action_executes_tts_probe_command(monkeypatch) -> None:
         "/tmp/operance-tts-probe.wav",
         "--tts-play",
     ]]
+    assert result.status == "success"
+    assert result.stdout == '{"status":"ok"}'
+
+
+def test_run_setup_action_executes_planner_readiness_command(monkeypatch) -> None:
+    from subprocess import CompletedProcess
+
+    from operance.ui import build_setup_snapshot
+    from operance.ui.setup import run_setup_action
+
+    snapshot = build_setup_snapshot(
+        _report(
+            {
+                "python_3_12_plus": "ok",
+                "virtualenv_active": "ok",
+                "linux_platform": "ok",
+                "kde_wayland_target": "ok",
+                "xdg_open_available": "ok",
+                "gdbus_available": "ok",
+                "networkmanager_cli_available": "ok",
+                "audio_cli_available": "ok",
+                "audio_capture_cli_available": "ok",
+                "systemctl_user_available": "ok",
+                "power_status_available": "ok",
+                "stt_backend_available": "ok",
+                "planner_runtime_enabled": "ok",
+                "planner_endpoint_healthy": "ok",
+            }
+        )
+    )
+    calls: list[list[str]] = []
+
+    def fake_run(args: list[str], capture_output: bool, check: bool, text: bool) -> CompletedProcess[str]:
+        calls.append(args)
+        return CompletedProcess(args=args, returncode=0, stdout='{"status":"ok"}', stderr="")
+
+    monkeypatch.setattr("operance.ui.setup.subprocess.run", fake_run)
+
+    result = run_setup_action("check_planner_readiness", snapshot=snapshot)
+
+    assert calls == [["python3", "-m", "operance.cli", "--planner-readiness"]]
     assert result.status == "success"
     assert result.stdout == '{"status":"ok"}'
 
