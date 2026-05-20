@@ -3663,6 +3663,42 @@ def test_cli_planner_smoke_reports_validation_failure(monkeypatch, capsys) -> No
     }
 
 
+def test_cli_planner_readiness_prints_config_health_and_smoke(monkeypatch, capsys) -> None:
+    def fake_readiness_report(config, *, client, validator, policy, transcript):  # type: ignore[no-untyped-def]
+        return {
+            "status": "ok",
+            "transcript": transcript,
+            "config": {
+                "enabled": config.enabled,
+                "endpoint": config.endpoint,
+                "model": config.model,
+                "timeout_seconds": config.timeout_seconds,
+                "max_retries": config.max_retries,
+            },
+            "checks": [
+                {"name": "planner_endpoint_healthy", "status": "ok", "detail": {"probe": "models"}},
+                {"name": "planner_smoke_valid", "status": "ok", "detail": {"validation": {"valid": True, "errors": []}}},
+            ],
+            "safe_to_enable": True,
+            "ready_for_live_fallback": False,
+            "execution": "not_executed",
+        }
+
+    monkeypatch.setattr("operance.cli.build_planner_readiness_report", fake_readiness_report)
+
+    exit_code = main(["--planner-readiness", "open firefox and notify me"])
+
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+
+    assert exit_code == 0
+    assert payload["status"] == "ok"
+    assert payload["transcript"] == "open firefox and notify me"
+    assert payload["safe_to_enable"] is True
+    assert payload["ready_for_live_fallback"] is False
+    assert payload["execution"] == "not_executed"
+
+
 def test_cli_setup_run_action_supports_planner_health(monkeypatch, capsys) -> None:
     from subprocess import CompletedProcess
 

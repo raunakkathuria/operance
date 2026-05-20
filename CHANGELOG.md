@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added local planner onboarding readiness with `operance --planner-readiness`, setup action support, support-snapshot planner readiness projection, and a tray `Show planner readiness` surface; the readiness path checks health plus a non-executing planner smoke without enabling live fallback.
 - Added a bounded local planner MVP smoke path with `operance --planner-smoke`, per-tool planner payload schemas, stricter validator rejection for model-invented or wrong-type args, planner confirmation-gate regression coverage, and a planner MVP fixture in the source-checkout smoke.
 - Added the adapter conformance gate with a tool-to-adapter capability contract, `operance --adapter-conformance`, provider registry uniqueness checks, and release-readiness enforcement.
 - Added explicit release-channel diagnostics through `operance --check-updates`, support snapshots, and a tray `Check for updates` menu item, without adding automatic package mutation or sudo-based updates.

@@ -54,6 +54,17 @@ def test_build_support_snapshot_reuses_one_doctor_report(monkeypatch) -> None:
         lambda env=None, report=None: received_reports.append(report) or _FakeVoiceLoopServiceSnapshot(),
     )
     monkeypatch.setattr(
+        "operance.support_snapshot.build_planner_readiness_snapshot",
+        lambda config, report=None: received_reports.append(report)
+        or {
+            "status": "warn",
+            "runtime_fallback_enabled": False,
+            "ready_for_live_fallback": False,
+            "safe_to_enable": False,
+            "smoke_checked": False,
+        },
+    )
+    monkeypatch.setattr(
         "operance.support_snapshot._build_recent_audit_payload",
         lambda env=None, limit=20: {"count": 1, "entries": [{"status": "success", "transcript": "open firefox"}]},
     )
@@ -104,6 +115,13 @@ def test_build_support_snapshot_reuses_one_doctor_report(monkeypatch) -> None:
             "status": "warn",
             "recommended_command": "./scripts/install_voice_loop_user_service.sh",
         },
+        "planner_readiness": {
+            "status": "warn",
+            "runtime_fallback_enabled": False,
+            "ready_for_live_fallback": False,
+            "safe_to_enable": False,
+            "smoke_checked": False,
+        },
         "release": {
             "status": "unknown",
             "installed_tag": None,
@@ -112,7 +130,7 @@ def test_build_support_snapshot_reuses_one_doctor_report(monkeypatch) -> None:
         },
         "audit": {"count": 1, "entries": [{"status": "success", "transcript": "open firefox"}]},
     }
-    assert received_reports == [report, report, report, report]
+    assert received_reports == [report, report, report, report, report]
 
 
 def test_build_support_snapshot_can_redact_home_paths(monkeypatch) -> None:

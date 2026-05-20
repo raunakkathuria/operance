@@ -817,6 +817,47 @@ def test_tray_controller_can_restart_voice_loop_service(monkeypatch, tmp_path: P
     assert result.command == "./scripts/control_systemd_user_services.sh restart --voice-loop"
 
 
+def test_tray_controller_can_build_planner_readiness_report(monkeypatch, tmp_path: Path) -> None:
+    from operance.daemon import OperanceDaemon
+    from operance.ui import TrayController
+
+    daemon = OperanceDaemon.build_default(
+        {
+            "OPERANCE_DATA_DIR": str(tmp_path / "data"),
+            "OPERANCE_DESKTOP_DIR": str(tmp_path / "Desktop"),
+            "OPERANCE_PLANNER_ENDPOINT": "http://127.0.0.1:18080/v1/chat/completions",
+            "OPERANCE_PLANNER_MODEL": "qwen-test",
+        }
+    )
+    received: dict[str, object] = {}
+
+    def fake_readiness_report(config, *, client, validator, policy, transcript):
+        received["config_model"] = config.model
+        received["client_endpoint"] = client.config.endpoint
+        received["transcript"] = transcript
+        received["validator"] = validator
+        received["policy"] = policy
+        return {
+            "status": "ok",
+            "safe_to_enable": True,
+            "runtime_fallback_enabled": False,
+            "ready_for_live_fallback": False,
+            "execution": "not_executed",
+        }
+
+    monkeypatch.setattr("operance.ui.tray.build_planner_readiness_report", fake_readiness_report)
+
+    controller = TrayController(daemon)
+    report = controller.planner_readiness_report()
+
+    assert report["status"] == "ok"
+    assert received["config_model"] == "qwen-test"
+    assert received["client_endpoint"] == "http://127.0.0.1:18080/v1/chat/completions"
+    assert received["transcript"] == "open firefox and notify me"
+    assert received["validator"] is daemon.validator
+    assert received["policy"] is daemon.policy
+
+
 def test_show_confirmation_dialog_returns_cancel_when_cancel_button_clicked() -> None:
     from operance.ui.tray import TrayConfirmationDialog, _show_confirmation_dialog
 

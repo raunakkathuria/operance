@@ -986,6 +986,7 @@ def _build_setup_actions(
         and tts_voices_ready
     )
     planner_probe_ready = python_ready and virtualenv_ready and planner_enabled
+    planner_readiness_ready = python_ready and virtualenv_ready
     voice_loop_runtime_healthy = (
         str(checks_by_name.get("voice_loop_runtime_heartbeat_fresh", {}).get("status", "ok")) == "ok"
     )
@@ -1435,6 +1436,15 @@ def _build_setup_actions(
             available=planner_probe_ready,
             recommended="python3 -m operance.cli --planner-health" in recommended_set,
             blocker_checks=("python_3_12_plus", "virtualenv_active", "planner_runtime_enabled"),
+            suggested_command=bootstrap_command if not python_ready or not virtualenv_ready else None,
+        ),
+        build_action(
+            action_id="check_planner_readiness",
+            label="Check planner readiness",
+            command="python3 -m operance.cli --planner-readiness",
+            available=planner_readiness_ready,
+            recommended="python3 -m operance.cli --planner-readiness" in recommended_set,
+            blocker_checks=("python_3_12_plus", "virtualenv_active"),
             suggested_command=bootstrap_command if not python_ready or not virtualenv_ready else None,
         ),
         build_action(
