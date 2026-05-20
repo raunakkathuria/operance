@@ -156,6 +156,37 @@ def test_cli_about_prints_project_identity(monkeypatch, capsys) -> None:
     }
 
 
+def test_cli_check_updates_prints_release_status_without_daemon(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(
+        "operance.cli.OperanceDaemon.build_default",
+        lambda env: (_ for _ in ()).throw(AssertionError("daemon should not be built for --check-updates")),
+    )
+    monkeypatch.setattr(
+        "operance.cli.build_release_update_status",
+        lambda channel=None: {
+            "status": "ok",
+            "channel": channel or "prerelease",
+            "installed_tag": "v0.1.0-beta.4",
+            "latest_tag": "v0.1.0-beta.5",
+            "update_available": True,
+        },
+    )
+
+    exit_code = main(["--check-updates", "--release-channel", "stable"])
+
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+
+    assert exit_code == 0
+    assert payload == {
+        "status": "ok",
+        "channel": "stable",
+        "installed_tag": "v0.1.0-beta.4",
+        "latest_tag": "v0.1.0-beta.5",
+        "update_available": True,
+    }
+
+
 def test_cli_process_generic_app_transcript_prints_response_payload(capsys) -> None:
     exit_code = main(["--transcript", "open code"])
 
@@ -633,6 +664,10 @@ def test_cli_supported_commands_available_only_filters_blocked_entries(monkeypat
     assert exit_code == 0
     assert payload["catalog_filter"] == "available_only"
     assert "apps.launch" in commands
+    assert "apps.quit" in commands
+    assert commands["apps.quit"]["requires_confirmation"] is True
+    assert "audio.set_volume" in commands
+    assert "audio.set_muted" in commands
     assert "windows.list" not in commands
     assert "text.type" not in commands
     assert payload["summary"]["unverified_commands"] == 0

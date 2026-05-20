@@ -20,6 +20,7 @@ from ..installed_smoke import (
 )
 from ..models.events import RuntimeState
 from ..project_info import build_project_identity, project_version
+from ..release_channel import build_release_update_status
 from ..status import StatusSnapshot
 from ..stt import SpeechTranscriber, build_default_speech_transcriber
 from ..support_bundle import write_support_bundle_artifact
@@ -236,6 +237,9 @@ class TrayController:
 
     def installed_readiness_report(self) -> TrayInstalledReadinessReport:
         return build_installed_readiness_report(build_installed_smoke_result(env=self.env))
+
+    def release_update_status(self) -> dict[str, object]:
+        return build_release_update_status(env=self.env)
 
     def start_click_to_talk(
         self,
@@ -545,6 +549,23 @@ def _format_about_highlights(identity: dict[str, object]) -> str:
     return "\n".join(lines)
 
 
+def _format_release_update_highlights(status: dict[str, object]) -> str:
+    lines: list[str] = []
+    installed_tag = status.get("installed_tag")
+    latest_tag = status.get("latest_tag")
+    channel = status.get("channel")
+    suggested_command = status.get("suggested_command")
+    if isinstance(channel, str) and channel:
+        lines.append(f"Channel: {channel}")
+    if isinstance(installed_tag, str) and installed_tag:
+        lines.append(f"Installed: {installed_tag}")
+    if isinstance(latest_tag, str) and latest_tag:
+        lines.append(f"Latest: {latest_tag}")
+    if isinstance(suggested_command, str) and suggested_command:
+        lines.append(f"Next: {suggested_command}")
+    return "\n".join(lines)
+
+
 def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     QApplication, QAction, QIcon, QMenu, QMessageBox, QStyle, QSystemTrayIcon, QTimer = _load_pyside6_api()
 
@@ -571,6 +592,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     click_to_talk_action = QAction("Click to talk", menu)
     supported_commands_action = QAction("Show supported commands", menu)
     about_action = QAction("About Operance", menu)
+    check_updates_action = QAction("Check for updates", menu)
     installed_readiness_action = QAction("Show installed readiness", menu)
     support_snapshot_action = QAction("Show support snapshot", menu)
     save_support_snapshot_action = QAction("Save support snapshot", menu)
@@ -595,6 +617,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     menu.addAction(click_to_talk_action)
     menu.addAction(supported_commands_action)
     menu.addAction(about_action)
+    menu.addAction(check_updates_action)
     menu.addAction(installed_readiness_action)
     menu.addAction(support_snapshot_action)
     menu.addAction(save_support_snapshot_action)
@@ -755,6 +778,24 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
             details=json.dumps(identity, indent=2, sort_keys=True),
         )
 
+    def show_update_status() -> None:
+        try:
+            status = controller.release_update_status()
+        except Exception as exc:
+            tray.showMessage(
+                "Update check unavailable",
+                str(exc),
+                _resolve_notification_icon(QSystemTrayIcon, "warning"),
+            )
+            return
+        _show_information_dialog(
+            QMessageBox,
+            title="Operance updates",
+            summary=str(status.get("message") or "Release status checked."),
+            informative_text=_format_release_update_highlights(status),
+            details=json.dumps(status, indent=2, sort_keys=True),
+        )
+
     def show_installed_readiness() -> None:
         try:
             report = controller.installed_readiness_report()
@@ -870,6 +911,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     click_to_talk_action.triggered.connect(start_click_to_talk)
     supported_commands_action.triggered.connect(show_supported_commands)
     about_action.triggered.connect(show_about)
+    check_updates_action.triggered.connect(show_update_status)
     installed_readiness_action.triggered.connect(show_installed_readiness)
     support_snapshot_action.triggered.connect(show_support_snapshot)
     save_support_snapshot_action.triggered.connect(save_support_snapshot)

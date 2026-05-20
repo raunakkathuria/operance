@@ -28,8 +28,11 @@ CURRENT_RELEASE_VERIFIED_TOOLS = frozenset(
     {
         ToolName.APPS_FOCUS,
         ToolName.APPS_LAUNCH,
+        ToolName.APPS_QUIT,
         ToolName.AUDIO_GET_VOLUME,
         ToolName.AUDIO_MUTE_STATUS,
+        ToolName.AUDIO_SET_MUTED,
+        ToolName.AUDIO_SET_VOLUME,
         ToolName.NETWORK_WIFI_STATUS,
         ToolName.POWER_BATTERY_STATUS,
         ToolName.TIME_NOW,
@@ -487,7 +490,7 @@ class LinuxKdeWaylandPlatformProvider:
             return []
         if tool == ToolName.APPS_LAUNCH:
             return _blockers_for(steps_by_name, "linux_platform", "xdg_open_available")
-        if tool == ToolName.APPS_FOCUS or tool in window_tools:
+        if tool in {ToolName.APPS_FOCUS, ToolName.APPS_QUIT} or tool in window_tools:
             return _blockers_for(steps_by_name, "linux_platform", "kde_wayland_target", "gdbus_available")
         if tool == ToolName.POWER_BATTERY_STATUS:
             return _blockers_for(steps_by_name, "linux_platform", "power_status_available")
@@ -584,7 +587,7 @@ class LinuxKdeWaylandPlatformProvider:
             return None
         if tool == ToolName.APPS_LAUNCH:
             return _first_recommended(steps_by_name, "linux_platform", "xdg_open_available")
-        if tool == ToolName.APPS_FOCUS or tool in window_tools:
+        if tool in {ToolName.APPS_FOCUS, ToolName.APPS_QUIT} or tool in window_tools:
             return _first_recommended(
                 steps_by_name,
                 "linux_platform",

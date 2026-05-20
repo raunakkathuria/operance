@@ -29,6 +29,7 @@ from .planner import (
     run_planner_fixture,
 )
 from .project_info import build_project_identity
+from .release_channel import build_release_update_status
 from .replay import run_replay_fixture
 from .schemas import build_action_plan_schema, build_action_result_schema
 from .session import process_transcript, run_interactive_session, run_transcript_file
@@ -73,6 +74,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Operance developer CLI")
     parser.add_argument("--version", action="store_true", help="Print the current Operance version and build identity")
     parser.add_argument("--about", action="store_true", help="Print detailed Operance runtime identity as JSON")
+    parser.add_argument("--check-updates", action="store_true", help="Check the configured Operance release channel")
+    parser.add_argument(
+        "--release-channel",
+        choices=("prerelease", "stable"),
+        help="Release channel for --check-updates. Defaults to OPERANCE_RELEASE_CHANNEL or prerelease",
+    )
     parser.add_argument("--print-config", action="store_true", help="Print the effective configuration")
     parser.add_argument("--supported-commands", action="store_true", help="Print the current supported command catalog")
     parser.add_argument(
@@ -311,6 +318,10 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.about:
         print(json.dumps(build_project_identity(), sort_keys=True))
+        return 0
+
+    if args.check_updates:
+        print(json.dumps(build_release_update_status(channel=args.release_channel), sort_keys=True))
         return 0
 
     daemon = OperanceDaemon.build_default(env)

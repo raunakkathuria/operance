@@ -34,6 +34,10 @@ def test_installed_desktop_smoke_dry_run_prints_default_steps() -> None:
         "- wifi status",
         "- what is the volume",
         "- is audio muted",
+        "- set volume to 50 percent",
+        "- mute audio",
+        "- unmute audio",
+        "- quit firefox, then confirm",
     ]
     assert result.stderr == ""
 

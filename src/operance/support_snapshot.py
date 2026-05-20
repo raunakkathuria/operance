@@ -10,6 +10,7 @@ from .audit import AuditStore
 from .config import AppConfig
 from .doctor import build_environment_report
 from .project_info import build_project_identity
+from .release_channel import build_release_update_status
 from .supported_commands import build_supported_command_catalog
 from .voice import build_voice_loop_config_snapshot
 from .voice.service import build_voice_loop_service_snapshot
@@ -23,14 +24,16 @@ def build_support_snapshot(
     home_dir: str | None = None,
 ) -> dict[str, object]:
     doctor_report = build_environment_report() if report is None else report
+    identity = build_project_identity()
     snapshot = {
-        "build": build_project_identity(),
+        "build": identity,
         "doctor": doctor_report,
         "setup": _build_setup_snapshot(doctor_report).to_dict(),
         "supported_commands": build_supported_command_catalog(doctor_report),
         "runnable_supported_commands": build_supported_command_catalog(doctor_report, available_only=True),
         "voice_loop_config": build_voice_loop_config_snapshot(env=env).to_dict(),
         "voice_loop_service": build_voice_loop_service_snapshot(env=env, report=doctor_report).to_dict(),
+        "release": build_release_update_status(identity=identity, check_remote=False),
         "audit": _build_recent_audit_payload(env=env),
     }
     if redact:
@@ -57,6 +60,9 @@ def build_support_snapshot_help_text(snapshot: dict[str, object]) -> dict[str, o
     voice_loop_service = snapshot.get("voice_loop_service")
     if not isinstance(voice_loop_service, dict):
         voice_loop_service = {}
+    release = snapshot.get("release")
+    if not isinstance(release, dict):
+        release = {}
     audit = snapshot.get("audit")
     if not isinstance(audit, dict):
         audit = {}
@@ -83,6 +89,9 @@ def build_support_snapshot_help_text(snapshot: dict[str, object]) -> dict[str, o
     ]
     if audit_count:
         highlights.append(f"Recent audit entries: {audit_count}")
+    release_message = release.get("message")
+    if isinstance(release_message, str) and release_message:
+        highlights.append(f"Release: {release_message}")
     recommended_command = voice_loop_service.get("recommended_command")
     if isinstance(recommended_command, str) and recommended_command:
         highlights.append(f"Next voice-loop action: {recommended_command}")

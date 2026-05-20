@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added explicit release-channel diagnostics through `operance --check-updates`, support snapshots, and a tray `Check for updates` menu item, without adding automatic package mutation or sudo-based updates.
+- Promoted the first conservative command-expansion batch into the Fedora KDE Wayland verified subset: confirmation-gated `quit <app name>`, `set volume to <percent>`, `mute audio`, and `unmute audio`.
 - Added narrow deterministic two-step launch handling for safe app plus URL phrases such as `open firefox and load localhost:3000`, while preserving planner fallback for unrelated chains such as `open firefox and notify me`.
 - Added packaged build provenance with `build-info.json`, `operance --about`, richer `--version` output, support snapshot or bundle identity fields, installed-smoke identity checks, a tray `About Operance` dialog, and release smoke validation that installed RPMs carry package profile and build commit metadata.
 - Added installed-package readiness to the tray menu, rendering the same `operance --installed-smoke` status, next steps, and manual click-to-talk checks from the product surface.
@@ -39,7 +41,7 @@
 - Added `scripts/bundle_python_runtime.py` plus a new optional `--bundle-profile mvp` path across the packaged-asset renderer and Fedora package build helpers, so maintainers can now build an RPM that vendors the current tray UI and STT runtime dependencies from the local virtualenv instead of stopping at the base-runtime package profile.
 - Hardened the bundled-runtime packaging path by stripping executable bits from vendored `site-packages` files during packaging, preventing `PySide6` helper scripts with ambiguous shebangs from breaking `rpmbuild` even though those files are runtime payload rather than installed CLI tools.
 - Real-validated the new `mvp` RPM bundle profile on Fedora: the targeted packaging test slice passes, `./scripts/build_package_artifacts.sh --rpm --bundle-profile mvp --bundle-python .venv/bin/python` completes, and the finished artifact now passes `rpm -Kv`.
-- Tightened the public README to the release-tested quickstart and a small verified verified command smoke, moving deeper setup, packaging, systemd, planner, and optional voice diagnostics back behind `docs/requirements/linux.md` instead of keeping a long command inventory in the main landing page.
+- Tightened the public README to the release-tested quickstart and a small verified command smoke, moving deeper setup, packaging, systemd, planner, and optional voice diagnostics back behind `docs/requirements/linux.md` instead of keeping a long command inventory in the main landing page.
 - Added a platform-provider boundary under `src/operance/platforms/`, so adapter selection, Linux doctor checks, setup-step metadata, and live command verification or blocker rules now route through a host-specific provider instead of staying hardcoded across shared core modules.
 - Added `docs/architecture/adapter-authoring.md` and updated the architecture, contributor, README, and Linux handoff docs to describe the current extension contract: providers own host readiness and verification rules, adapters own execution, and the portable core keeps shared tool semantics and safety.
 - Moved Linux setup actions, blocked recommendations, next-step generation, and per-check remediation policy behind the `linux_kde_wayland` provider, so new OS bring-up no longer requires editing `src/operance/ui/setup.py` just to project host-specific onboarding or release-gate behavior.
