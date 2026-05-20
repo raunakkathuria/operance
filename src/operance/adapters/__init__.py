@@ -18,6 +18,13 @@ from .base import (
     TimeAdapter,
     WindowsAdapter,
 )
+from .conformance import (
+    ADAPTER_TOOL_CONTRACTS,
+    AdapterConformanceReport,
+    AdapterToolContract,
+    adapter_capability_matrix,
+    validate_adapter_set,
+)
 from .linux import build_linux_adapter_set
 from .mock import build_mock_adapter_set
 
@@ -34,6 +41,9 @@ def build_default_adapter_set(config: "AppConfig", *, system_name: str | None = 
 
 __all__ = [
     "AdapterSet",
+    "ADAPTER_TOOL_CONTRACTS",
+    "AdapterConformanceReport",
+    "AdapterToolContract",
     "AppsAdapter",
     "AudioAdapter",
     "ClipboardAdapter",
@@ -46,4 +56,6 @@ __all__ = [
     "build_default_adapter_set",
     "build_linux_adapter_set",
     "build_mock_adapter_set",
+    "adapter_capability_matrix",
+    "validate_adapter_set",
 ]

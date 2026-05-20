@@ -95,6 +95,16 @@ Current Linux-specific execution lives in:
 - Linux-specific audio and playback helpers
 - repo-local Linux service and packaging scripts
 
+The adapter SDK surface is enforced by:
+
+- `src/operance/adapters/base.py`, which defines the protocol methods
+- `src/operance/adapters/conformance.py`, which maps typed tools to adapter
+  fields and required methods
+- `python3 -m operance.cli --adapter-conformance`, which validates the active
+  adapter set
+- `scripts/run_release_readiness_gate.sh`, which runs that validation before
+  release smoke checks
+
 That split is intentional:
 
 - Linux-specific D-Bus, KWin, NetworkManager, PipeWire, and Wayland details stay

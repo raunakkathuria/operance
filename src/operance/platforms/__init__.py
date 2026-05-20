@@ -22,6 +22,10 @@ _PROVIDERS_BY_ID = {
 }
 
 
+def list_platform_providers() -> tuple[PlatformProvider, ...]:
+    return tuple(_PROVIDERS_BY_ID[provider_id] for provider_id in sorted(_PROVIDERS_BY_ID))
+
+
 def get_platform_provider(
     *,
     system_name: str | None = None,
@@ -44,4 +48,5 @@ __all__ = [
     "CheckMetadata",
     "PlatformProvider",
     "get_platform_provider",
+    "list_platform_providers",
 ]

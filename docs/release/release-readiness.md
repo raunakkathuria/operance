@@ -38,6 +38,7 @@ Use the fast release-readiness gate during normal development:
 That gate runs:
 
 - the full unit test suite
+- the adapter conformance check for the active adapter set
 - the old-brand reference guard
 - the source-checkout smoke
 - the reset-aware Fedora package gate in dry-run mode

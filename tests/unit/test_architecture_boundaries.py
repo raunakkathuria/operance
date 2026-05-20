@@ -64,6 +64,20 @@ def test_portable_core_does_not_import_concrete_os_adapters() -> None:
     assert offenders == []
 
 
+def test_adapter_conformance_module_stays_platform_neutral() -> None:
+    root = Path(__file__).resolve().parents[2]
+    conformance_path = root / "src" / "operance" / "adapters" / "conformance.py"
+    tree = ast.parse(conformance_path.read_text(encoding="utf-8"), filename=str(conformance_path))
+    offenders: list[str] = []
+
+    for node in ast.walk(tree):
+        imported_module = _imported_module_name(node)
+        if imported_module in FORBIDDEN_CONCRETE_ADAPTER_IMPORTS:
+            offenders.append(f"{conformance_path.relative_to(root)}:{node.lineno} imports {imported_module}")
+
+    assert offenders == []
+
+
 def _imported_module_name(node: ast.AST) -> str | None:
     if isinstance(node, ast.Import):
         return next(

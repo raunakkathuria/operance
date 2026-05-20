@@ -569,6 +569,7 @@ When Operance chooses that bundle path itself, the generated archive filename no
 That same bundle path can also be written to an explicit location through `python3 -m operance.cli --support-bundle --support-bundle-out <path>`, and missing service logs are recorded as bundle warnings instead of failing the whole archive.
 That same archive path is now also available through `./scripts/run_mvp.sh --support-bundle --support-bundle-out <path>`, so the repo-local MVP launcher can collect the preferred redacted issue-report artifact without dropping back to the lower-level CLI.
 The contributor-facing bug-report flow now points at that support bundle first, with the raw `--support-snapshot` JSON kept as the inline fallback when a maintainer specifically wants machine-readable details pasted directly into an issue.
+The CLI now also exposes `python3 -m operance.cli --adapter-conformance`, which validates the active adapter set against the shared tool-to-adapter contract. The release readiness gate runs this after the unit suite, so provider or adapter changes fail before release smoke checks if a registered tool no longer has the adapter method it needs.
 
 To run the current command-backed Linux adapters instead of the mock developer adapters:
 
