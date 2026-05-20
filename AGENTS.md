@@ -14,7 +14,7 @@ source .venv/bin/activate
 python3 -m pip install -e ".[dev]"
 ```
 
-Run the full test suite with `.venv/bin/python -m pytest`. Run the CLI locally with `.venv/bin/python -m operance.cli --print-config` or `.venv/bin/python -m operance.cli --doctor`. Use `.venv/bin/python -m operance.cli --planner-request "open firefox"` to inspect planner payloads during development.
+Run the full test suite with `.venv/bin/python -m pytest`. Run the CLI locally with `.venv/bin/python -m operance.cli --print-config` or `.venv/bin/python -m operance.cli --doctor`. Use `.venv/bin/python -m operance.cli --planner-request "open firefox"` to inspect planner payloads during development, and `.venv/bin/python -m operance.cli --planner-smoke "open firefox and notify me"` to validate a local planner endpoint without executing actions.
 
 ## Coding Style & Naming Conventions
 
@@ -38,6 +38,7 @@ Enforce these boundaries when making changes:
 - For an existing tool on a new OS, prefer provider or adapter changes only. Core changes are expected only when adding a genuinely new tool or changing shared safety semantics.
 - Keep the current public positioning honest: Linux first, Fedora KDE Wayland first, source checkout first, RPM `mvp` runtime second.
 - New or widened adapter surfaces must pass `.venv/bin/python -m operance.cli --adapter-conformance`.
+- Planner changes must keep model output bounded to typed action schemas; local model smoke tests must validate and policy-check plans without bypassing confirmation gates.
 
 Apply these engineering principles in every slice:
 

@@ -317,6 +317,47 @@ def test_validator_rejects_missing_required_args() -> None:
     assert "missing required args" in result.errors[0]
 
 
+def test_validator_rejects_unexpected_planner_args() -> None:
+    from operance.registry import build_default_action_registry
+    from operance.validator import PlanValidator
+
+    validator = PlanValidator(registry=build_default_action_registry())
+    plan = ActionPlan(
+        source=PlanSource.PLANNER,
+        original_text="open firefox",
+        actions=[
+            TypedAction(
+                tool=ToolName.APPS_LAUNCH,
+                args={"app": "firefox", "shell_command": "rm -rf ~"},
+            )
+        ],
+    )
+
+    result = validator.validate(plan)
+
+    assert result.valid is False
+    assert result.normalized_plan is None
+    assert result.errors == ["apps.launch: unexpected args: shell_command"]
+
+
+def test_validator_rejects_wrong_planner_arg_type() -> None:
+    from operance.registry import build_default_action_registry
+    from operance.validator import PlanValidator
+
+    validator = PlanValidator(registry=build_default_action_registry())
+    plan = ActionPlan(
+        source=PlanSource.PLANNER,
+        original_text="open firefox",
+        actions=[TypedAction(tool=ToolName.APPS_LAUNCH, args={"app": 42})],
+    )
+
+    result = validator.validate(plan)
+
+    assert result.valid is False
+    assert result.normalized_plan is None
+    assert result.errors == ["apps.launch: app must be a string"]
+
+
 def test_validator_rejects_blank_known_ssid() -> None:
     from operance.registry import build_default_action_registry
     from operance.validator import PlanValidator

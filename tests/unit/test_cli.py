@@ -3561,6 +3561,108 @@ def test_cli_planner_health_prints_health_payload(monkeypatch, capsys) -> None:
     assert payload["model_ids"] == ["qwen-test"]
 
 
+def test_cli_planner_smoke_validates_local_planner_without_executing(monkeypatch, capsys) -> None:
+    class FakeResponse:
+        def __enter__(self) -> "FakeResponse":
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> None:
+            return None
+
+        def read(self) -> bytes:
+            return json.dumps(
+                {
+                    "choices": [
+                        {
+                            "message": {
+                                "content": json.dumps(
+                                    {
+                                        "actions": [
+                                            {
+                                                "tool": "apps.launch",
+                                                "args": {"app": "firefox"},
+                                            }
+                                        ]
+                                    }
+                                )
+                            }
+                        }
+                    ]
+                }
+            ).encode("utf-8")
+
+    def fake_urlopen(request, timeout: float):  # type: ignore[no-untyped-def]
+        return FakeResponse()
+
+    monkeypatch.setattr("operance.planner.client.urlopen", fake_urlopen)
+
+    exit_code = main(["--planner-smoke", "open firefox"])
+
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+
+    assert exit_code == 0
+    assert payload["status"] == "ok"
+    assert payload["execution"] == "not_executed"
+    assert payload["transcript"] == "open firefox"
+    assert payload["plan"]["source"] == "planner"
+    assert payload["validation"]["valid"] is True
+    assert payload["policy"]["action"] == "auto_approve"
+    assert payload["preview"] == "Planned action: launch firefox."
+
+
+def test_cli_planner_smoke_reports_validation_failure(monkeypatch, capsys) -> None:
+    class FakeResponse:
+        def __enter__(self) -> "FakeResponse":
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> None:
+            return None
+
+        def read(self) -> bytes:
+            return json.dumps(
+                {
+                    "choices": [
+                        {
+                            "message": {
+                                "content": json.dumps(
+                                    {
+                                        "actions": [
+                                            {
+                                                "tool": "apps.launch",
+                                                "args": {
+                                                    "app": "firefox",
+                                                    "shell_command": "rm -rf ~",
+                                                },
+                                            }
+                                        ]
+                                    }
+                                )
+                            }
+                        }
+                    ]
+                }
+            ).encode("utf-8")
+
+    def fake_urlopen(request, timeout: float):  # type: ignore[no-untyped-def]
+        return FakeResponse()
+
+    monkeypatch.setattr("operance.planner.client.urlopen", fake_urlopen)
+
+    exit_code = main(["--planner-smoke", "open firefox"])
+
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+
+    assert exit_code == 1
+    assert payload["status"] == "failed"
+    assert payload["execution"] == "not_executed"
+    assert payload["validation"] == {
+        "errors": ["apps.launch: unexpected args: shell_command"],
+        "valid": False,
+    }
+
+
 def test_cli_setup_run_action_supports_planner_health(monkeypatch, capsys) -> None:
     from subprocess import CompletedProcess
 

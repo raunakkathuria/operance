@@ -25,6 +25,7 @@ def test_checkout_smoke_script_dry_run_prints_default_steps() -> None:
         "+ .venv/bin/python -m operance.cli --doctor",
         "+ .venv/bin/python -m operance.cli --setup-actions",
         "+ .venv/bin/python -m operance.cli --supported-commands --supported-commands-available-only",
+        "+ .venv/bin/python -m operance.cli --planner-fixture tests/fixtures/planner_mvp.jsonl",
         "+ .venv/bin/python -m operance.cli --support-bundle",
     ]
     assert result.stderr == ""
@@ -43,6 +44,7 @@ def test_checkout_smoke_script_can_forward_bundle_output_path() -> None:
         "+ .venv/bin/python -m operance.cli --doctor",
         "+ .venv/bin/python -m operance.cli --setup-actions",
         "+ .venv/bin/python -m operance.cli --supported-commands --supported-commands-available-only",
+        "+ .venv/bin/python -m operance.cli --planner-fixture tests/fixtures/planner_mvp.jsonl",
         "+ .venv/bin/python -m operance.cli --support-bundle --support-bundle-out /tmp/operance-support.tar.gz",
     ]
     assert result.stderr == ""

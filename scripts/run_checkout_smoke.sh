@@ -80,6 +80,9 @@ run_step "${python_bin} -m operance.cli --setup-actions" "${python_bin}" "-m" "o
 run_step \
     "${python_bin} -m operance.cli --supported-commands --supported-commands-available-only" \
     "${python_bin}" "-m" "operance.cli" "--supported-commands" "--supported-commands-available-only"
+run_step \
+    "${python_bin} -m operance.cli --planner-fixture tests/fixtures/planner_mvp.jsonl" \
+    "${python_bin}" "-m" "operance.cli" "--planner-fixture" "tests/fixtures/planner_mvp.jsonl"
 
 support_bundle_display="${python_bin} -m operance.cli --support-bundle"
 support_bundle_command=("${python_bin}" "-m" "operance.cli" "--support-bundle")
