@@ -5,7 +5,7 @@
 
 Turn intent into action.
 
-Operance lets developers control a Linux desktop with natural language through a tray-first click-to-talk workflow. In the current Fedora KDE Wayland release, it can open apps and URLs, focus apps, and answer a small verified set of desktop-status commands such as time, battery, Wi-Fi, and audio state.
+Operance lets developers control a Linux desktop with natural language through a tray-first click-to-talk workflow. In the current Fedora KDE Wayland release, it can open apps and URLs, focus or quit apps with confirmation, answer desktop-status questions, and control basic audio state.
 
 Under the hood, Operance is a local-first desktop action runtime for Linux desktops, with a shared portable core, per-platform adapters, and an MCP-compatible control surface. Every command flows through typed actions, validation, and policy before execution.
 
@@ -23,19 +23,20 @@ Windows and macOS provider scaffolds exist for adapter authors, but they are int
 
 ## Developer Quickstart
 
-This is the primary supported public-supported path today:
+This is the primary supported public path today:
 
 ```bash
 ./scripts/install_linux_dev.sh --ui --voice
 .venv/bin/python -m operance.cli --version
 .venv/bin/python -m operance.cli --about
+.venv/bin/python -m operance.cli --check-updates
 .venv/bin/python -m operance.cli --doctor
 .venv/bin/python -m operance.cli --supported-commands --supported-commands-available-only
 ./scripts/run_mvp.sh
 ./scripts/run_checkout_smoke.sh
 ```
 
-Try a few live commands from the verified verified subset:
+Try a few live commands from the verified subset:
 
 ```bash
 OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "what time is it"
@@ -43,6 +44,7 @@ OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "what is
 OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "wifi status"
 OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "open firefox"
 OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "open localhost:3000"
+OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "set volume to 50 percent"
 ```
 
 If the MVP path fails or you need to file a bug, collect the current issue artifact with:
@@ -76,6 +78,7 @@ Operance is ready for a **Fedora KDE Wayland developer release** for outside dev
 - Wake word and the continuous voice loop remain secondary to click-to-talk for release reliability
 - The supported Fedora package path now vendors the tray UI and STT runtime dependencies needed for the MVP tray plus click-to-talk path
 - First installed-package diagnostic: `operance --installed-smoke`
+- Explicit release-channel check: `operance --check-updates`
 - Wake-word and TTS assets or backends remain optional and are not part of the packaged support contract
 - Windows and macOS are architecture targets only; their current providers are scaffolds, not supported runtimes
 
@@ -110,9 +113,9 @@ Operance already has a coherent Linux-first developer release path: a typed and 
 What works now:
 
 - Core runtime: typed action models, deterministic intent matching, validator and policy enforcement, local audit logging, planner fallback, and MCP-compatible control surfaces.
-- Verified verified command subset on Fedora KDE Wayland: `open <app name>` or URL targets, safe two-step app plus URL launch phrases such as `open firefox and load localhost:3000`, `focus <app name>`, `what time is it`, `what is my battery level`, `wifi status`, `what is the volume`, and `is audio muted`.
+- Verified command subset on Fedora KDE Wayland: `open <app name>` or URL targets, safe two-step app plus URL launch phrases such as `open firefox and load localhost:3000`, `focus <app name>`, confirmation-gated `quit <app name>`, `what time is it`, `what is my battery level`, `wifi status`, `what is the volume`, `is audio muted`, `set volume to 50 percent`, `mute audio`, and `unmute audio`.
 - Voice and tray MVP: tray app, bounded click-to-talk, confirmation flows, last-interaction reporting, optional wake-word, STT, and TTS probe paths, plus repo-local background voice-loop support.
-- Diagnostics and support: version/about provenance, doctor, setup actions, installed readiness checks, runnable-command catalog, runtime status resources, support snapshot, support bundle, audit inspection, and source-checkout smoke scripts.
+- Diagnostics and support: version/about provenance, explicit release-channel checks, doctor, setup actions, installed readiness checks, runnable-command catalog, runtime status resources, support snapshot, support bundle, audit inspection, and source-checkout smoke scripts.
 - Packaging and release gates: reproducible Linux bootstrap, source-checkout install or uninstall helpers, repo-local systemd helpers, Debian or RPM scaffolds, installed-package smoke, and the Fedora gate.
 
 What is intentionally not implemented yet:
@@ -532,7 +535,7 @@ python3 -m operance.cli --tray-run
 
 ## CLI
 
-Most developers only need `--version`, `--doctor`, `--supported-commands --supported-commands-available-only`, `--transcript`, `--mvp-launch`, and `--support-bundle`. In the current developer release, `--supported-commands --supported-commands-available-only` is intentionally conservative: it prints only the commands that are both environment-ready and release-verified for the Fedora KDE Wayland target. The rest of this section is the lower-level CLI reference surface.
+Most developers only need `--version`, `--about`, `--check-updates`, `--doctor`, `--supported-commands --supported-commands-available-only`, `--transcript`, `--mvp-launch`, and `--support-bundle`. In the current developer release, `--supported-commands --supported-commands-available-only` is intentionally conservative: it prints only the commands that are both environment-ready and release-verified for the Fedora KDE Wayland target. The rest of this section is the lower-level CLI reference surface.
 
 Print the effective config:
 
@@ -559,12 +562,13 @@ Installed packages are different: the packaged `/usr/bin/operance` entrypoint de
 ```bash
 operance --print-config
 operance --installed-smoke
+operance --check-updates
 python3 scripts/check_installed_mvp_runtime.py --command operance --check-tray-service
 ```
 
-`operance --print-config` should report `"developer_mode": false`. `operance --about` reports whether the command is a packaged install or source checkout plus package profile, build commit, tag when available, build time, and install root. `operance --installed-smoke` summarizes installed package readiness, warns when the tray service is not active, fails when packaged build identity or runtime dependencies are missing, and catches stale repo-local user units shadowing the packaged service. If stale user units are reported, reinstall with `./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --replace-existing --reset-user-services`. In `systemctl --user status`, `preset: disabled` is normal on Fedora; `Loaded`, `Active`, and the `ExecStart` command path are the parts to verify.
+`operance --print-config` should report `"developer_mode": false`. `operance --about` reports whether the command is a packaged install or source checkout plus package profile, build commit, tag when available, build time, and install root. `operance --check-updates` checks the configured release channel and prints whether the installed packaged build matches the latest release; it does not auto-install packages or invoke `sudo`. `operance --installed-smoke` summarizes installed package readiness, warns when the tray service is not active, fails when packaged build identity or runtime dependencies are missing, and catches stale repo-local user units shadowing the packaged service. If stale user units are reported, reinstall with `./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --replace-existing --reset-user-services`. In `systemctl --user status`, `preset: disabled` is normal on Fedora; `Loaded`, `Active`, and the `ExecStart` command path are the parts to verify.
 `./scripts/run_installed_desktop_smoke.sh` starts/enables the packaged tray user service before checking status, so `Active: inactive (dead)` is a smoke failure rather than a successful desktop state.
-The tray menu also exposes `Show installed readiness`, which presents the same installed-smoke summary and next steps without requiring a terminal.
+The tray menu also exposes `Check for updates` and `Show installed readiness`, so users can inspect release-channel status and installed-smoke next steps without requiring a terminal.
 
 Run the built-in deterministic corpus and print a summary:
 

@@ -47,6 +47,10 @@ Manual tray click-to-talk checks:
 - wifi status
 - what is the volume
 - is audio muted
+- set volume to 50 percent
+- mute audio
+- unmute audio
+- quit firefox, then confirm
 EOF
 }
 

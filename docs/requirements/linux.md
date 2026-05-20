@@ -78,6 +78,7 @@ For the shortest current source-checkout path on the target Linux stack:
 ./scripts/install_linux_dev.sh --ui --voice
 .venv/bin/python -m operance.cli --version
 .venv/bin/python -m operance.cli --about
+.venv/bin/python -m operance.cli --check-updates
 ./scripts/run_mvp.sh
 ./scripts/run_checkout_smoke.sh
 ./scripts/run_fedora_gate.sh --reset-user-services --dry-run
@@ -109,6 +110,9 @@ OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "what is
 OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "wifi status"
 OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "what is the volume"
 OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "is audio muted"
+OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "set volume to 50 percent"
+OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "mute audio"
+OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "unmute audio"
 OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "open firefox"
 OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "open localhost:3000"
 OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "open firefox and load localhost:3000"
@@ -393,11 +397,12 @@ After installing the RPM, verify that the package is using live adapters before 
 ```bash
 operance --print-config
 operance --installed-smoke
+operance --check-updates
 python3 scripts/check_installed_mvp_runtime.py --command operance --check-tray-service
 ```
 
-`operance --print-config` should report `"developer_mode": false`. `operance --about` reports whether the command is a packaged install or source checkout plus package profile, build commit, tag when available, build time, and install root. `operance --installed-smoke` summarizes installed package readiness, warns when the tray service is not active, fails when packaged build identity or runtime dependencies are missing, and catches stale repo-local user units shadowing the packaged service. `preset: disabled` in `systemctl --user status` is normal Fedora preset metadata; verify `Loaded`, `Active`, and the `ExecStart` path instead. `./scripts/run_installed_desktop_smoke.sh` starts/enables the packaged tray user service before checking status, so `Active: inactive (dead)` is a smoke failure.
-The packaged tray shows the same diagnostic from `Show installed readiness`, so users can inspect readiness and next steps after install without finding the CLI command first.
+`operance --print-config` should report `"developer_mode": false`. `operance --about` reports whether the command is a packaged install or source checkout plus package profile, build commit, tag when available, build time, and install root. `operance --check-updates` checks the configured release channel and prints whether the installed packaged build matches the latest release; it does not auto-install packages or invoke `sudo`. `operance --installed-smoke` summarizes installed package readiness, warns when the tray service is not active, fails when packaged build identity or runtime dependencies are missing, and catches stale repo-local user units shadowing the packaged service. `preset: disabled` in `systemctl --user status` is normal Fedora preset metadata; verify `Loaded`, `Active`, and the `ExecStart` path instead. `./scripts/run_installed_desktop_smoke.sh` starts/enables the packaged tray user service before checking status, so `Active: inactive (dead)` is a smoke failure.
+The packaged tray shows `Check for updates` and the same diagnostic from `Show installed readiness`, so users can inspect release-channel status, readiness, and next steps after install without finding the CLI command first.
 
 Install a built native package artifact through the matching distro package manager:
 
@@ -550,7 +555,8 @@ It now also reports whether the current machine exposes the command-line surface
 - `kokoro-onnx` plus `soundfile` in the current Python environment for the optional TTS probe
 - `upower` or battery sysfs for battery status
 
-The CLI now also exposes `python3 -m operance.cli --supported-commands`, which projects the typed command catalog with example transcripts, current live blockers from doctor/setup state, and release-verification status. Use that when a developer needs to answer both “what can I say?” and “why is this command not live on this machine?” from one surface. When a tester only needs the current launch-safe subset, `python3 -m operance.cli --supported-commands --supported-commands-available-only` filters the catalog down to commands that are both live on the current machine and release-verified for the Fedora KDE developer target. That filtered view is now also the preferred next-step path from setup, and the repo-local MVP wrapper can print it through `./scripts/run_mvp.sh --supported-commands --supported-commands-available-only`, so developers can reach the same conservative discovery path from the main bring-up flow instead of remembering a separate raw CLI flag.
+The CLI now also exposes `python3 -m operance.cli --supported-commands`, which projects the typed command catalog with example transcripts, current live blockers from doctor/setup state, and release-verification status. Use that when a developer needs to answer both “what can I say?” and “why is this command not live on this machine?” from one surface. When a tester only needs the current verified subset, `python3 -m operance.cli --supported-commands --supported-commands-available-only` filters the catalog down to commands that are both live on the current machine and release-verified for the Fedora KDE developer target. That filtered view includes the first confirmation-gated app command, `quit <app name>`, plus basic audio set or mute commands after they have been live-verified. It remains the preferred next-step path from setup, and the repo-local MVP wrapper can print it through `./scripts/run_mvp.sh --supported-commands --supported-commands-available-only`, so developers can reach the same conservative discovery path from the main bring-up flow instead of remembering a separate raw CLI flag.
+The CLI now also exposes `python3 -m operance.cli --check-updates`, which checks the configured release channel against GitHub releases and returns a JSON status payload. The default channel is `prerelease`, `--release-channel stable` opts into stable releases, and the command is intentionally diagnostic-only: it reports the release URL or next command, but it does not download packages, mutate system state, or invoke `sudo`.
 That same text-input surface now also covers a small allowlist of developer-oriented modifier chords like `Ctrl+C`, `Ctrl+L`, `Ctrl+R`, `Ctrl+T`, `Ctrl+W`, and `Ctrl+Shift+P` on the existing `keys.press` path instead of stopping at only bare keys like Enter or Escape.
 The CLI now also exposes `python3 -m operance.cli --version`, which prints the current Operance version plus source or packaged build identity. Use `python3 -m operance.cli --about` when you need the full machine-readable identity payload, including install mode, package profile, build commit, tag when available, build time, and install root.
 The CLI now also exposes `python3 -m operance.cli --support-snapshot`, which aggregates doctor, setup, the full supported-command catalog, the release-verified runnable subset, and voice-loop state into one JSON payload for issue reports and remote debugging. Home-directory paths are redacted by default so the payload is safer to paste into public issues, `--support-snapshot-raw` opts back into exact paths when maintainers need them, and `--support-snapshot-out <path>` can persist that same JSON to a file without changing stdout behavior.
@@ -692,7 +698,7 @@ Still deferred in the repo at the moment:
 - broader KDE desktop execution coverage beyond the current implemented action slice
 - richer tray UI beyond the current minimal status surface
 
-The current repository contains a broader implemented Linux runtime beyond the supported verified command subset above, including voice probes, planner tooling, tray surfaces, and additional KDE action paths. Those broader surfaces remain implementation inventory, not part of the supported support contract, until they are live-verified and graduate into `--supported-commands --supported-commands-available-only`.
+The current repository contains a broader implemented Linux runtime beyond the supported verified command subset above, including voice probes, planner tooling, tray surfaces, network-changing commands, file operations, and additional KDE action paths. Those broader surfaces remain implementation inventory, not part of the supported support contract, until they are live-verified and graduate into `--supported-commands --supported-commands-available-only`.
 
 Broader implemented Linux-backed paths that are not all release-verified yet:
 

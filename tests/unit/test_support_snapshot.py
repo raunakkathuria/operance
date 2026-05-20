@@ -68,6 +68,15 @@ def test_build_support_snapshot_reuses_one_doctor_report(monkeypatch) -> None:
             "git_dirty": False,
         },
     )
+    monkeypatch.setattr(
+        "operance.support_snapshot.build_release_update_status",
+        lambda identity=None, check_remote=True: {
+            "status": "unknown",
+            "installed_tag": None,
+            "latest_tag": None,
+            "update_available": None,
+        },
+    )
 
     snapshot = build_support_snapshot()
 
@@ -94,6 +103,12 @@ def test_build_support_snapshot_reuses_one_doctor_report(monkeypatch) -> None:
         "voice_loop_service": {
             "status": "warn",
             "recommended_command": "./scripts/install_voice_loop_user_service.sh",
+        },
+        "release": {
+            "status": "unknown",
+            "installed_tag": None,
+            "latest_tag": None,
+            "update_available": None,
         },
         "audit": {"count": 1, "entries": [{"status": "success", "transcript": "open firefox"}]},
     }
@@ -167,6 +182,15 @@ def test_build_support_snapshot_can_redact_home_paths(monkeypatch) -> None:
             "git_commit": "abc1234",
             "git_branch": "main",
             "git_dirty": False,
+        },
+    )
+    monkeypatch.setattr(
+        "operance.support_snapshot.build_release_update_status",
+        lambda identity=None, check_remote=True: {
+            "status": "unknown",
+            "installed_tag": None,
+            "latest_tag": None,
+            "update_available": None,
         },
     )
 
