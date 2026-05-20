@@ -21,6 +21,7 @@ def test_release_readiness_gate_dry_run_prints_default_steps() -> None:
 
     assert result.stdout.splitlines() == [
         "+ .venv/bin/python -m pytest",
+        "+ .venv/bin/python -m operance.cli --adapter-conformance",
         "+ git grep -n -i <old-brand> -- .",
         "+ ./scripts/run_checkout_smoke.sh --python .venv/bin/python",
         "+ ./scripts/run_fedora_gate.sh --reset-user-services --dry-run",
@@ -41,6 +42,7 @@ def test_release_readiness_gate_can_forward_options() -> None:
 
     assert result.stdout.splitlines() == [
         "+ /tmp/operance-python -m pytest",
+        "+ /tmp/operance-python -m operance.cli --adapter-conformance",
         "+ git grep -n -i <old-brand> -- .",
         (
             "+ ./scripts/run_checkout_smoke.sh --python /tmp/operance-python "

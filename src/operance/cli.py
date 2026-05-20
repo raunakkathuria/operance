@@ -12,6 +12,7 @@ import sys
 from typing import Sequence
 
 from .audio import build_default_audio_capture_source, build_default_audio_playback_sink
+from .adapters import validate_adapter_set
 from .corpus import run_default_corpus
 from .daemon import OperanceDaemon
 from .doctor import build_environment_report
@@ -82,6 +83,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--print-config", action="store_true", help="Print the effective configuration")
     parser.add_argument("--supported-commands", action="store_true", help="Print the current supported command catalog")
+    parser.add_argument(
+        "--adapter-conformance",
+        action="store_true",
+        help="Validate that the active adapter set satisfies the typed tool contract",
+    )
     parser.add_argument(
         "--supported-commands-available-only",
         action="store_true",
@@ -341,6 +347,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         )
         return 0
+
+    if args.adapter_conformance:
+        report = validate_adapter_set(daemon.adapters)
+        print(json.dumps(report.to_dict(), sort_keys=True))
+        return 0 if report.status == "ok" else 1
 
     if args.audit_log:
         if args.audit_limit < 1:

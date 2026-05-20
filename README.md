@@ -153,7 +153,7 @@ The repo now also includes a baseline public-project trust surface:
 - [docs/architecture/overview.md](docs/architecture/overview.md) for the
   portable-core versus platform-adapter boundary
 - [docs/architecture/adapter-authoring.md](docs/architecture/adapter-authoring.md)
-  for the current provider and adapter extension contract
+  for the current provider, adapter, and conformance contract
 - [docs/release/fedora-checklist.md](docs/release/fedora-checklist.md)
   for the current Fedora KDE release gate and stop line
 - [docs/requirements/linux.md](docs/requirements/linux.md) for Linux machine
@@ -574,6 +574,12 @@ Run the built-in deterministic corpus and print a summary:
 
 ```bash
 python3 -m operance.cli --run-corpus
+```
+
+Validate the active adapter set against the shared tool-to-adapter contract:
+
+```bash
+python3 -m operance.cli --adapter-conformance
 ```
 
 Process one transcript per non-empty line from a file:

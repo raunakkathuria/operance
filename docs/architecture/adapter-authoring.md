@@ -75,14 +75,34 @@ Start in this order:
 1. add a provider module in `src/operance/platforms/`
 2. add adapter implementations for the existing protocols you can support
 3. register the provider in `src/operance/platforms/__init__.py`
-4. add provider tests
-5. add adapter tests
-6. only then widen the verified command subset for that platform
+4. add or reuse adapter contracts in `src/operance/adapters/conformance.py`
+5. add provider tests
+6. add adapter tests
+7. run `.venv/bin/python -m operance.cli --adapter-conformance`
+8. only then widen the verified command subset for that platform
 
 Do not start by editing the core command model unless the new OS truly needs a
 new tool, not just a new implementation.
 
-## 4. Current non-goals
+## 4. Adapter SDK contract
+
+The current in-repo adapter SDK is intentionally small:
+
+- `src/operance/adapters/base.py` defines protocol methods for each adapter
+  surface.
+- `src/operance/adapters/conformance.py` maps every registered `ToolName` to
+  the adapter field and method that must exist.
+- `python3 -m operance.cli --adapter-conformance` validates the active adapter
+  set against that contract and returns a JSON report.
+- `scripts/run_release_readiness_gate.sh` runs the conformance check after the
+  unit suite, so release work fails before smoke tests if an adapter contract is
+  broken.
+
+The conformance check is a shape contract, not a live OS smoke. It proves that an
+adapter set exposes the methods required by the typed tools. Providers still own
+doctor checks, live blockers, setup guidance, and release-verified tool lists.
+
+## 5. Current non-goals
 
 This is **not** a general external plugin SDK yet.
 
@@ -100,7 +120,7 @@ The current non-goal is:
 - arbitrary third-party tool plugins
 - arbitrary external platform package discovery
 
-## 5. Design constraints
+## 6. Design constraints
 
 When adding a provider or adapter:
 
@@ -111,8 +131,10 @@ When adding a provider or adapter:
 - prefer capability gaps over fake support
 - keep unsupported tools blocked or unverified instead of pretending they work
 - preserve Linux-first delivery until another platform is actually being brought up
+- do not add a tool to `release_verified_tools` unless its adapter contract
+  exists and the platform-specific live behavior has been tested
 
-## 6. Practical example
+## 7. Practical example
 
 For the scaffolded Windows backend:
 

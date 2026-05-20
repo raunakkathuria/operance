@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added the adapter conformance gate with a tool-to-adapter capability contract, `operance --adapter-conformance`, provider registry uniqueness checks, and release-readiness enforcement.
 - Added explicit release-channel diagnostics through `operance --check-updates`, support snapshots, and a tray `Check for updates` menu item, without adding automatic package mutation or sudo-based updates.
 - Promoted the first conservative command-expansion batch into the Fedora KDE Wayland verified subset: confirmation-gated `quit <app name>`, `set volume to <percent>`, `mute audio`, and `unmute audio`.
 - Added narrow deterministic two-step launch handling for safe app plus URL phrases such as `open firefox and load localhost:3000`, while preserving planner fallback for unrelated chains such as `open firefox and notify me`.

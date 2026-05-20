@@ -187,6 +187,18 @@ def test_cli_check_updates_prints_release_status_without_daemon(monkeypatch, cap
     }
 
 
+def test_cli_adapter_conformance_prints_report(capsys) -> None:
+    exit_code = main(["--adapter-conformance"])
+
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+
+    assert exit_code == 0
+    assert payload["status"] == "ok"
+    assert payload["summary"]["failed_tools"] == 0
+    assert payload["summary"]["checked_tools"] >= 1
+
+
 def test_cli_process_generic_app_transcript_prints_response_payload(capsys) -> None:
     exit_code = main(["--transcript", "open code"])
 

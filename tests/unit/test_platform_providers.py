@@ -11,6 +11,33 @@ def test_get_platform_provider_returns_linux_provider_for_linux_host() -> None:
     assert provider.provider_id == "linux_kde_wayland"
 
 
+def test_platform_provider_registry_has_unique_provider_ids() -> None:
+    from operance.platforms import list_platform_providers
+
+    providers = list_platform_providers()
+    provider_ids = [provider.provider_id for provider in providers]
+
+    assert provider_ids == sorted(provider_ids)
+    assert len(provider_ids) == len(set(provider_ids))
+    assert "linux_kde_wayland" in provider_ids
+    assert "windows_desktop" in provider_ids
+    assert "macos_desktop" in provider_ids
+
+
+def test_release_verified_tools_have_adapter_contracts() -> None:
+    from operance.adapters.conformance import ADAPTER_TOOL_CONTRACTS
+    from operance.platforms import list_platform_providers
+
+    missing_contracts = [
+        f"{provider.provider_id}:{tool.value}"
+        for provider in list_platform_providers()
+        for tool in provider.release_verified_tools
+        if tool not in ADAPTER_TOOL_CONTRACTS
+    ]
+
+    assert missing_contracts == []
+
+
 def test_get_platform_provider_returns_windows_provider_for_windows_host() -> None:
     from operance.platforms import get_platform_provider
 

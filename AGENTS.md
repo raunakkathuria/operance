@@ -27,6 +27,8 @@ Treat the repo as a Linux-first portable core with per-platform host integration
 - Portable core under `src/operance/` owns typed actions, registry, validator, policy, planner, executor, daemon, MCP, and shared voice orchestration.
 - Platform providers under `src/operance/platforms/` own host detection, adapter selection, doctor checks, setup metadata, setup actions, blocked recommendations, next steps, and release-verification policy.
 - Adapters under `src/operance/adapters/` own OS-native execution details.
+- Adapter capability contracts under `src/operance/adapters/conformance.py`
+  define the shared adapter SDK surface that every registered tool must satisfy.
 
 Enforce these boundaries when making changes:
 
@@ -35,6 +37,7 @@ Enforce these boundaries when making changes:
 - Keep shared input definitions semantic; native input translation belongs in the adapter that executes it.
 - For an existing tool on a new OS, prefer provider or adapter changes only. Core changes are expected only when adding a genuinely new tool or changing shared safety semantics.
 - Keep the current public positioning honest: Linux first, Fedora KDE Wayland first, source checkout first, RPM `mvp` runtime second.
+- New or widened adapter surfaces must pass `.venv/bin/python -m operance.cli --adapter-conformance`.
 
 Apply these engineering principles in every slice:
 
@@ -82,6 +85,7 @@ Before calling a feature complete:
 - confirm the portable core remains decoupled from OS-native adapters
 - confirm platform readiness or setup behavior lives in platform providers, not shared core modules
 - confirm OS-native execution details stay in adapters
+- confirm adapter contracts and provider release-verified tools pass the adapter conformance gate
 - confirm the implementation follows `KISS`, `YAGNI`, and `DRY`
 - update relevant documentation, or explicitly state that no documentation change is needed and why
 - ensure `README.md` reflects any changed public/user workflow
