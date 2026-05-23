@@ -43,6 +43,9 @@ Manual tray click-to-talk checks:
 - open firefox
 - open localhost:3000
 - open firefox and load localhost:3000
+- show recent files
+- list windows
+- switch to window <visible window title>
 - what time is it
 - wifi status
 - what is the volume

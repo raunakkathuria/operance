@@ -40,6 +40,19 @@ _WTYPE_ARGS_BY_SUPPORTED_KEY = {
     "ctrl+w": ["-M", "ctrl", "w", "-m", "ctrl"],
     "ctrl+shift+p": ["-M", "ctrl", "-M", "shift", "p", "-m", "shift", "-m", "ctrl"],
 }
+_WINDOWS_RUNNER_STRING_LITERAL = r"'(?:\\.|[^'\\])*'"
+_WINDOWS_RUNNER_MATCH_PREFIX_RE = re.compile(
+    rf"\(\s*(?P<match_id>{_WINDOWS_RUNNER_STRING_LITERAL})\s*,\s*"
+    rf"(?P<title>{_WINDOWS_RUNNER_STRING_LITERAL})\s*,\s*"
+    rf"(?P<icon>{_WINDOWS_RUNNER_STRING_LITERAL})\s*,\s*"
+    r"(?P<category>-?\d+)\s*,\s*"
+    r"(?P<score>-?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s*,",
+    re.DOTALL,
+)
+_WINDOWS_RUNNER_SUBTEXT_RE = re.compile(
+    rf"'subtext'\s*:\s*(?:<(?P<variant>{_WINDOWS_RUNNER_STRING_LITERAL})>|(?P<plain>{_WINDOWS_RUNNER_STRING_LITERAL}))",
+    re.DOTALL,
+)
 
 
 def _default_run_command(command: list[str]) -> subprocess.CompletedProcess[str]:
@@ -1420,29 +1433,25 @@ def _app_match_targets(app: str) -> tuple[str, ...]:
 
 
 def _parse_windows_runner_matches(raw_output: str) -> list[WindowsRunnerMatch]:
-    normalized = re.sub(r"@a\([^)]+\)\s*", "", raw_output).replace("<", "").replace(">", "")
-    parsed = ast.literal_eval(normalized)
-    if not isinstance(parsed, tuple) or not parsed:
+    prefix_matches = list(_WINDOWS_RUNNER_MATCH_PREFIX_RE.finditer(raw_output))
+    if not prefix_matches:
         raise ValueError("unable to parse windows runner output")
 
-    matches = parsed[0]
-    if not isinstance(matches, list):
-        raise ValueError("windows runner output did not contain a match list")
-
     parsed_matches: list[WindowsRunnerMatch] = []
-    for match in matches:
-        if not isinstance(match, tuple) or len(match) != 6:
+    for index, match in enumerate(prefix_matches):
+        metadata_end = (
+            prefix_matches[index + 1].start() if index + 1 < len(prefix_matches) else len(raw_output)
+        )
+        metadata_segment = raw_output[match.end() : metadata_end]
+        try:
+            match_id = _literal_string(match.group("match_id"))
+            title = _literal_string(match.group("title"))
+            icon = _literal_string(match.group("icon"))
+            category_relevance = int(match.group("category"))
+            score = float(match.group("score"))
+        except (SyntaxError, ValueError):
             continue
-        match_id, title, icon, category_relevance, score, metadata = match
-        if not isinstance(match_id, str) or not isinstance(title, str) or not isinstance(icon, str):
-            continue
-        if not isinstance(category_relevance, int) or not isinstance(score, float):
-            continue
-        subtext = ""
-        if isinstance(metadata, dict):
-            raw_subtext = metadata.get("subtext", "")
-            if isinstance(raw_subtext, str):
-                subtext = raw_subtext
+
         parsed_matches.append(
             WindowsRunnerMatch(
                 match_id=match_id,
@@ -1450,10 +1459,32 @@ def _parse_windows_runner_matches(raw_output: str) -> list[WindowsRunnerMatch]:
                 icon=icon,
                 category_relevance=category_relevance,
                 score=score,
-                subtext=subtext,
+                subtext=_parse_windows_runner_subtext(metadata_segment),
             )
         )
+
+    if not parsed_matches:
+        raise ValueError("windows runner output did not contain valid matches")
     return parsed_matches
+
+
+def _literal_string(value: str) -> str:
+    parsed = ast.literal_eval(value)
+    if not isinstance(parsed, str):
+        raise ValueError("not a string literal")
+    return parsed
+
+
+def _parse_windows_runner_subtext(metadata_segment: str) -> str:
+    match = _WINDOWS_RUNNER_SUBTEXT_RE.search(metadata_segment)
+    if match is None:
+        return ""
+
+    raw_literal = match.group("variant") or match.group("plain")
+    try:
+        return _literal_string(raw_literal)
+    except (SyntaxError, ValueError):
+        return ""
 
 
 def _dedupe_window_matches(matches: list[WindowsRunnerMatch]) -> list[WindowsRunnerMatch]:

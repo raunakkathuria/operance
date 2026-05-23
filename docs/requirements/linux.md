@@ -60,11 +60,17 @@ Current supported command subset on that target:
 - `open <app name>` and URL-like launch targets such as `open localhost:3000`
 - safe two-step app plus URL launch phrases such as `open firefox and load localhost:3000`
 - `focus <app name>`
+- `show recent files`
+- `list windows`
+- `switch to window <title>`
 - `what time is it`
 - `what is my battery level`
 - `wifi status`
 - `what is the volume`
 - `is audio muted`
+- `set volume to 50 percent`
+- `mute audio`
+- `unmute audio`
 
 If you want the fastest iteration loop, use the source checkout. Treat the RPM path as the packaged public handoff and run a human tray plus microphone smoke after the automated gate passes.
 
@@ -116,6 +122,9 @@ OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "unmute 
 OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "open firefox"
 OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "open localhost:3000"
 OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "open firefox and load localhost:3000"
+OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "show recent files"
+OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "list windows"
+OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "switch to window firefox"
 ```
 
 ---
@@ -555,7 +564,7 @@ It now also reports whether the current machine exposes the command-line surface
 - `kokoro-onnx` plus `soundfile` in the current Python environment for the optional TTS probe
 - `upower` or battery sysfs for battery status
 
-The CLI now also exposes `python3 -m operance.cli --supported-commands`, which projects the typed command catalog with example transcripts, current live blockers from doctor/setup state, and release-verification status. Use that when a developer needs to answer both “what can I say?” and “why is this command not live on this machine?” from one surface. When a tester only needs the current verified subset, `python3 -m operance.cli --supported-commands --supported-commands-available-only` filters the catalog down to commands that are both live on the current machine and release-verified for the Fedora KDE developer target. That filtered view includes the first confirmation-gated app command, `quit <app name>`, plus basic audio set or mute commands after they have been live-verified. It remains the preferred next-step path from setup, and the repo-local MVP wrapper can print it through `./scripts/run_mvp.sh --supported-commands --supported-commands-available-only`, so developers can reach the same conservative discovery path from the main bring-up flow instead of remembering a separate raw CLI flag.
+The CLI now also exposes `python3 -m operance.cli --supported-commands`, which projects the typed command catalog with example transcripts, current live blockers from doctor/setup state, and release-verification status. Use that when a developer needs to answer both “what can I say?” and “why is this command not live on this machine?” from one surface. When a tester only needs the current verified subset, `python3 -m operance.cli --supported-commands --supported-commands-available-only` filters the catalog down to commands that are both live on the current machine and release-verified for the Fedora KDE developer target. That filtered view includes the first confirmation-gated app command, `quit <app name>`, basic audio set or mute commands, the read-only `show recent files` file command, and the verified `list windows` or `switch to window <title>` window commands after they have been live-verified. It remains the preferred next-step path from setup, and the repo-local MVP wrapper can print it through `./scripts/run_mvp.sh --supported-commands --supported-commands-available-only`, so developers can reach the same conservative discovery path from the main bring-up flow instead of remembering a separate raw CLI flag.
 The CLI now also exposes `python3 -m operance.cli --check-updates`, which checks the configured release channel against GitHub releases and returns a JSON status payload. The default channel is `prerelease`, `--release-channel stable` opts into stable releases, and the command is intentionally diagnostic-only: it reports the release URL or next command, but it does not download packages, mutate system state, or invoke `sudo`.
 That same text-input surface now also covers a small allowlist of developer-oriented modifier chords like `Ctrl+C`, `Ctrl+L`, `Ctrl+R`, `Ctrl+T`, `Ctrl+W`, and `Ctrl+Shift+P` on the existing `keys.press` path instead of stopping at only bare keys like Enter or Escape.
 The CLI now also exposes `python3 -m operance.cli --version`, which prints the current Operance version plus source or packaged build identity. Use `python3 -m operance.cli --about` when you need the full machine-readable identity payload, including install mode, package profile, build commit, tag when available, build time, and install root.
@@ -710,7 +719,7 @@ Broader implemented Linux-backed paths that are not all release-verified yet:
 - two-step launch phrases like `open firefox and load localhost:3000` execute app launch first and then URL launch, while unrelated chains like `open firefox and notify me` still require planner support
 - explicit URL phrases like `browse to docs.python.org/3` and `open url github.com/openai/openai-python` now also normalize bare hostnames to `https://...`, so developer docs and repository browsing work without widening the generic app-launch path
 - app quit reuses the same KWin window-close path and now executes after an in-session confirmation reply
-- window listing and window switching prefer KWin `WindowsRunner` over the session bus
+- file open, create, delete, rename, and move commands are implemented but remain outside the release-verified subset until their live smoke path uses controlled fixtures and stronger side-effect checks
 - window minimization, maximization, fullscreen on or off, keep-above or keep-below on or off, shade on or off, all-desktops on or off, and restore prefer a KWin scripting bridge over the session bus
 - window close uses the same KWin scripting path and now executes after an in-session confirmation reply
 - desktop folder deletion and desktop file deletion use the existing file adapter path and now execute after an in-session confirmation reply

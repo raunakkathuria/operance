@@ -88,6 +88,9 @@ def build_installed_smoke_result(
         manual_checks=[
             "Click the tray icon and say: open firefox",
             "Click the tray icon and say: open localhost:3000",
+            "Click the tray icon and say: show recent files",
+            "Click the tray icon and say: list windows",
+            "Click the tray icon and say: switch to window <visible window title>",
             "Click the tray icon and say: what time is it",
         ],
         build=build_identity,
