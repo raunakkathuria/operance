@@ -95,7 +95,13 @@ def build_default_action_registry() -> ActionRegistry:
             allowed_side_effects=("quit_app", "close_app_windows"),
         )
     )
-    registry.register(ToolSpec(ToolName.WINDOWS_LIST, "List open windows"))
+    registry.register(
+        ToolSpec(
+            ToolName.WINDOWS_LIST,
+            "List open windows",
+            example_transcripts=("list windows",),
+        )
+    )
     registry.register(
         ToolSpec(
             ToolName.WINDOWS_SWITCH,

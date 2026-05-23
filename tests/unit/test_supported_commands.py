@@ -115,7 +115,9 @@ def test_build_supported_command_catalog_can_filter_available_commands_only() ->
 
     assert catalog["catalog_filter"] == "available_only"
     assert "apps.launch" in commands
-    assert "windows.list" not in commands
+    assert "files.list_recent" in commands
+    assert "windows.list" in commands
+    assert "windows.switch" in commands
     assert "text.type" not in commands
     assert catalog["summary"]["unverified_commands"] == 0
     assert catalog["summary"]["blocked_commands"] == 0

@@ -195,6 +195,9 @@ def _tool_usage_pattern(tool: ToolName) -> str | None:
         ToolName.APPS_LAUNCH: "open <app name> | open http://localhost:3000 | browse to localhost 3000 | open <app> and load <url>",
         ToolName.APPS_FOCUS: "focus <app name>",
         ToolName.APPS_QUIT: "quit <app name>",
+        ToolName.WINDOWS_LIST: "list windows",
+        ToolName.WINDOWS_SWITCH: "switch to window <title>",
+        ToolName.FILES_LIST_RECENT: "show recent files",
         ToolName.FILES_OPEN: "open file on desktop called <name> | open recent file called <name>",
     }
     return patterns.get(tool)

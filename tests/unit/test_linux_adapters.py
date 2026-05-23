@@ -410,6 +410,33 @@ def test_linux_windows_adapter_lists_deduplicated_window_titles() -> None:
     ]]
 
 
+def test_linux_windows_adapter_parses_windows_runner_matches_with_icon_data() -> None:
+    from operance.adapters.linux import LinuxWindowsAdapter
+
+    commands: list[list[str]] = []
+
+    def run_command(command: list[str]) -> subprocess.CompletedProcess[str]:
+        commands.append(command)
+        return subprocess.CompletedProcess(
+            command,
+            0,
+            stdout=(
+                "(["
+                "('0_{abc}', 'Google Chrome', '', 100, 0.80000000000000004, "
+                "{'icon-data': <(64, 64, 256, true, 8, 4, [byte 0x00, 0xff])>, "
+                "'subtext': <'Activate running window on Desktop 1'>}), "
+                "('0_{def}', 'Untitled — KWrite', 'kwrite', 30, 0.5, "
+                "{'subtext': <'Activate running window on Desktop 1'>})"
+                "],)\n"
+            ),
+            stderr="",
+        )
+
+    adapter = LinuxWindowsAdapter(run_command=run_command)
+
+    assert adapter.list_windows() == ["Google Chrome", "Untitled — KWrite"]
+
+
 def test_linux_windows_adapter_sets_fullscreen_state_via_kwin_script() -> None:
     from operance.adapters.linux import LinuxWindowsAdapter
 

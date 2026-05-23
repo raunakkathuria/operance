@@ -626,7 +626,8 @@ def test_cli_supported_commands_prints_catalog_with_live_blockers(monkeypatch, c
     assert commands["apps.launch"]["usage_pattern"] == (
         "open <app name> | open http://localhost:3000 | browse to localhost 3000 | open <app> and load <url>"
     )
-    assert commands["windows.list"]["live_runtime_status"] == "unverified"
+    assert commands["windows.list"]["live_runtime_status"] == "available"
+    assert commands["windows.list"]["release_verification_status"] == "verified"
     assert commands["windows.list"]["release_verification_target"] == "fedora_kde_wayland"
     assert commands["text.type"]["live_runtime_status"] == "blocked"
     assert commands["text.type"]["live_runtime_blockers"] == ["Wayland text input CLI"]
@@ -680,7 +681,12 @@ def test_cli_supported_commands_available_only_filters_blocked_entries(monkeypat
     assert commands["apps.quit"]["requires_confirmation"] is True
     assert "audio.set_volume" in commands
     assert "audio.set_muted" in commands
-    assert "windows.list" not in commands
+    assert "files.list_recent" in commands
+    assert commands["files.list_recent"]["usage_pattern"] == "show recent files"
+    assert "windows.list" in commands
+    assert "windows.switch" in commands
+    assert commands["windows.list"]["usage_pattern"] == "list windows"
+    assert commands["windows.switch"]["usage_pattern"] == "switch to window <title>"
     assert "text.type" not in commands
     assert payload["summary"]["unverified_commands"] == 0
     assert payload["summary"]["blocked_commands"] == 0
