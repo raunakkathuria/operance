@@ -1092,12 +1092,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
 
     if args.transcript_file:
-        results = run_transcript_file(Path(args.transcript_file))
+        results = run_transcript_file(Path(args.transcript_file), env)
         print(json.dumps({"total_transcripts": len(results), "results": results}, sort_keys=True))
         return 0
 
     if args.interactive:
-        results = run_interactive_session(sys.stdin)
+        results = run_interactive_session(sys.stdin, env)
         print(json.dumps({"total_transcripts": len(results), "results": results}, sort_keys=True))
         return 0
 
@@ -1108,7 +1108,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         daemon.emit_transcript("open firefox")
 
     if args.transcript:
-        print(json.dumps(process_transcript(args.transcript), sort_keys=True))
+        print(json.dumps(process_transcript(args.transcript, env), sort_keys=True))
 
     daemon.stop()
     return 0

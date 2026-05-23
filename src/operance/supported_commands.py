@@ -198,6 +198,7 @@ def _tool_usage_pattern(tool: ToolName) -> str | None:
         ToolName.WINDOWS_LIST: "list windows",
         ToolName.WINDOWS_SWITCH: "switch to window <title>",
         ToolName.FILES_LIST_RECENT: "show recent files",
+        ToolName.FILES_CREATE_FOLDER: "create folder on desktop called <name>",
         ToolName.FILES_OPEN: "open file on desktop called <name> | open recent file called <name>",
     }
     return patterns.get(tool)

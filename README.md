@@ -5,7 +5,7 @@
 
 Turn intent into action.
 
-Operance lets developers control a Linux desktop with natural language through a tray-first click-to-talk workflow. In the current Fedora KDE Wayland release, it can open apps and URLs, focus or quit apps with confirmation, list recent files, list or switch windows, answer desktop-status questions, and control basic audio state.
+Operance lets developers control a Linux desktop with natural language through a tray-first click-to-talk workflow. In the current Fedora KDE Wayland release, it can open apps and URLs, focus or quit apps with confirmation, list recent files, create desktop folders, list or switch windows, answer desktop-status questions, and control basic audio state.
 
 Under the hood, Operance is a local-first desktop action runtime for Linux desktops, with a shared portable core, per-platform adapters, and an MCP-compatible control surface. Every command flows through typed actions, validation, and policy before execution.
 
@@ -58,7 +58,9 @@ If the MVP path fails or you need to file a bug, collect the current issue artif
 
 For release-readiness work, use the repository gate that combines tests, branding
 guard, source-checkout smoke, reset-aware Fedora package gate dry-run, and the
-installed desktop smoke checklist:
+installed desktop smoke checklist. The gate also runs controlled live command
+smoke against a temporary desktop fixture, so file-command verification does not
+touch your real Desktop directory:
 
 ```bash
 ./scripts/run_release_readiness_gate.sh
@@ -116,7 +118,7 @@ Operance already has a coherent Linux-first developer release path: a typed and 
 What works now:
 
 - Core runtime: typed action models, deterministic intent matching, validator and policy enforcement, local audit logging, bounded local planner fallback, and MCP-compatible control surfaces.
-- Verified command subset on Fedora KDE Wayland: `open <app name>` or URL targets, safe two-step app plus URL launch phrases such as `open firefox and load localhost:3000`, `focus <app name>`, confirmation-gated `quit <app name>`, `show recent files`, `list windows`, `switch to window <title>`, `what time is it`, `what is my battery level`, `wifi status`, `what is the volume`, `is audio muted`, `set volume to 50 percent`, `mute audio`, and `unmute audio`.
+- Verified command subset on Fedora KDE Wayland: `open <app name>` or URL targets, safe two-step app plus URL launch phrases such as `open firefox and load localhost:3000`, `focus <app name>`, confirmation-gated `quit <app name>`, `show recent files`, `create folder on desktop called <name>`, `list windows`, `switch to window <title>`, `what time is it`, `what is my battery level`, `wifi status`, `what is the volume`, `is audio muted`, `set volume to 50 percent`, `mute audio`, and `unmute audio`.
 - Voice and tray MVP: tray app, bounded click-to-talk, confirmation flows, last-interaction reporting, optional wake-word, STT, and TTS probe paths, plus repo-local background voice-loop support.
 - Diagnostics and support: version/about provenance, explicit release-channel checks, doctor, setup actions, installed readiness checks, runnable-command catalog, runtime status resources, support snapshot, support bundle, audit inspection, and source-checkout smoke scripts.
 - Packaging and release gates: reproducible Linux bootstrap, source-checkout install or uninstall helpers, repo-local systemd helpers, Debian or RPM scaffolds, installed-package smoke, and the Fedora gate.

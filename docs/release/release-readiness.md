@@ -40,6 +40,7 @@ That gate runs:
 - the full unit test suite
 - the adapter conformance check for the active adapter set
 - the old-brand reference guard
+- the controlled live command smoke against a temporary desktop fixture
 - the source-checkout smoke
 - the reset-aware Fedora package gate in dry-run mode
 - the installed desktop smoke checklist in dry-run mode

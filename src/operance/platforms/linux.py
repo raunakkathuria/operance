@@ -33,6 +33,7 @@ CURRENT_RELEASE_VERIFIED_TOOLS = frozenset(
         ToolName.AUDIO_MUTE_STATUS,
         ToolName.AUDIO_SET_MUTED,
         ToolName.AUDIO_SET_VOLUME,
+        ToolName.FILES_CREATE_FOLDER,
         ToolName.FILES_LIST_RECENT,
         ToolName.NETWORK_WIFI_STATUS,
         ToolName.POWER_BATTERY_STATUS,

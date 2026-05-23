@@ -106,6 +106,8 @@ run_step "${python_bin} -m pytest" "${python_bin}" "-m" "pytest"
 run_step "${python_bin} -m operance.cli --adapter-conformance" \
     "${python_bin}" "-m" "operance.cli" "--adapter-conformance"
 run_old_brand_guard
+run_step "./scripts/run_live_command_smoke.sh --python ${python_bin}" \
+    bash "./scripts/run_live_command_smoke.sh" "--python" "${python_bin}"
 
 checkout_smoke_display="./scripts/run_checkout_smoke.sh --python ${python_bin}"
 checkout_smoke_args=("./scripts/run_checkout_smoke.sh" "--python" "${python_bin}")

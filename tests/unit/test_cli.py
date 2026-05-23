@@ -87,6 +87,26 @@ def test_cli_process_transcript_prints_response_payload(capsys) -> None:
     assert payload["simulated"] is True
 
 
+def test_cli_process_transcript_uses_desktop_dir_override(tmp_path: Path, capsys) -> None:
+    desktop_dir = tmp_path / "Desktop"
+
+    exit_code = main(
+        [
+            "--desktop-dir",
+            str(desktop_dir),
+            "--transcript",
+            "create folder on desktop called projects",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+
+    assert exit_code == 0
+    assert payload["status"] == "success"
+    assert (desktop_dir / "projects").is_dir()
+
+
 def test_cli_processes_two_step_launch_transcript(capsys) -> None:
     exit_code = main(["--transcript", "open firefox and load localhost:3000"])
 
@@ -683,6 +703,8 @@ def test_cli_supported_commands_available_only_filters_blocked_entries(monkeypat
     assert "audio.set_muted" in commands
     assert "files.list_recent" in commands
     assert commands["files.list_recent"]["usage_pattern"] == "show recent files"
+    assert "files.create_folder" in commands
+    assert commands["files.create_folder"]["usage_pattern"] == "create folder on desktop called <name>"
     assert "windows.list" in commands
     assert "windows.switch" in commands
     assert commands["windows.list"]["usage_pattern"] == "list windows"
