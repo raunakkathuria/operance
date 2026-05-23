@@ -57,6 +57,46 @@ if payload.get("simulated") is not False:
 PY
 }
 
+assert_transcript_sequence_success() {
+    local payload="$1"
+    local command_transcript="$2"
+
+    "${python_bin}" - "${payload}" "${command_transcript}" <<'PY'
+import json
+import sys
+
+payload = json.loads(sys.argv[1])
+expected_command = sys.argv[2]
+expected_transcripts = [expected_command, "confirm"]
+expected_statuses = ["awaiting_confirmation", "success"]
+
+if payload.get("total_transcripts") != 2:
+    raise SystemExit(f"expected two transcript results, got: {payload}")
+
+results = payload.get("results")
+if not isinstance(results, list) or len(results) != 2:
+    raise SystemExit(f"expected two transcript results, got: {payload}")
+
+for index, result in enumerate(results):
+    if result.get("transcript") != expected_transcripts[index]:
+        raise SystemExit(f"unexpected transcript sequence: {payload}")
+    if result.get("status") != expected_statuses[index]:
+        raise SystemExit(f"unexpected transcript status sequence: {payload}")
+    if result.get("simulated") is not False:
+        raise SystemExit(f"expected live mode payload, got: {payload}")
+PY
+}
+
+write_transcript_fixture() {
+    local fixture_path="$1"
+    local command_transcript="$2"
+
+    echo "+ write ${fixture_path}"
+    if [[ "${dry_run}" -eq 0 ]]; then
+        printf '%s\nconfirm\n' "${command_transcript}" > "${fixture_path}"
+    fi
+}
+
 run_live_transcript() {
     local desktop_dir="$1"
     local transcript="$2"
@@ -75,6 +115,27 @@ run_live_transcript() {
     )"
     printf '%s\n' "${output}"
     assert_transcript_success "$(printf '%s\n' "${output}" | tail -n 1)" "${transcript}"
+}
+
+run_live_confirmation_transcripts() {
+    local desktop_dir="$1"
+    local fixture_path="$2"
+    local command_transcript="$3"
+    local display="OPERANCE_DEVELOPER_MODE=0 ${python_bin} -m operance.cli --desktop-dir ${desktop_dir} --transcript-file ${fixture_path}"
+
+    echo "+ ${display}"
+    if [[ "${dry_run}" -eq 1 ]]; then
+        return
+    fi
+
+    local output
+    output="$(
+        OPERANCE_DEVELOPER_MODE=0 "${python_bin}" -m operance.cli \
+            --desktop-dir "${desktop_dir}" \
+            --transcript-file "${fixture_path}"
+    )"
+    printf '%s\n' "${output}"
+    assert_transcript_sequence_success "$(printf '%s\n' "${output}" | tail -n 1)" "${command_transcript}"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -116,6 +177,24 @@ if [[ "${dry_run}" -eq 1 ]]; then
     run_live_transcript '${tmp_dir}/Desktop' "show recent files"
     run_live_transcript '${tmp_dir}/Desktop' "create folder on desktop called projects"
     run_step 'test -d "${tmp_dir}/Desktop/projects"' true
+    write_transcript_fixture '${tmp_dir}/delete-folder.txt' "delete folder on desktop called projects"
+    run_live_confirmation_transcripts '${tmp_dir}/Desktop' '${tmp_dir}/delete-folder.txt' "delete folder on desktop called projects"
+    run_step 'test ! -e "${tmp_dir}/Desktop/projects"' true
+    run_step 'touch "${tmp_dir}/Desktop/notes.txt"' true
+    write_transcript_fixture '${tmp_dir}/delete-file.txt' "delete file on desktop called notes.txt"
+    run_live_confirmation_transcripts '${tmp_dir}/Desktop' '${tmp_dir}/delete-file.txt' "delete file on desktop called notes.txt"
+    run_step 'test ! -e "${tmp_dir}/Desktop/notes.txt"' true
+    run_step 'mkdir -p "${tmp_dir}/Desktop/projects"' true
+    write_transcript_fixture '${tmp_dir}/rename-folder.txt' "rename folder on desktop from projects to archive"
+    run_live_confirmation_transcripts '${tmp_dir}/Desktop' '${tmp_dir}/rename-folder.txt' "rename folder on desktop from projects to archive"
+    run_step 'test -d "${tmp_dir}/Desktop/archive"' true
+    run_step 'test ! -e "${tmp_dir}/Desktop/projects"' true
+    run_step 'rm -rf "${tmp_dir}/Desktop/archive"' true
+    run_step 'mkdir -p "${tmp_dir}/Desktop/projects" "${tmp_dir}/Desktop/archive"' true
+    write_transcript_fixture '${tmp_dir}/move-folder.txt' "move folder on desktop called projects to archive"
+    run_live_confirmation_transcripts '${tmp_dir}/Desktop' '${tmp_dir}/move-folder.txt' "move folder on desktop called projects to archive"
+    run_step 'test -d "${tmp_dir}/Desktop/archive/projects"' true
+    run_step 'test ! -e "${tmp_dir}/Desktop/projects"' true
     run_step 'rm -rf "${tmp_dir}"' true
     exit 0
 fi
@@ -131,6 +210,32 @@ run_step "touch ${desktop_dir}/operance-recent-smoke.txt" touch "${desktop_dir}/
 run_live_transcript "${desktop_dir}" "show recent files"
 run_live_transcript "${desktop_dir}" "create folder on desktop called projects"
 run_step "test -d ${desktop_dir}/projects" test -d "${desktop_dir}/projects"
+
+delete_folder_fixture="${tmp_dir}/delete-folder.txt"
+write_transcript_fixture "${delete_folder_fixture}" "delete folder on desktop called projects"
+run_live_confirmation_transcripts "${desktop_dir}" "${delete_folder_fixture}" "delete folder on desktop called projects"
+run_step "test ! -e ${desktop_dir}/projects" test ! -e "${desktop_dir}/projects"
+
+run_step "touch ${desktop_dir}/notes.txt" touch "${desktop_dir}/notes.txt"
+delete_file_fixture="${tmp_dir}/delete-file.txt"
+write_transcript_fixture "${delete_file_fixture}" "delete file on desktop called notes.txt"
+run_live_confirmation_transcripts "${desktop_dir}" "${delete_file_fixture}" "delete file on desktop called notes.txt"
+run_step "test ! -e ${desktop_dir}/notes.txt" test ! -e "${desktop_dir}/notes.txt"
+
+run_step "mkdir -p ${desktop_dir}/projects" mkdir -p "${desktop_dir}/projects"
+rename_fixture="${tmp_dir}/rename-folder.txt"
+write_transcript_fixture "${rename_fixture}" "rename folder on desktop from projects to archive"
+run_live_confirmation_transcripts "${desktop_dir}" "${rename_fixture}" "rename folder on desktop from projects to archive"
+run_step "test -d ${desktop_dir}/archive" test -d "${desktop_dir}/archive"
+run_step "test ! -e ${desktop_dir}/projects" test ! -e "${desktop_dir}/projects"
+
+run_step "rm -rf ${desktop_dir}/archive" rm -rf "${desktop_dir}/archive"
+run_step "mkdir -p ${desktop_dir}/projects ${desktop_dir}/archive" mkdir -p "${desktop_dir}/projects" "${desktop_dir}/archive"
+move_fixture="${tmp_dir}/move-folder.txt"
+write_transcript_fixture "${move_fixture}" "move folder on desktop called projects to archive"
+run_live_confirmation_transcripts "${desktop_dir}" "${move_fixture}" "move folder on desktop called projects to archive"
+run_step "test -d ${desktop_dir}/archive/projects" test -d "${desktop_dir}/archive/projects"
+run_step "test ! -e ${desktop_dir}/projects" test ! -e "${desktop_dir}/projects"
 
 if [[ "${keep_fixture}" -eq 1 ]]; then
     echo "Kept live command smoke fixture: ${tmp_dir}"

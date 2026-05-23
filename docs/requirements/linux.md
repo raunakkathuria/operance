@@ -62,6 +62,10 @@ Current supported command subset on that target:
 - `focus <app name>`
 - `show recent files`
 - `create folder on desktop called <name>`
+- `delete folder on desktop called <name>`, then confirm
+- `delete file on desktop called <name>`, then confirm
+- `rename folder on desktop from <source> to <target>`, then confirm
+- `move folder on desktop called <name> to <folder>`, then confirm
 - `list windows`
 - `switch to window <title>`
 - `what time is it`
@@ -75,7 +79,7 @@ Current supported command subset on that target:
 
 If you want the fastest iteration loop, use the source checkout. Treat the RPM path as the packaged public handoff and run a human tray plus microphone smoke after the automated gate passes.
 
-The release gate now also runs `./scripts/run_live_command_smoke.sh`, which executes live adapters against a temporary desktop fixture. That lets maintainers verify file-command behavior such as recent-file listing and folder creation without touching the real Desktop directory.
+The release gate now also runs `./scripts/run_live_command_smoke.sh`, which executes live adapters against a temporary desktop fixture. That lets maintainers verify file-command behavior such as recent-file listing, folder creation, and confirmation-gated desktop file mutations without touching the real Desktop directory.
 
 Use [public-handoff.md](../release/public-handoff.md) for the outside-developer handoff and [fedora-checklist.md](../release/fedora-checklist.md) for the exact release gate.
 
@@ -567,7 +571,7 @@ It now also reports whether the current machine exposes the command-line surface
 - `kokoro-onnx` plus `soundfile` in the current Python environment for the optional TTS probe
 - `upower` or battery sysfs for battery status
 
-The CLI now also exposes `python3 -m operance.cli --supported-commands`, which projects the typed command catalog with example transcripts, current live blockers from doctor/setup state, and release-verification status. Use that when a developer needs to answer both “what can I say?” and “why is this command not live on this machine?” from one surface. When a tester only needs the current verified subset, `python3 -m operance.cli --supported-commands --supported-commands-available-only` filters the catalog down to commands that are both live on the current machine and release-verified for the Fedora KDE developer target. That filtered view includes the first confirmation-gated app command, `quit <app name>`, basic audio set or mute commands, the verified `show recent files` and `create folder on desktop called <name>` file commands, and the verified `list windows` or `switch to window <title>` window commands after they have been live-verified. It remains the preferred next-step path from setup, and the repo-local MVP wrapper can print it through `./scripts/run_mvp.sh --supported-commands --supported-commands-available-only`, so developers can reach the same conservative discovery path from the main bring-up flow instead of remembering a separate raw CLI flag.
+The CLI now also exposes `python3 -m operance.cli --supported-commands`, which projects the typed command catalog with example transcripts, current live blockers from doctor/setup state, and release-verification status. Use that when a developer needs to answer both “what can I say?” and “why is this command not live on this machine?” from one surface. When a tester only needs the current verified subset, `python3 -m operance.cli --supported-commands --supported-commands-available-only` filters the catalog down to commands that are both live on the current machine and release-verified for the Fedora KDE developer target. That filtered view includes the first confirmation-gated app command, `quit <app name>`, basic audio set or mute commands, the verified desktop file command batch, and the verified `list windows` or `switch to window <title>` window commands after they have been live-verified. It remains the preferred next-step path from setup, and the repo-local MVP wrapper can print it through `./scripts/run_mvp.sh --supported-commands --supported-commands-available-only`, so developers can reach the same conservative discovery path from the main bring-up flow instead of remembering a separate raw CLI flag.
 The CLI now also exposes `python3 -m operance.cli --check-updates`, which checks the configured release channel against GitHub releases and returns a JSON status payload. The default channel is `prerelease`, `--release-channel stable` opts into stable releases, and the command is intentionally diagnostic-only: it reports the release URL or next command, but it does not download packages, mutate system state, or invoke `sudo`.
 That same text-input surface now also covers a small allowlist of developer-oriented modifier chords like `Ctrl+C`, `Ctrl+L`, `Ctrl+R`, `Ctrl+T`, `Ctrl+W`, and `Ctrl+Shift+P` on the existing `keys.press` path instead of stopping at only bare keys like Enter or Escape.
 The CLI now also exposes `python3 -m operance.cli --version`, which prints the current Operance version plus source or packaged build identity. Use `python3 -m operance.cli --about` when you need the full machine-readable identity payload, including install mode, package profile, build commit, tag when available, build time, and install root.
@@ -722,11 +726,9 @@ Broader implemented Linux-backed paths that are not all release-verified yet:
 - two-step launch phrases like `open firefox and load localhost:3000` execute app launch first and then URL launch, while unrelated chains like `open firefox and notify me` still require planner support
 - explicit URL phrases like `browse to docs.python.org/3` and `open url github.com/openai/openai-python` now also normalize bare hostnames to `https://...`, so developer docs and repository browsing work without widening the generic app-launch path
 - app quit reuses the same KWin window-close path and now executes after an in-session confirmation reply
-- file open, delete, rename, and move commands are implemented but remain outside the release-verified subset until their live smoke path uses controlled fixtures and stronger side-effect checks
+- file open commands are implemented but remain outside the release-verified subset until their live smoke path can assert external launcher behavior without relying on a user-visible app
 - window minimization, maximization, fullscreen on or off, keep-above or keep-below on or off, shade on or off, all-desktops on or off, and restore prefer a KWin scripting bridge over the session bus
 - window close uses the same KWin scripting path and now executes after an in-session confirmation reply
-- desktop folder deletion and desktop file deletion use the existing file adapter path and now execute after an in-session confirmation reply
-- desktop entry rename and move use the existing file adapter path, now execute after confirmation, and can be undone in-session
 - desktop file and folder open requests now use the same file adapter path, with live Linux execution through `xdg-open`
 - recent-file open requests now resolve against the current file adapter’s recent-file list for the desktop root before opening the matched file through the same `xdg-open` path
 - microphone discovery and frame capture now use `pactl` plus `pw-record` or `parecord`, with a default-device fallback when the discovery backend cannot reach the current session audio server

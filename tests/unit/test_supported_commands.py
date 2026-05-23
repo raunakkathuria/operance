@@ -117,6 +117,10 @@ def test_build_supported_command_catalog_can_filter_available_commands_only() ->
     assert "apps.launch" in commands
     assert "files.list_recent" in commands
     assert "files.create_folder" in commands
+    assert "files.delete_folder" in commands
+    assert "files.delete_file" in commands
+    assert "files.rename" in commands
+    assert "files.move" in commands
     assert "windows.list" in commands
     assert "windows.switch" in commands
     assert "text.type" not in commands

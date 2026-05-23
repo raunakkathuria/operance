@@ -705,6 +705,14 @@ def test_cli_supported_commands_available_only_filters_blocked_entries(monkeypat
     assert commands["files.list_recent"]["usage_pattern"] == "show recent files"
     assert "files.create_folder" in commands
     assert commands["files.create_folder"]["usage_pattern"] == "create folder on desktop called <name>"
+    assert commands["files.delete_folder"]["usage_pattern"] == "delete folder on desktop called <name>"
+    assert commands["files.delete_folder"]["requires_confirmation"] is True
+    assert commands["files.delete_file"]["usage_pattern"] == "delete file on desktop called <name>"
+    assert commands["files.delete_file"]["requires_confirmation"] is True
+    assert commands["files.rename"]["usage_pattern"] == "rename folder on desktop from <source> to <target>"
+    assert commands["files.rename"]["requires_confirmation"] is True
+    assert commands["files.move"]["usage_pattern"] == "move folder on desktop called <name> to <folder>"
+    assert commands["files.move"]["requires_confirmation"] is True
     assert "windows.list" in commands
     assert "windows.switch" in commands
     assert commands["windows.list"]["usage_pattern"] == "list windows"

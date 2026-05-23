@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Extended controlled live command smoke to cover confirmation-gated desktop file delete, rename, and move flows in a temporary desktop fixture, then promoted those verified commands into the Fedora KDE Wayland supported subset.
 - Added `scripts/run_live_command_smoke.sh`, wired it into release readiness, fixed CLI transcript env overrides for `--desktop-dir`, and promoted `create folder on desktop called <name>` after live verification against a temporary desktop fixture.
 - Hardened KWin `WindowsRunner` parsing for native icon metadata and promoted read-only `show recent files`, `list windows`, and `switch to window <title>` into the Fedora KDE Wayland verified command subset with installed desktop smoke guidance.
 - Added local planner onboarding readiness with `operance --planner-readiness`, setup action support, support-snapshot planner readiness projection, and a tray `Show planner readiness` surface; the readiness path checks health plus a non-executing planner smoke without enabling live fallback.
