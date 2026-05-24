@@ -301,6 +301,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="Call the local planner endpoint for one transcript, validate the typed plan, and do not execute it",
     )
     parser.add_argument(
+        "--planner-execute",
+        help="Call the local planner endpoint for one transcript, validate and policy-check the plan, then execute only auto-approved actions",
+    )
+    parser.add_argument(
         "--planner-readiness",
         nargs="?",
         const=DEFAULT_PLANNER_READINESS_TRANSCRIPT,
@@ -1072,6 +1076,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(json.dumps(result, sort_keys=True))
         return 0 if result.get("status") == "ok" else 1
 
+    if args.planner_execute:
+        result = _run_planner_execute(daemon, args.planner_execute)
+        print(json.dumps(result, sort_keys=True))
+        return 0 if result.get("status") in {"success", "awaiting_confirmation"} else 1
+
     if args.planner_readiness:
         planner_client = PlannerServiceClient(
             daemon.planner_client.config
@@ -1200,6 +1209,68 @@ def _planner_service_config_from_daemon(daemon: OperanceDaemon) -> PlannerServic
 
 
 def _run_planner_smoke(daemon: OperanceDaemon, transcript: str) -> dict[str, object]:
+    planned = _build_planner_checked_plan(daemon, transcript, execution="not_executed")
+    if planned["status"] != "ok":
+        return planned
+
+    payload = {
+        **planned,
+        "preview": build_plan_preview(planned["normalized_plan"]),
+        "plan": planned["normalized_plan"].to_dict(),
+    }
+    payload.pop("normalized_plan", None)
+    return payload
+
+
+def _run_planner_execute(daemon: OperanceDaemon, transcript: str) -> dict[str, object]:
+    planned = _build_planner_checked_plan(daemon, transcript, execution="policy_checked")
+    if planned["status"] != "ok":
+        return planned
+
+    normalized_plan = planned["normalized_plan"]
+    policy = planned["policy"]
+    plan_payload = normalized_plan.to_dict()
+    base_payload = {
+        **planned,
+        "plan": plan_payload,
+        "preview": build_plan_preview(normalized_plan),
+        "simulated": daemon.config.runtime.developer_mode,
+    }
+    base_payload.pop("normalized_plan", None)
+
+    if policy["action"] == "deny":
+        return {
+            **base_payload,
+            "status": "denied",
+            "execution": "not_executed",
+            "response": "Command validation failed.",
+        }
+
+    if policy["action"] == "require_confirmation":
+        return {
+            **base_payload,
+            "status": "awaiting_confirmation",
+            "execution": "not_executed",
+            "response": "Command requires confirmation.",
+        }
+
+    result = daemon.executor.execute(normalized_plan)
+    response_text, response_status = daemon.response_builder.from_action_result(result)
+    return {
+        **base_payload,
+        "status": response_status,
+        "execution": "executed",
+        "result": result.to_dict(),
+        "response": response_text,
+    }
+
+
+def _build_planner_checked_plan(
+    daemon: OperanceDaemon,
+    transcript: str,
+    *,
+    execution: str,
+) -> dict[str, object]:
     planner_client = PlannerServiceClient(
         daemon.planner_client.config
         if daemon.planner_client is not None
@@ -1209,7 +1280,7 @@ def _run_planner_smoke(daemon: OperanceDaemon, transcript: str) -> dict[str, obj
         "transcript": transcript,
         "endpoint": planner_client.config.endpoint,
         "model": planner_client.config.model,
-        "execution": "not_executed",
+        "execution": execution,
     }
 
     try:
@@ -1242,8 +1313,7 @@ def _run_planner_smoke(daemon: OperanceDaemon, transcript: str) -> dict[str, obj
         **base_payload,
         "status": "ok",
         "planner_payload": planner_payload,
-        "plan": normalized_plan.to_dict(),
-        "preview": build_plan_preview(normalized_plan),
+        "normalized_plan": normalized_plan,
         "validation": validation_payload,
         "policy": {
             "action": policy_decision.action,

@@ -520,6 +520,7 @@ python3 -m operance.cli --print-config
 python3 -m operance.cli --planner-status
 python3 -m operance.cli --planner-health
 python3 -m operance.cli --planner-readiness "open firefox and notify me"
+python3 -m operance.cli --planner-execute "let me know when this is done"
 export OPERANCE_PLANNER_ENABLED=1
 ```
 
@@ -533,6 +534,11 @@ checks health, runs a non-executing planner smoke, validates the returned plan
 against the same typed action registry used by runtime execution, applies
 policy, and preserves confirmation gates. Use it before enabling planner
 fallback in a live tray or voice session.
+`--planner-execute` is the explicit local-model execution test: it bypasses
+deterministic matching, calls the configured planner endpoint, validates and
+policy-checks the returned typed plan, executes only auto-approved actions, and
+stops before confirmation-gated actions. In a source checkout it still uses
+simulated adapters unless `OPERANCE_DEVELOPER_MODE=0` is set.
 
 Inspect or run the tray surface:
 
@@ -567,7 +573,7 @@ python3 -m operance.cli --tray-run
 
 ## CLI
 
-Most developers only need `--version`, `--about`, `--check-updates`, `--doctor`, `--getting-started`, `--planner-setup-template`, `--planner-status`, `--supported-commands --supported-commands-available-only`, `--transcript`, `--mvp-launch`, and `--support-bundle`. In the current developer release, `--supported-commands --supported-commands-available-only` is intentionally conservative: it prints only the commands that are both environment-ready and release-verified for the Fedora KDE Wayland target. The rest of this section is the lower-level CLI reference surface.
+Most developers only need `--version`, `--about`, `--check-updates`, `--doctor`, `--getting-started`, `--planner-setup-template`, `--planner-status`, `--planner-execute`, `--supported-commands --supported-commands-available-only`, `--transcript`, `--mvp-launch`, and `--support-bundle`. In the current developer release, `--supported-commands --supported-commands-available-only` is intentionally conservative: it prints only the commands that are both environment-ready and release-verified for the Fedora KDE Wayland target. The rest of this section is the lower-level CLI reference surface.
 
 Print the effective config:
 
@@ -794,6 +800,14 @@ Run a non-executing local planner smoke against the configured endpoint:
 
 ```bash
 python3 -m operance.cli --planner-smoke "open firefox and notify me"
+```
+
+Run an explicit local planner execution test without relying on unmatched
+phrasing in the normal transcript path:
+
+```bash
+python3 -m operance.cli --planner-execute "let me know when this is done"
+OPERANCE_DEVELOPER_MODE=0 python3 -m operance.cli --planner-execute "let me know when this is done"
 ```
 
 Run the full local planner readiness check before enabling live fallback:

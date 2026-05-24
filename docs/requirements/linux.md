@@ -95,6 +95,7 @@ For the shortest current source-checkout path on the target Linux stack:
 .venv/bin/python -m operance.cli --getting-started
 .venv/bin/python -m operance.cli --planner-setup-template
 .venv/bin/python -m operance.cli --planner-status
+.venv/bin/python -m operance.cli --planner-execute "let me know when this is done"
 ./scripts/run_mvp.sh
 ./scripts/run_checkout_smoke.sh
 ./scripts/run_fedora_gate.sh --reset-user-services --dry-run
@@ -788,6 +789,7 @@ Broader implemented Linux-backed paths that are not all release-verified yet:
 - planner readiness classifies local model request timeouts separately from schema or validation failures, so slow first-token local model startup points at model warm-up or `OPERANCE_PLANNER_TIMEOUT_SECONDS` tuning instead of incorrectly implying an action-schema problem
 - `python3 -m operance.cli --planner-readiness "open firefox and notify me"` prints the configured planner endpoint and model, probes health, runs a non-executing planner smoke, validates and policy-checks the returned plan, and reports whether the endpoint is safe to enable without changing the runtime fallback setting
 - `python3 -m operance.cli --planner-smoke "open firefox and notify me"` calls the configured local planner endpoint, validates and policy-checks the returned plan, and deliberately does not execute desktop actions; use it after `--planner-health` and before enabling planner fallback in a live tray or voice session
+- `python3 -m operance.cli --planner-execute "let me know when this is done"` explicitly forces one local-model path for testing, bypasses deterministic matching, validates and policy-checks the model plan, executes only auto-approved actions, and stops before confirmation-gated actions
 - support snapshots now include a planner-readiness summary derived from doctor checks, and the tray menu exposes `Show planner readiness` for the full health plus smoke report
 - planner transport calls now support bounded retries, and the CLI can probe the sibling `/v1/models` or `/health` surfaces before relying on the local endpoint for live fallback
 - planner fallback now also enters a bounded cooldown after repeated planner failures, and the live runtime plus MCP planner snapshots expose the current failure count and remaining cooldown time for Linux-side debugging
