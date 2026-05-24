@@ -713,6 +713,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     app = QApplication.instance()
     if app is None:
         app = QApplication([])
+    _configure_tray_application(app)
 
     if not QSystemTrayIcon.isSystemTrayAvailable():
         raise ValueError("system tray is not available")
@@ -1165,6 +1166,12 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
         daemon.stop()
 
     return 0
+
+
+def _configure_tray_application(app: object) -> None:
+    set_quit_on_last_window_closed = getattr(app, "setQuitOnLastWindowClosed", None)
+    if callable(set_quit_on_last_window_closed):
+        set_quit_on_last_window_closed(False)
 
 
 def _build_confirmation_dialog(status: StatusSnapshot) -> TrayConfirmationDialog | None:

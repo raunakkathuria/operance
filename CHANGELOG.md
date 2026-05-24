@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Fixed tray dialog lifecycle so closing information dialogs such as Show supported commands does not quit the tray app; the tray now stays running until the user chooses Quit Operance.
 - Added consumer-beta tray onboarding actions for Getting started and local AI setup, reusing existing readiness, command-catalog, planner, and contribution guidance without adding a new setup framework.
 - Added Linux default-browser and website launch resolution for `open browser`, `open web browser`, `open default browser`, and phrases like `open google.com`, so common non-technical phrasing opens the system browser instead of probing for a literal desktop entry.
 - Added `scripts/build_release_artifacts.sh`, which builds the Fedora `mvp` RPM release upload set, verifies the RPM, copies it to `dist/release/`, writes `SHA256SUMS`, and emits a release artifact manifest.

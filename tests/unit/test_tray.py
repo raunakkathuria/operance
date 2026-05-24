@@ -1081,6 +1081,23 @@ def test_show_information_dialog_sets_message_box_fields() -> None:
     assert dialog.executed is True
 
 
+def test_configure_tray_application_keeps_app_running_after_dialogs_close() -> None:
+    from operance.ui.tray import _configure_tray_application
+
+    class FakeApplication:
+        def __init__(self) -> None:
+            self.quit_on_last_window_closed = True
+
+        def setQuitOnLastWindowClosed(self, value: bool) -> None:
+            self.quit_on_last_window_closed = value
+
+    app = FakeApplication()
+
+    _configure_tray_application(app)
+
+    assert app.quit_on_last_window_closed is False
+
+
 def test_save_support_snapshot_artifact_writes_redacted_json(tmp_path: Path, monkeypatch) -> None:
     from operance.ui.tray import _save_support_snapshot_artifact
 
