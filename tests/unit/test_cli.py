@@ -3924,6 +3924,113 @@ def test_cli_planner_execute_preserves_confirmation_gate(monkeypatch, capsys) ->
     assert payload["response"] == "Command requires confirmation."
 
 
+def test_cli_planner_execute_repairs_open_intent_window_switch(monkeypatch, capsys) -> None:
+    class FakeResponse:
+        def __enter__(self) -> "FakeResponse":
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> None:
+            return None
+
+        def read(self) -> bytes:
+            return json.dumps(
+                {
+                    "choices": [
+                        {
+                            "message": {
+                                "content": json.dumps(
+                                    {
+                                        "actions": [
+                                            {
+                                                "tool": "windows.switch",
+                                                "args": {"window": "firefox"},
+                                            },
+                                            {
+                                                "tool": "notifications.show",
+                                                "args": {"title": "Opened", "message": "Firefox launched"},
+                                            },
+                                        ]
+                                    }
+                                )
+                            }
+                        }
+                    ]
+                }
+            ).encode("utf-8")
+
+    def fake_urlopen(request, timeout: float):  # type: ignore[no-untyped-def]
+        return FakeResponse()
+
+    monkeypatch.setattr("operance.planner.client.urlopen", fake_urlopen)
+
+    exit_code = main(["--planner-execute", "open firefox and notify me"])
+
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+
+    assert exit_code == 0
+    assert payload["status"] == "success"
+    assert payload["execution"] == "executed"
+    assert payload["plan"]["actions"][0]["tool"] == "apps.launch"
+    assert payload["plan"]["actions"][0]["args"] == {"app": "firefox"}
+    assert payload["planner_payload"]["actions"][0]["tool"] == "windows.switch"
+    assert payload["result"]["status"] == "success"
+    assert payload["result"]["results"][0]["tool"] == "apps.launch"
+
+
+def test_cli_planner_execute_returns_json_when_execution_fails(monkeypatch, capsys) -> None:
+    class FakeResponse:
+        def __enter__(self) -> "FakeResponse":
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> None:
+            return None
+
+        def read(self) -> bytes:
+            return json.dumps(
+                {
+                    "choices": [
+                        {
+                            "message": {
+                                "content": json.dumps(
+                                    {
+                                        "actions": [
+                                            {
+                                                "tool": "windows.switch",
+                                                "args": {"window": "does-not-exist"},
+                                            }
+                                        ]
+                                    }
+                                )
+                            }
+                        }
+                    ]
+                }
+            ).encode("utf-8")
+
+    def fake_urlopen(request, timeout: float):  # type: ignore[no-untyped-def]
+        return FakeResponse()
+
+    monkeypatch.setattr("operance.planner.client.urlopen", fake_urlopen)
+
+    exit_code = main(["--planner-execute", "switch to the missing window"])
+
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+
+    assert exit_code == 1
+    assert payload["status"] == "failed"
+    assert payload["execution"] == "executed"
+    assert payload["result"]["status"] == "failed"
+    assert payload["result"]["results"][0] == {
+        "message": "no window matched 'does-not-exist'",
+        "status": "failed",
+        "tool": "windows.switch",
+        "undo_token": None,
+    }
+    assert payload["response"] == "no window matched 'does-not-exist'"
+
+
 def test_cli_planner_readiness_prints_config_health_and_smoke(monkeypatch, capsys) -> None:
     def fake_readiness_report(config, *, client, validator, policy, transcript):  # type: ignore[no-untyped-def]
         return {

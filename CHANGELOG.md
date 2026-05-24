@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fixed planner execution failures so adapter runtime errors return structured failed JSON instead of crashing `operance --planner-execute`.
+- Tightened local planner prompt guidance and schema repair so open/launch/start requests are routed to `apps.launch` instead of `windows.switch`.
 - Suppressed installed-package startup warnings for source-checkout tray runs, keeping packaged readiness checks scoped to packaged installs.
 - Made supported-command tray help product-facing by showing concrete examples such as `open browser` and `open google.com` instead of leading with raw placeholder patterns.
 - Set the Qt tray application name to Operance so desktop notifications do not show the implementation filename.

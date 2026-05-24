@@ -540,6 +540,40 @@ def test_parse_planner_payload_builds_typed_action_plan() -> None:
     assert plan.actions[1].tool == ToolName.NOTIFICATIONS_SHOW
 
 
+def test_parse_planner_payload_repairs_window_switch_for_open_intent() -> None:
+    from operance.planner.parser import parse_planner_payload
+
+    plan = parse_planner_payload(
+        {
+            "actions": [
+                {"tool": "windows.switch", "args": {"window": "firefox"}},
+                {"tool": "notifications.show", "args": {"title": "Opened", "message": "Firefox launched"}},
+            ]
+        },
+        original_text="open firefox and notify me",
+    )
+
+    assert plan.actions[0].tool == ToolName.APPS_LAUNCH
+    assert plan.actions[0].args == {"app": "firefox"}
+    assert plan.actions[1].tool == ToolName.NOTIFICATIONS_SHOW
+
+
+def test_parse_planner_payload_preserves_window_switch_for_switch_intent() -> None:
+    from operance.planner.parser import parse_planner_payload
+
+    plan = parse_planner_payload(
+        {
+            "actions": [
+                {"tool": "windows.switch", "args": {"window": "firefox"}},
+            ]
+        },
+        original_text="switch to firefox",
+    )
+
+    assert plan.actions[0].tool == ToolName.WINDOWS_SWITCH
+    assert plan.actions[0].args == {"window": "firefox"}
+
+
 def test_parse_planner_payload_rejects_unknown_tool() -> None:
     from operance.planner.parser import PlannerParseError, parse_planner_payload
 

@@ -15,7 +15,18 @@ class ActionExecutor:
     undo_manager: UndoManager = field(default_factory=UndoManager)
 
     def execute(self, plan: ActionPlan) -> ActionResult:
-        results = [self._execute_action(action.tool, action.args) for action in plan.actions]
+        results: list[ActionResultItem] = []
+        for action in plan.actions:
+            try:
+                results.append(self._execute_action(action.tool, action.args))
+            except ValueError as exc:
+                results.append(
+                    ActionResultItem(
+                        tool=action.tool,
+                        status="failed",
+                        message=str(exc),
+                    )
+                )
         overall_status = "success" if all(result.status == "success" for result in results) else "failed"
         return ActionResult(plan_id=plan.plan_id, status=overall_status, results=results)
 
