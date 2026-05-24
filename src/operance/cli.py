@@ -12,7 +12,12 @@ import sys
 from typing import Sequence
 
 from .audio import build_default_audio_capture_source, build_default_audio_playback_sink
-from .activation import build_getting_started_report, build_planner_status_report
+from .activation import (
+    PLANNER_SETUP_PROFILES,
+    build_getting_started_report,
+    build_planner_setup_template,
+    build_planner_status_report,
+)
 from .adapters import validate_adapter_set
 from .corpus import run_default_corpus
 from .daemon import OperanceDaemon
@@ -279,6 +284,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="Add one planner context message as role:content for --planner-prompt or --planner-request",
     )
     parser.add_argument("--planner-health", action="store_true", help="Probe local planner endpoint health")
+    parser.add_argument(
+        "--planner-setup-template",
+        nargs="?",
+        const="generic",
+        choices=PLANNER_SETUP_PROFILES,
+        help="Print non-mutating local planner setup guidance for a provider profile",
+    )
     parser.add_argument(
         "--planner-status",
         action="store_true",
@@ -1033,6 +1045,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         result = planner_client.health()
         print(json.dumps(result, sort_keys=True))
         return 0 if result.get("status") == "ok" else 1
+
+    if args.planner_setup_template:
+        print(
+            json.dumps(
+                build_planner_setup_template(args.planner_setup_template),
+                sort_keys=True,
+            )
+        )
+        return 0
 
     if args.planner_status:
         print(

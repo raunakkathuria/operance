@@ -1,6 +1,3 @@
-import json
-
-
 def test_planner_prompt_includes_transcript_and_tool_catalog() -> None:
     from operance.planner.prompt import build_planner_messages
 
@@ -47,25 +44,20 @@ def test_planner_prompt_includes_required_arg_hints() -> None:
     assert "time.now: Get the current time | args=none" in system_content
 
 
-def test_planner_prompt_includes_two_step_output_schema() -> None:
+def test_planner_prompt_includes_compact_output_shape_without_duplicate_schema() -> None:
     from operance.planner.prompt import build_planner_messages
 
     messages = build_planner_messages("open firefox")
     system_content = messages[0]["content"]
 
-    assert '"maxItems": 2' in system_content
-    assert '"required": ["actions"]' in system_content
-    assert '"tool"' in system_content
-    assert '"args"' in system_content
-
-
-def test_planner_prompt_serializes_schema_as_json() -> None:
-    from operance.planner.prompt import build_planner_messages
-
-    messages = build_planner_messages("open firefox")
-    schema_line = next(line for line in messages[0]["content"].splitlines() if line.startswith("Output schema: "))
-
-    parsed = json.loads(schema_line.removeprefix("Output schema: "))
-
-    assert parsed["type"] == "object"
-    assert parsed["properties"]["actions"]["maxItems"] == 2
+    assert "Plan at most two actions." in system_content
+    assert 'Return shape: {"actions":[{"tool":"tool.name","args":{}}]}.' in system_content
+    assert "The request carries a machine-enforced JSON schema" in system_content
+    assert "open/launch/start apps or URLs with apps.launch" in system_content
+    assert "focus/switch existing windows with apps.focus or windows.switch" in system_content
+    assert "Example: open firefox and notify me" in system_content
+    assert '"tool":"apps.launch"' in system_content
+    assert "Example: switch to firefox" in system_content
+    assert "Output schema:" not in system_content
+    assert '"maxItems": 2' not in system_content
+    assert len(system_content) < 7000

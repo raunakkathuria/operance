@@ -121,7 +121,7 @@ Operance already has a coherent Linux-first developer release path: a typed and 
 What works now:
 
 - Core runtime: typed action models, deterministic intent matching, validator and policy enforcement, local audit logging, bounded local planner fallback, and MCP-compatible control surfaces.
-- Verified command subset on Fedora KDE Wayland: `open <app name>` or URL targets, safe two-step app plus URL launch phrases such as `open firefox and load localhost:3000`, `focus <app name>`, confirmation-gated `quit <app name>`, `show recent files`, `create folder on desktop called <name>`, confirmation-gated desktop file or folder delete, rename, and move commands, `list windows`, `switch to window <title>`, `what time is it`, `what is my battery level`, `wifi status`, `what is the volume`, `is audio muted`, `set volume to 50 percent`, `mute audio`, and `unmute audio`.
+- Verified command subset on Fedora KDE Wayland: `open <app name>` or URL targets, safe two-step launch phrases such as `open firefox and load localhost:3000` or `open firefox and notify me`, `focus <app name>`, confirmation-gated `quit <app name>`, `show recent files`, `create folder on desktop called <name>`, confirmation-gated desktop file or folder delete, rename, and move commands, `list windows`, `switch to window <title>`, `what time is it`, `what is my battery level`, `wifi status`, `what is the volume`, `is audio muted`, `set volume to 50 percent`, `mute audio`, and `unmute audio`.
 - Voice and tray MVP: tray app, bounded click-to-talk, confirmation flows, last-interaction reporting, optional wake-word, STT, and TTS probe paths, plus repo-local background voice-loop support.
 - Diagnostics and support: version/about provenance, explicit release-channel checks, doctor, setup actions, installed readiness checks, runnable-command catalog, runtime status resources, support snapshot, support bundle, audit inspection, and source-checkout smoke scripts.
 - Packaging and release gates: reproducible Linux bootstrap, source-checkout install or uninstall helpers, repo-local systemd helpers, Debian or RPM scaffolds, installed-package smoke, and the Fedora gate.
@@ -509,9 +509,12 @@ python3 -m operance.cli --voice-session-frames 40 --wakeword-model /path/to/oper
 Enable planner fallback against a local chat-completions endpoint:
 
 ```bash
+python3 -m operance.cli --planner-setup-template
+python3 -m operance.cli --planner-setup-template llama-cpp
+python3 -m operance.cli --planner-setup-template ollama
 export OPERANCE_PLANNER_ENDPOINT=http://127.0.0.1:8080/v1/chat/completions
 export OPERANCE_PLANNER_MODEL=qwen2.5-7b-instruct
-export OPERANCE_PLANNER_TIMEOUT_SECONDS=30
+export OPERANCE_PLANNER_TIMEOUT_SECONDS=60
 export OPERANCE_PLANNER_MAX_RETRIES=1
 python3 -m operance.cli --print-config
 python3 -m operance.cli --planner-status
@@ -520,6 +523,11 @@ python3 -m operance.cli --planner-readiness "open firefox and notify me"
 export OPERANCE_PLANNER_ENABLED=1
 ```
 
+`--planner-setup-template` prints non-mutating setup guidance for generic
+OpenAI-compatible servers, llama.cpp, and Ollama. It does not install model
+runtimes, download models, start servers, or enable planner fallback for you.
+The Ollama template defaults to `qwen2.5:3b` because that is a more practical
+CPU-first readiness target than a 7B model on typical developer laptops.
 `--planner-readiness` calls the configured local OpenAI-compatible endpoint,
 checks health, runs a non-executing planner smoke, validates the returned plan
 against the same typed action registry used by runtime execution, applies
@@ -559,7 +567,7 @@ python3 -m operance.cli --tray-run
 
 ## CLI
 
-Most developers only need `--version`, `--about`, `--check-updates`, `--doctor`, `--getting-started`, `--planner-status`, `--supported-commands --supported-commands-available-only`, `--transcript`, `--mvp-launch`, and `--support-bundle`. In the current developer release, `--supported-commands --supported-commands-available-only` is intentionally conservative: it prints only the commands that are both environment-ready and release-verified for the Fedora KDE Wayland target. The rest of this section is the lower-level CLI reference surface.
+Most developers only need `--version`, `--about`, `--check-updates`, `--doctor`, `--getting-started`, `--planner-setup-template`, `--planner-status`, `--supported-commands --supported-commands-available-only`, `--transcript`, `--mvp-launch`, and `--support-bundle`. In the current developer release, `--supported-commands --supported-commands-available-only` is intentionally conservative: it prints only the commands that are both environment-ready and release-verified for the Fedora KDE Wayland target. The rest of this section is the lower-level CLI reference surface.
 
 Print the effective config:
 
@@ -587,12 +595,13 @@ Installed packages are different: the packaged `/usr/bin/operance` entrypoint de
 operance --print-config
 operance --installed-smoke
 operance --getting-started
+operance --planner-setup-template
 operance --planner-status
 operance --check-updates
 python3 scripts/check_installed_mvp_runtime.py --command operance --check-tray-service
 ```
 
-`operance --print-config` should report `"developer_mode": false`. `operance --about` reports whether the command is a packaged install or source checkout plus package profile, build commit, tag when available, build time, and install root. `operance --getting-started` prints the current first-run path, commands to try, local AI planner state, and contributor next steps. `operance --planner-status` prints non-executing local planner status plus the safety contract that keeps model output bounded to typed actions. `operance --check-updates` checks the configured release channel and prints whether the installed packaged build matches the latest release; it does not auto-install packages or invoke `sudo`. `operance --installed-smoke` summarizes installed package readiness, warns when the tray service is not active, fails when packaged build identity or runtime dependencies are missing, and catches stale repo-local user units shadowing the packaged service. If stale user units are reported, reinstall with `./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --replace-existing --reset-user-services`. In `systemctl --user status`, `preset: disabled` is normal on Fedora; `Loaded`, `Active`, and the `ExecStart` command path are the parts to verify.
+`operance --print-config` should report `"developer_mode": false`. `operance --about` reports whether the command is a packaged install or source checkout plus package profile, build commit, tag when available, build time, and install root. `operance --getting-started` prints the current first-run path, commands to try, local AI planner state, and contributor next steps. `operance --planner-setup-template` prints copy-paste local planner setup templates without mutating the host. `operance --planner-status` prints non-executing local planner status plus the safety contract that keeps model output bounded to typed actions. `operance --check-updates` checks the configured release channel and prints whether the installed packaged build matches the latest release; it does not auto-install packages or invoke `sudo`. `operance --installed-smoke` summarizes installed package readiness, warns when the tray service is not active, fails when packaged build identity or runtime dependencies are missing, and catches stale repo-local user units shadowing the packaged service. If stale user units are reported, reinstall with `./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --replace-existing --reset-user-services`. In `systemctl --user status`, `preset: disabled` is normal on Fedora; `Loaded`, `Active`, and the `ExecStart` command path are the parts to verify.
 `./scripts/run_installed_desktop_smoke.sh` starts/enables the packaged tray user service before checking status, so `Active: inactive (dead)` is a smoke failure rather than a successful desktop state.
 The tray menu also exposes `Check for updates` and `Show installed readiness`, so users can inspect release-channel status and installed-smoke next steps without requiring a terminal.
 

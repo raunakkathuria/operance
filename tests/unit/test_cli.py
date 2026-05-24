@@ -767,7 +767,53 @@ def test_cli_getting_started_prints_activation_path(monkeypatch, capsys) -> None
     assert payload["start_here"][1]["command"] == "python3 -m operance.cli --mvp-launch"
     assert {"group": "Apps and URLs", "say": "open <app name> | open http://localhost:3000 | browse to localhost 3000 | open <app> and load <url>"} in payload["try_commands"]
     assert payload["local_ai_planner"]["readiness_command"] == "python3 -m operance.cli --planner-readiness"
+    assert payload["local_ai_planner"]["setup_template_command"] == "python3 -m operance.cli --planner-setup-template"
     assert payload["contributor_next_steps"][0] == "Read docs/contributing/command-authoring.md before adding commands."
+
+
+def test_cli_planner_setup_template_prints_generic_profile(capsys) -> None:
+    exit_code = main(["--planner-setup-template"])
+
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+
+    assert exit_code == 0
+    assert payload["status"] == "ok"
+    assert payload["profile"] == "generic"
+    assert payload["environment"]["OPERANCE_PLANNER_ENDPOINT"] == "http://127.0.0.1:8080/v1/chat/completions"
+    assert payload["environment"]["OPERANCE_PLANNER_MODEL"] == "qwen2.5-7b-instruct"
+    assert payload["environment"]["OPERANCE_PLANNER_TIMEOUT_SECONDS"] == "60"
+    assert "python3 -m operance.cli --planner-readiness \"open firefox and notify me\"" in payload["validation_commands"]
+    assert "The planner path never executes raw shell, PowerShell, AppleScript, or KWin scripts." in payload["safety_contract"]
+
+
+def test_cli_planner_setup_template_supports_llama_cpp_profile(capsys) -> None:
+    exit_code = main(["--planner-setup-template", "llama-cpp"])
+
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+
+    assert exit_code == 0
+    assert payload["profile"] == "llama-cpp"
+    assert payload["label"] == "llama.cpp server"
+    assert payload["server"]["command"] == "llama-server -m /path/to/model.gguf --host 127.0.0.1 --port 8080"
+    assert payload["environment"]["OPERANCE_PLANNER_ENDPOINT"] == "http://127.0.0.1:8080/v1/chat/completions"
+    assert payload["environment"]["OPERANCE_PLANNER_TIMEOUT_SECONDS"] == "60"
+
+
+def test_cli_planner_setup_template_supports_ollama_profile(capsys) -> None:
+    exit_code = main(["--planner-setup-template", "ollama"])
+
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+
+    assert exit_code == 0
+    assert payload["profile"] == "ollama"
+    assert payload["label"] == "Ollama OpenAI-compatible API"
+    assert payload["server"]["command"] == "ollama run qwen2.5:3b"
+    assert payload["environment"]["OPERANCE_PLANNER_ENDPOINT"] == "http://127.0.0.1:11434/v1/chat/completions"
+    assert payload["environment"]["OPERANCE_PLANNER_MODEL"] == "qwen2.5:3b"
+    assert payload["environment"]["OPERANCE_PLANNER_TIMEOUT_SECONDS"] == "90"
 
 
 def test_cli_planner_status_prints_non_executing_local_ai_status(monkeypatch, capsys) -> None:
@@ -784,6 +830,7 @@ def test_cli_planner_status_prints_non_executing_local_ai_status(monkeypatch, ca
     assert payload["runtime_fallback_enabled"] is False
     assert payload["safe_to_enable"] is True
     assert payload["commands"]["readiness"] == "python3 -m operance.cli --planner-readiness"
+    assert payload["commands"]["setup_template"] == "python3 -m operance.cli --planner-setup-template"
     assert "The local model may only return the Operance typed action schema." in payload["safety_contract"]
 
 

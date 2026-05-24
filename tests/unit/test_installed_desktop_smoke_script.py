@@ -26,6 +26,7 @@ def test_installed_desktop_smoke_dry_run_prints_default_steps() -> None:
         "+ operance --installed-smoke",
         "+ operance --print-config",
         "+ operance --getting-started",
+        "+ operance --planner-setup-template",
         "+ operance --planner-status",
         "+ operance --supported-commands --supported-commands-available-only",
         "Manual tray click-to-talk checks:",

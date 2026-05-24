@@ -165,6 +165,44 @@ def test_planner_readiness_report_fails_for_invalid_model_args() -> None:
     }
 
 
+def test_planner_readiness_report_classifies_request_timeout() -> None:
+    from operance.planner.client import PlannerClientError
+    from operance.planner.readiness import build_planner_readiness_report
+    from operance.policy import ExecutionPolicy
+    from operance.registry import build_default_action_registry
+    from operance.validator import PlanValidator
+
+    class FakePlannerClient:
+        config = None
+
+        def health(self) -> dict[str, object]:
+            return {"status": "ok", "probe": "models", "model_ids": ["qwen-test"]}
+
+        def plan(self, transcript: str) -> dict[str, object]:
+            raise PlannerClientError("planner request failed: timed out")
+
+    report = build_planner_readiness_report(
+        PlannerSettings(enabled=False, model="qwen-test"),
+        client=FakePlannerClient(),
+        validator=PlanValidator(build_default_action_registry()),
+        policy=ExecutionPolicy(),
+    )
+
+    assert report["status"] == "failed"
+    assert report["checks"][1] == {
+        "name": "planner_smoke_valid",
+        "status": "failed",
+        "detail": {
+            "message": "planner request failed: timed out",
+            "kind": "request_timeout",
+        },
+    }
+    assert report["next_steps"] == [
+        "Warm the local model with a direct prompt, or increase OPERANCE_PLANNER_TIMEOUT_SECONDS, then rerun python3 -m operance.cli --planner-readiness.",
+        "For Ollama first-run testing, try: export OPERANCE_PLANNER_TIMEOUT_SECONDS=90.",
+    ]
+
+
 def test_planner_readiness_snapshot_uses_doctor_checks_without_smoke() -> None:
     from operance.planner.readiness import build_planner_readiness_snapshot
 
