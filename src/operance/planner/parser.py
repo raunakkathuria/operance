@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import re
 from typing import Any, Mapping
 
 from ..models.actions import ActionPlan, PlanSource, ToolName, TypedAction
@@ -38,10 +39,42 @@ def parse_planner_payload(payload: Mapping[str, object], *, original_text: str) 
         if not isinstance(args_value, dict):
             raise PlannerParseError(f"action {index} args must be an object")
 
-        actions.append(TypedAction(tool=tool, args=dict(args_value)))
+        normalized_tool, normalized_args = _normalize_planner_action(
+            original_text,
+            tool,
+            dict(args_value),
+        )
+        actions.append(TypedAction(tool=normalized_tool, args=normalized_args))
 
     return ActionPlan(
         source=PlanSource.PLANNER,
         original_text=original_text,
         actions=actions,
     )
+
+
+def _normalize_planner_action(
+    original_text: str,
+    tool: ToolName,
+    args: dict[str, object],
+) -> tuple[ToolName, dict[str, object]]:
+    if not _is_open_launch_intent(original_text):
+        return (tool, args)
+
+    if tool == ToolName.WINDOWS_SWITCH:
+        window = args.get("window")
+        if isinstance(window, str) and window.strip():
+            return (ToolName.APPS_LAUNCH, {"app": window.strip()})
+
+    if tool == ToolName.APPS_FOCUS:
+        app = args.get("app")
+        if isinstance(app, str) and app.strip():
+            return (ToolName.APPS_LAUNCH, {"app": app.strip()})
+
+    return (tool, args)
+
+
+def _is_open_launch_intent(text: str) -> bool:
+    normalized = text.strip().casefold()
+    normalized = re.sub(r"\s+", " ", normalized)
+    return bool(re.match(r"^(?:please )?(?:open|launch|start)\b", normalized))

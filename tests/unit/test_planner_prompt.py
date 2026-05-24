@@ -53,8 +53,8 @@ def test_planner_prompt_includes_compact_output_shape_without_duplicate_schema()
     assert "Plan at most two actions." in system_content
     assert 'Return shape: {"actions":[{"tool":"tool.name","args":{}}]}.' in system_content
     assert "The request carries a machine-enforced JSON schema" in system_content
-    assert "open/launch/start apps or URLs with apps.launch" in system_content
-    assert "focus/switch existing windows with apps.focus or windows.switch" in system_content
+    assert "open/launch/start apps or websites MUST use apps.launch, never windows.switch" in system_content
+    assert "Use windows.switch only when the user explicitly asks to switch to an existing window" in system_content
     assert "Example: open firefox and notify me" in system_content
     assert '"tool":"apps.launch"' in system_content
     assert "Example: switch to firefox" in system_content

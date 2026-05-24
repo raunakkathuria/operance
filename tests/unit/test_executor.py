@@ -198,6 +198,35 @@ def test_executor_returns_failed_result_when_app_launch_adapter_fails() -> None:
     ]
 
 
+def test_executor_returns_failed_result_when_window_adapter_fails() -> None:
+    from operance.adapters.base import AdapterSet
+    from operance.executor import ActionExecutor
+    from operance.models.actions import ActionPlan, ActionResultItem, PlanSource, ToolName, TypedAction
+
+    class FailingWindowsAdapter:
+        def switch(self, window: str) -> str:
+            raise ValueError("unable to parse windows runner output")
+
+    executor = ActionExecutor(adapters=AdapterSet(windows=FailingWindowsAdapter()))
+    plan = ActionPlan(
+        plan_id="plan-1",
+        original_text="switch to firefox",
+        source=PlanSource.PLANNER,
+        actions=[TypedAction(tool=ToolName.WINDOWS_SWITCH, args={"window": "firefox"})],
+    )
+
+    result = executor.execute(plan)
+
+    assert result.status == "failed"
+    assert result.results == [
+        ActionResultItem(
+            tool=ToolName.WINDOWS_SWITCH,
+            status="failed",
+            message="unable to parse windows runner output",
+        )
+    ]
+
+
 def test_executor_updates_mock_state_for_mutating_actions(tmp_path: Path) -> None:
     from operance.adapters.mock import build_mock_adapter_set
     from operance.executor import ActionExecutor
