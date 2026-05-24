@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added public beta activation diagnostics with `operance --getting-started`, `operance --planner-status`, user-facing supported-command groups, source and installed smoke coverage for those surfaces, and contributor command-authoring guidance that preserves the typed-action/provider/adapter boundary.
 - Extended controlled live command smoke to cover confirmation-gated desktop file delete, rename, and move flows in a temporary desktop fixture, then promoted those verified commands into the Fedora KDE Wayland supported subset.
 - Added `scripts/run_live_command_smoke.sh`, wired it into release readiness, fixed CLI transcript env overrides for `--desktop-dir`, and promoted `create folder on desktop called <name>` after live verification against a temporary desktop fixture.
 - Hardened KWin `WindowsRunner` parsing for native icon metadata and promoted read-only `show recent files`, `list windows`, and `switch to window <title>` into the Fedora KDE Wayland verified command subset with installed desktop smoke guidance.

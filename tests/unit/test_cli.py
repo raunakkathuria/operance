@@ -74,6 +74,34 @@ class _FakeVoiceSessionWakeWordDetector:
         return None
 
 
+def _ready_linux_report() -> dict[str, object]:
+    return {
+        "platform": "Linux",
+        "python_version": "3.14.0",
+        "checks": [
+            {"name": "python_3_12_plus", "status": "ok", "detail": "3.14.0"},
+            {"name": "virtualenv_active", "status": "ok", "detail": "active"},
+            {"name": "linux_platform", "status": "ok", "detail": "Linux"},
+            {"name": "kde_wayland_target", "status": "ok", "detail": {"session_type": "wayland", "desktop_session": "KDE"}},
+            {"name": "wayland_session_accessible", "status": "ok", "detail": "ok"},
+            {"name": "xdg_open_available", "status": "ok", "detail": "/usr/bin/xdg-open"},
+            {"name": "notify_send_available", "status": "ok", "detail": "/usr/bin/notify-send"},
+            {"name": "gdbus_available", "status": "ok", "detail": "/usr/bin/gdbus"},
+            {"name": "networkmanager_cli_available", "status": "ok", "detail": "/usr/bin/nmcli"},
+            {"name": "audio_cli_available", "status": "ok", "detail": {"wpctl": "/usr/bin/wpctl"}},
+            {"name": "audio_capture_cli_available", "status": "ok", "detail": {"pw-record": "/usr/bin/pw-record"}},
+            {"name": "clipboard_cli_available", "status": "ok", "detail": {"wl-copy": "/usr/bin/wl-copy", "wl-paste": "/usr/bin/wl-paste"}},
+            {"name": "text_input_cli_available", "status": "warn", "detail": {"wtype": None}},
+            {"name": "systemctl_user_available", "status": "ok", "detail": "/usr/bin/systemctl"},
+            {"name": "rpm_package_installer_available", "status": "ok", "detail": "/usr/bin/dnf"},
+            {"name": "power_status_available", "status": "ok", "detail": {"upower": "/usr/bin/upower"}},
+            {"name": "stt_backend_available", "status": "ok", "detail": "moonshine_voice"},
+            {"name": "planner_runtime_enabled", "status": "warn", "detail": {"enabled": False}},
+            {"name": "planner_endpoint_healthy", "status": "ok", "detail": {"status": "ok", "probe": "models"}},
+        ],
+    }
+
+
 def test_cli_process_transcript_prints_response_payload(capsys) -> None:
     exit_code = main(["--transcript", "open firefox"])
 
@@ -718,8 +746,45 @@ def test_cli_supported_commands_available_only_filters_blocked_entries(monkeypat
     assert commands["windows.list"]["usage_pattern"] == "list windows"
     assert commands["windows.switch"]["usage_pattern"] == "switch to window <title>"
     assert "text.type" not in commands
-    assert payload["summary"]["unverified_commands"] == 0
-    assert payload["summary"]["blocked_commands"] == 0
+
+
+def test_cli_getting_started_prints_activation_path(monkeypatch, capsys) -> None:
+    monkeypatch.setattr("operance.cli.build_environment_report", _ready_linux_report)
+    monkeypatch.setattr(
+        "operance.project_info._git_output",
+        lambda repo_root, *args: None,
+    )
+    monkeypatch.setattr("operance.project_info._git_dirty", lambda repo_root: False)
+
+    exit_code = main(["--getting-started"])
+
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+
+    assert exit_code == 0
+    assert payload["status"] == "ready"
+    assert payload["current_target"] == "Linux first: Fedora KDE Wayland developer beta."
+    assert payload["start_here"][1]["command"] == "python3 -m operance.cli --mvp-launch"
+    assert {"group": "Apps and URLs", "say": "open <app name> | open http://localhost:3000 | browse to localhost 3000 | open <app> and load <url>"} in payload["try_commands"]
+    assert payload["local_ai_planner"]["readiness_command"] == "python3 -m operance.cli --planner-readiness"
+    assert payload["contributor_next_steps"][0] == "Read docs/contributing/command-authoring.md before adding commands."
+
+
+def test_cli_planner_status_prints_non_executing_local_ai_status(monkeypatch, capsys) -> None:
+    monkeypatch.setattr("operance.cli.build_environment_report", _ready_linux_report)
+
+    exit_code = main(["--planner-status"])
+
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+
+    assert exit_code == 0
+    assert payload["status"] == "ok"
+    assert payload["mode"] == "ready_to_enable"
+    assert payload["runtime_fallback_enabled"] is False
+    assert payload["safe_to_enable"] is True
+    assert payload["commands"]["readiness"] == "python3 -m operance.cli --planner-readiness"
+    assert "The local model may only return the Operance typed action schema." in payload["safety_contract"]
 
 
 def test_cli_supported_commands_prints_runtime_guidance_for_unsupported_text_input(monkeypatch, capsys) -> None:

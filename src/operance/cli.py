@@ -12,6 +12,7 @@ import sys
 from typing import Sequence
 
 from .audio import build_default_audio_capture_source, build_default_audio_playback_sink
+from .activation import build_getting_started_report, build_planner_status_report
 from .adapters import validate_adapter_set
 from .corpus import run_default_corpus
 from .daemon import OperanceDaemon
@@ -80,6 +81,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="store_true", help="Print the current Operance version and build identity")
     parser.add_argument("--about", action="store_true", help="Print detailed Operance runtime identity as JSON")
     parser.add_argument("--check-updates", action="store_true", help="Check the configured Operance release channel")
+    parser.add_argument(
+        "--getting-started",
+        action="store_true",
+        help="Print a concise first-run activation guide for the current environment",
+    )
     parser.add_argument(
         "--release-channel",
         choices=("prerelease", "stable"),
@@ -274,6 +280,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--planner-health", action="store_true", help="Probe local planner endpoint health")
     parser.add_argument(
+        "--planner-status",
+        action="store_true",
+        help="Print non-executing local AI planner status, safety contract, and next steps",
+    )
+    parser.add_argument(
         "--planner-smoke",
         help="Call the local planner endpoint for one transcript, validate the typed plan, and do not execute it",
     )
@@ -348,6 +359,30 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.print_config:
         print(json.dumps(daemon.config.to_dict(), indent=2, sort_keys=True))
+        return 0
+
+    if args.getting_started:
+        environment_report = build_environment_report()
+        setup_snapshot = build_setup_snapshot(environment_report)
+        command_catalog = build_supported_command_catalog(
+            environment_report,
+            available_only=True,
+        )
+        planner_status = build_planner_status_report(
+            daemon.config.planner,
+            environment_report=environment_report,
+        )
+        print(
+            json.dumps(
+                build_getting_started_report(
+                    setup_snapshot=setup_snapshot,
+                    command_catalog=command_catalog,
+                    planner_status=planner_status,
+                    identity=build_project_identity(),
+                ),
+                sort_keys=True,
+            )
+        )
         return 0
 
     if args.supported_commands or args.supported_commands_available_only:
@@ -998,6 +1033,18 @@ def main(argv: Sequence[str] | None = None) -> int:
         result = planner_client.health()
         print(json.dumps(result, sort_keys=True))
         return 0 if result.get("status") == "ok" else 1
+
+    if args.planner_status:
+        print(
+            json.dumps(
+                build_planner_status_report(
+                    daemon.config.planner,
+                    environment_report=build_environment_report(),
+                ),
+                sort_keys=True,
+            )
+        )
+        return 0
 
     if args.planner_smoke:
         result = _run_planner_smoke(daemon, args.planner_smoke)
