@@ -42,6 +42,8 @@ The public release line has already established:
 - keep the stop line in [release-readiness.md](./release-readiness.md)
 - run `./scripts/run_release_readiness_gate.sh` during normal release work
 - run `./scripts/run_release_readiness_gate.sh --run-package-gate` before tagging
+- run `./scripts/run_package_evidence_gate.sh --bundle-python .venv/bin/python`
+  before tagging a packaged Fedora release candidate
 - run a human installed tray plus microphone smoke before tagging
 - publish release notes from the corresponding versioned release-note file
 
@@ -79,6 +81,7 @@ That work should focus on:
 
 - keeping fresh `mvp` RPM rebuilds repeatable before every release candidate
 - tightening the packaged tray plus click-to-talk path after the runtime gate
+- capturing installed-package evidence and support bundles before tagging
 - widening the release-verified command subset one command family at a time
 - improving outside-developer onboarding and failure capture
 - collecting Fedora KDE feedback before widening distro claims
@@ -108,4 +111,6 @@ For every release candidate:
 2. keep each batch release-quality and documented
 3. run `./scripts/run_release_readiness_gate.sh` as the fast local stop line
 4. run `./scripts/run_release_readiness_gate.sh --run-package-gate` before tagging
-5. tag only after the manual installed tray plus click-to-talk smoke passes
+5. run `./scripts/run_package_evidence_gate.sh --bundle-python .venv/bin/python`
+   before tagging a packaged Fedora release candidate
+6. tag only after the manual installed tray plus click-to-talk smoke passes

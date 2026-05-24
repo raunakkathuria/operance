@@ -1052,7 +1052,7 @@ def test_cli_installed_smoke_prints_payload_and_returns_success(monkeypatch, cap
         status = "ok"
 
         def to_dict(self) -> dict[str, object]:
-            return {"status": "ok", "checks": [], "next_steps": [], "manual_checks": []}
+            return {"status": "ok", "checks": [], "evidence": {}, "next_steps": [], "manual_checks": []}
 
     monkeypatch.setattr("operance.cli.build_installed_smoke_result", lambda **kwargs: _FakeInstalledSmokeResult())
 
@@ -1063,6 +1063,7 @@ def test_cli_installed_smoke_prints_payload_and_returns_success(monkeypatch, cap
     assert exit_code == 0
     assert json.loads(captured.out) == {
         "checks": [],
+        "evidence": {},
         "manual_checks": [],
         "next_steps": [],
         "status": "ok",

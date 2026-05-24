@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 import subprocess
 from typing import Any, Mapping
@@ -43,11 +43,13 @@ class InstalledSmokeResult:
     next_steps: list[str]
     manual_checks: list[str]
     build: dict[str, object]
+    evidence: dict[str, object] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, object]:
         return {
             "build": dict(self.build),
             "checks": [check.to_dict() for check in self.checks],
+            "evidence": dict(self.evidence),
             "manual_checks": list(self.manual_checks),
             "next_steps": list(self.next_steps),
             "status": self.status,
@@ -69,6 +71,7 @@ def build_installed_smoke_result(
     report = build_environment_report() if report is None else report
     build_identity = build_project_identity()
     checks_by_name = _checks_by_name(report)
+    tray_service = _tray_service_properties(command=command, systemctl_command=systemctl_command)
 
     checks: list[InstalledSmokeCheck] = [
         _build_identity_check(build_identity),
@@ -78,7 +81,7 @@ def build_installed_smoke_result(
         _path_check("voice_loop_user_service_unit_installed", voice_loop_unit_path),
     ]
     checks.extend(_required_doctor_checks(checks_by_name))
-    checks.extend(_tray_service_checks(command=command, systemctl_command=systemctl_command))
+    checks.extend(_tray_service_checks(tray_service))
 
     status = _summary_status(checks)
     return InstalledSmokeResult(
@@ -94,6 +97,13 @@ def build_installed_smoke_result(
             "Click the tray icon and say: what time is it",
         ],
         build=build_identity,
+        evidence=_build_evidence(
+            command=command,
+            config=config,
+            build_identity=build_identity,
+            tray_service=tray_service,
+            checks=checks,
+        ),
     )
 
 
@@ -188,7 +198,7 @@ def _required_doctor_checks(checks_by_name: dict[str, dict[str, Any]]) -> list[I
     return checks
 
 
-def _tray_service_checks(*, command: str, systemctl_command: str) -> list[InstalledSmokeCheck]:
+def _tray_service_properties(*, command: str, systemctl_command: str) -> dict[str, object]:
     try:
         completed = subprocess.run(
             [
@@ -210,23 +220,17 @@ def _tray_service_checks(*, command: str, systemctl_command: str) -> list[Instal
             text=True,
         )
     except FileNotFoundError:
-        return [
-            InstalledSmokeCheck(
-                name="tray_user_service_inspectable",
-                status="warn",
-                detail=f"{systemctl_command} not found",
-                suggested_command="systemctl --user status operance-tray.service --no-pager",
-            )
-        ]
+        return {
+            "inspectable": False,
+            "command": systemctl_command,
+            "error": f"{systemctl_command} not found",
+        }
     if completed.returncode != 0:
-        return [
-            InstalledSmokeCheck(
-                name="tray_user_service_inspectable",
-                status="warn",
-                detail=_command_detail(completed),
-                suggested_command="systemctl --user status operance-tray.service --no-pager",
-            )
-        ]
+        return {
+            "inspectable": False,
+            "command": systemctl_command,
+            "error": _command_detail(completed),
+        }
 
     properties: dict[str, str] = {}
     for line in completed.stdout.splitlines():
@@ -234,10 +238,33 @@ def _tray_service_checks(*, command: str, systemctl_command: str) -> list[Instal
         if separator:
             properties[key] = value
 
-    load_state = properties.get("LoadState") or "unknown"
-    active_state = properties.get("ActiveState") or "unknown"
-    fragment_path = properties.get("FragmentPath") or ""
-    exec_start = properties.get("ExecStart") or ""
+    return {
+        "inspectable": True,
+        "command": systemctl_command,
+        "expected_command": command,
+        "load_state": properties.get("LoadState") or "unknown",
+        "active_state": properties.get("ActiveState") or "unknown",
+        "fragment_path": properties.get("FragmentPath") or "",
+        "exec_start": properties.get("ExecStart") or "",
+    }
+
+
+def _tray_service_checks(properties: dict[str, object]) -> list[InstalledSmokeCheck]:
+    if not properties.get("inspectable"):
+        return [
+            InstalledSmokeCheck(
+                name="tray_user_service_inspectable",
+                status="warn",
+                detail=properties.get("error") or "not inspectable",
+                suggested_command="systemctl --user status operance-tray.service --no-pager",
+            )
+        ]
+
+    command = str(properties.get("expected_command") or "")
+    load_state = str(properties.get("load_state") or "unknown")
+    active_state = str(properties.get("active_state") or "unknown")
+    fragment_path = str(properties.get("fragment_path") or "")
+    exec_start = str(properties.get("exec_start") or "")
 
     checks: list[InstalledSmokeCheck] = [
         InstalledSmokeCheck(
@@ -291,6 +318,31 @@ def _tray_service_checks(*, command: str, systemctl_command: str) -> list[Instal
         )
 
     return checks
+
+
+def _build_evidence(
+    *,
+    command: str,
+    config: AppConfig,
+    build_identity: dict[str, object],
+    tray_service: dict[str, object],
+    checks: list[InstalledSmokeCheck],
+) -> dict[str, object]:
+    return {
+        "command": command,
+        "developer_mode": config.runtime.developer_mode,
+        "environment": config.environment,
+        "data_dir": str(config.paths.data_dir),
+        "install_mode": build_identity.get("install_mode"),
+        "package_profile": build_identity.get("package_profile"),
+        "version": build_identity.get("version"),
+        "build_git_tag": build_identity.get("build_git_tag"),
+        "build_git_commit_short": build_identity.get("build_git_commit_short"),
+        "install_root": build_identity.get("install_root"),
+        "tray_service": dict(tray_service),
+        "failed_checks": [check.name for check in checks if check.status == "failed"],
+        "warning_checks": [check.name for check in checks if check.status == "warn"],
+    }
 
 
 def _command_detail(completed: subprocess.CompletedProcess[str]) -> str:
