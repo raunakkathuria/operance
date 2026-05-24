@@ -27,12 +27,13 @@ Current positioning:
 Current supported command subset on that target:
 
 - `open <app name>` and URL-like launch targets such as `open localhost:3000`, plus safe app and URL launch chains such as `open firefox and load localhost:3000`
-- `focus <app name>`
-- `what time is it`
-- `what is my battery level`
-- `wifi status`
-- `what is the volume`
-- `is audio muted`
+- narrow launch plus notification phrases such as `open firefox and notify me`
+- `focus <app name>` and confirmation-gated `quit <app name>`
+- `show recent files`
+- Desktop folder or file create, delete, rename, and move commands with confirmation where needed
+- `list windows` and `switch to window <visible title>`
+- `what time is it`, `what is my battery level`, `wifi status`, `what is the volume`, and `is audio muted`
+- `set volume to 50 percent`, `mute audio`, and `unmute audio`
 
 ---
 
@@ -70,6 +71,10 @@ What is already proven on the current target machine:
 - the source-checkout smoke path works
 - the Fedora gate can build the RPM artifact and validate the installed command
   path plus packaged MVP runtime checks
+- the package evidence gate can install the `mvp` RPM, start the tray service,
+  run installed smoke, and capture an installed support bundle
+- manual tray click-to-talk can open Firefox, open a localhost URL, run a
+  launch-plus-notification command, and execute a local planner test command
 - the installed command can produce a support bundle
 - `operance.cli --supported-commands --supported-commands-available-only`
   exposes only the release-verified command subset above, not the broader
@@ -112,7 +117,7 @@ Fedora checkout gate:
 If you are validating the full Fedora path for real, use:
 
 ```bash
-./scripts/run_fedora_gate.sh --reset-user-services
+./scripts/run_package_evidence_gate.sh --bundle-python .venv/bin/python --support-bundle-out /tmp/operance-installed-support.tar.gz
 ```
 
 If the gate stops immediately with `rpmbuild not found`, install the build tool
@@ -125,6 +130,16 @@ first:
 For the exact release stop line, use [fedora-checklist.md](./fedora-checklist.md).
 For the release-readiness stop line, use [release-readiness.md](./release-readiness.md).
 For the current maintainer release sequence, use [release-plan.md](./release-plan.md).
+For the public beta install and feedback path, use [public-beta.md](./public-beta.md).
+
+Maintainers preparing GitHub release assets should run:
+
+```bash
+./scripts/build_release_artifacts.sh --bundle-python .venv/bin/python
+```
+
+Upload the generated RPM, `SHA256SUMS`, and release artifact manifest from
+`dist/release/`.
 
 ---
 
@@ -152,6 +167,7 @@ Start with [CONTRIBUTING.md](../../CONTRIBUTING.md).
 When possible, attach:
 
 - `operance --version` or `.venv/bin/python -m operance.cli --version`
+- `operance --installed-smoke` when using the RPM
 - a support bundle from the same environment:
 
 ```bash

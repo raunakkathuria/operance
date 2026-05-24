@@ -462,7 +462,7 @@ Run the full Fedora gate from the same checkout when you want one command that c
 ./scripts/run_fedora_gate.sh --support-bundle-out /tmp/operance-release-support.tar.gz --dry-run
 ```
 
-The setup surface now also exposes `run_release_readiness_gate`, `run_package_evidence_gate`, `run_installed_desktop_smoke`, `run_fedora_gate`, `run_fedora_release_smoke`, and `run_installed_rpm_package_smoke` with reset-aware Fedora commands when the current machine has the right checkout and RPM build or install prerequisites, so the same package handoff path stays discoverable from `python3 -m operance.cli --setup-actions`. When Fedora prerequisites are present, setup next steps now surface the release-readiness gate, package evidence gate, and installed desktop smoke directly.
+The setup surface now also exposes `run_release_readiness_gate`, `build_release_artifacts`, `run_package_evidence_gate`, `run_installed_desktop_smoke`, `run_fedora_gate`, `run_fedora_release_smoke`, and `run_installed_rpm_package_smoke` with reset-aware Fedora commands when the current machine has the right checkout and RPM build or install prerequisites, so the same package handoff path stays discoverable from `python3 -m operance.cli --setup-actions`. When Fedora prerequisites are present, setup next steps now surface the release-readiness gate, release artifact builder, package evidence gate, and installed desktop smoke directly.
 That same setup surface now also exposes `install_deb_packaging_tools` and `install_rpm_packaging_tools` when the corresponding package-build CLI is missing but the host can install it, so Fedora bring-up no longer stops at a passive `rpmbuild` warning.
 
 Run the release-readiness gate when validating a larger release batch:
@@ -488,6 +488,17 @@ This gate rebuilds the `mvp` RPM, verifies the normalized RPM artifact with
 installed desktop smoke, captures `operance --support-bundle` from the installed
 command, and prints the manual tray click-to-talk commands that still require
 microphone access and an active KDE session.
+
+Prepare the release upload artifacts after that evidence gate passes:
+
+```bash
+./scripts/build_release_artifacts.sh --dry-run
+./scripts/build_release_artifacts.sh --bundle-python .venv/bin/python
+```
+
+This writes the normalized `mvp` RPM, `SHA256SUMS`, and
+`release-artifacts-manifest.json` under `dist/release/` so maintainers can
+upload one predictable artifact set to GitHub releases.
 
 Run the installed desktop smoke after installing the RPM in the active KDE session:
 
