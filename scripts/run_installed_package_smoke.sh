@@ -200,6 +200,7 @@ run_step \
 run_step "${command_path} --doctor" "${command_path}" "--doctor"
 run_step "${command_path} --installed-smoke" "${command_path}" "--installed-smoke"
 run_step "${command_path} --getting-started" "${command_path}" "--getting-started"
+run_step "${command_path} --planner-setup-template" "${command_path}" "--planner-setup-template"
 run_step "${command_path} --planner-status" "${command_path}" "--planner-status"
 if [[ "${require_mvp_runtime}" -eq 1 ]]; then
     run_step \

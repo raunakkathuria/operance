@@ -5,6 +5,55 @@ from __future__ import annotations
 from .config import PlannerSettings
 from .planner import build_planner_readiness_snapshot
 
+PLANNER_SETUP_PROFILES = ("generic", "llama-cpp", "ollama")
+
+
+def build_planner_setup_template(
+    profile: str,
+    *,
+    command_prefix: str = "python3 -m operance.cli",
+) -> dict[str, object]:
+    """Build copy-paste local planner setup guidance without mutating the host."""
+    normalized_profile = profile.strip().lower()
+    if normalized_profile not in PLANNER_SETUP_PROFILES:
+        raise ValueError(
+            "planner setup profile must be one of: "
+            + ", ".join(PLANNER_SETUP_PROFILES)
+        )
+
+    profile_payload = _planner_profile_payload(normalized_profile)
+    environment = {
+        "OPERANCE_PLANNER_ENDPOINT": profile_payload["endpoint"],
+        "OPERANCE_PLANNER_MODEL": profile_payload["model"],
+        "OPERANCE_PLANNER_TIMEOUT_SECONDS": profile_payload["timeout_seconds"],
+        "OPERANCE_PLANNER_MAX_RETRIES": "1",
+    }
+    return {
+        "status": "ok",
+        "profile": normalized_profile,
+        "label": profile_payload["label"],
+        "description": profile_payload["description"],
+        "server": profile_payload["server"],
+        "environment": environment,
+        "export_commands": [
+            f"export {name}={value}"
+            for name, value in environment.items()
+        ],
+        "validation_commands": [
+            f"{command_prefix} --planner-status",
+            f"{command_prefix} --planner-health",
+            f"{command_prefix} --planner-readiness \"open firefox and notify me\"",
+        ],
+        "enable_command": "export OPERANCE_PLANNER_ENABLED=1",
+        "safety_contract": _planner_safety_contract(),
+        "next_steps": [
+            "Start the local model server outside Operance.",
+            "Export the planner environment variables.",
+            "Run planner readiness before enabling live fallback.",
+            "Enable live fallback only after readiness reports safe_to_enable=true.",
+        ],
+    }
+
 
 def build_planner_status_report(
     config: PlannerSettings,
@@ -44,14 +93,10 @@ def build_planner_status_report(
             "health": "python3 -m operance.cli --planner-health",
             "readiness": "python3 -m operance.cli --planner-readiness",
             "smoke": "python3 -m operance.cli --planner-smoke \"open firefox and notify me\"",
+            "setup_template": "python3 -m operance.cli --planner-setup-template",
             "enable": "export OPERANCE_PLANNER_ENABLED=1",
         },
-        "safety_contract": [
-            "The local model may only return the Operance typed action schema.",
-            "Validation and policy still run before execution.",
-            "Confirmation-gated actions remain gated even when the model planned them.",
-            "The planner path never executes raw shell, PowerShell, AppleScript, or KWin scripts.",
-        ],
+        "safety_contract": _planner_safety_contract(),
         "next_steps": readiness.get("next_steps", []),
     }
 
@@ -113,6 +158,9 @@ def build_getting_started_report(
             "mode": planner_status.get("mode"),
             "summary": planner_status.get("summary"),
             "readiness_command": planner_status.get("commands", {}).get("readiness")
+            if isinstance(planner_status.get("commands"), dict)
+            else None,
+            "setup_template_command": planner_status.get("commands", {}).get("setup_template")
             if isinstance(planner_status.get("commands"), dict)
             else None,
             "safe_to_enable": planner_status.get("safe_to_enable"),
@@ -187,3 +235,59 @@ def _first_example(command: dict[str, object]) -> str | None:
         if isinstance(example, str) and example:
             return example
     return None
+
+
+def _planner_safety_contract() -> list[str]:
+    return [
+        "The local model may only return the Operance typed action schema.",
+        "Validation and policy still run before execution.",
+        "Confirmation-gated actions remain gated even when the model planned them.",
+        "The planner path never executes raw shell, PowerShell, AppleScript, or KWin scripts.",
+    ]
+
+
+def _planner_profile_payload(profile: str) -> dict[str, object]:
+    if profile == "llama-cpp":
+        return {
+            "label": "llama.cpp server",
+            "description": "Use a local llama.cpp server exposing OpenAI-compatible chat completions.",
+            "endpoint": "http://127.0.0.1:8080/v1/chat/completions",
+            "model": "qwen2.5-7b-instruct",
+            "timeout_seconds": "60",
+            "server": {
+                "command": "llama-server -m /path/to/model.gguf --host 127.0.0.1 --port 8080",
+                "notes": [
+                    "Use any instruction-tuned local model that follows JSON-schema prompts reliably.",
+                    "Keep the server bound to localhost for the current beta path.",
+                ],
+            },
+        }
+    if profile == "ollama":
+        return {
+            "label": "Ollama OpenAI-compatible API",
+            "description": "Use Ollama's local OpenAI-compatible chat-completions API.",
+            "endpoint": "http://127.0.0.1:11434/v1/chat/completions",
+            "model": "qwen2.5:3b",
+            "timeout_seconds": "90",
+            "server": {
+                "command": "ollama run qwen2.5:3b",
+                "notes": [
+                    "Ollama must be running locally before Operance can probe planner health.",
+                    "Use a different local model by changing OPERANCE_PLANNER_MODEL.",
+                ],
+            },
+        }
+    return {
+        "label": "Generic OpenAI-compatible local server",
+        "description": "Use any local server that exposes /v1/chat/completions and either /v1/models or /health.",
+        "endpoint": "http://127.0.0.1:8080/v1/chat/completions",
+        "model": "qwen2.5-7b-instruct",
+        "timeout_seconds": "60",
+        "server": {
+            "command": None,
+            "notes": [
+                "Start your local OpenAI-compatible server outside Operance.",
+                "Set endpoint and model to match that server before running planner readiness.",
+            ],
+        },
+    }

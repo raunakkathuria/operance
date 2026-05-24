@@ -78,6 +78,7 @@ run_step "${python_bin} -m operance.cli --about" "${python_bin}" "-m" "operance.
 run_step "${python_bin} -m operance.cli --doctor" "${python_bin}" "-m" "operance.cli" "--doctor"
 run_step "${python_bin} -m operance.cli --setup-actions" "${python_bin}" "-m" "operance.cli" "--setup-actions"
 run_step "${python_bin} -m operance.cli --getting-started" "${python_bin}" "-m" "operance.cli" "--getting-started"
+run_step "${python_bin} -m operance.cli --planner-setup-template" "${python_bin}" "-m" "operance.cli" "--planner-setup-template"
 run_step "${python_bin} -m operance.cli --planner-status" "${python_bin}" "-m" "operance.cli" "--planner-status"
 run_step \
     "${python_bin} -m operance.cli --supported-commands --supported-commands-available-only" \

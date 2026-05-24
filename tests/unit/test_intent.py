@@ -232,7 +232,6 @@ def test_deterministic_intent_matcher_returns_none_for_unknown_command() -> None
     matcher = DeterministicIntentMatcher()
 
     assert matcher.match("install updates") is None
-    assert matcher.match("open firefox and notify me") is None
     assert matcher.match("open firefox and load notes") is None
     assert matcher.match("focus localhost:3000") is None
 
@@ -259,5 +258,31 @@ def test_deterministic_intent_matcher_builds_two_step_launch_plan(text: str, exp
     assert len(plan.actions) == 2
     assert [action.tool for action in plan.actions] == [ToolName.APPS_LAUNCH, ToolName.APPS_LAUNCH]
     assert [action.args for action in plan.actions] == [{"app": "firefox"}, {"app": expected_url}]
+    assert all(action.risk_tier == RiskTier.TIER_0 for action in plan.actions)
+    assert all(action.requires_confirmation is False for action in plan.actions)
+
+
+@pytest.mark.parametrize(
+    ("text", "expected_app"),
+    [
+        ("open firefox and notify me", "firefox"),
+        ("launch code then notify me", "code"),
+        ("start localhost:3000 and notify me", "localhost:3000"),
+    ],
+)
+def test_deterministic_intent_matcher_builds_launch_then_notify_plan(text: str, expected_app: str) -> None:
+    from operance.intent import DeterministicIntentMatcher
+
+    matcher = DeterministicIntentMatcher()
+
+    plan = matcher.match(text)
+
+    assert plan is not None
+    assert plan.source == PlanSource.DETERMINISTIC
+    assert plan.original_text == text
+    assert len(plan.actions) == 2
+    assert [action.tool for action in plan.actions] == [ToolName.APPS_LAUNCH, ToolName.NOTIFICATIONS_SHOW]
+    assert plan.actions[0].args == {"app": expected_app}
+    assert plan.actions[1].args == {"title": "Opened", "message": f"{expected_app} opened"}
     assert all(action.risk_tier == RiskTier.TIER_0 for action in plan.actions)
     assert all(action.requires_confirmation is False for action in plan.actions)

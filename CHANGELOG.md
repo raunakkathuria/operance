@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added deterministic two-step handling for narrow launch-plus-notification commands such as `open firefox and notify me`, keeping common public demo commands reliable without depending on local model routing.
+- Reduced local planner prompt size by removing the duplicate inline JSON schema from prompt messages while keeping the machine-enforced schema in the chat-completions request, which makes Ollama CPU readiness checks less likely to truncate or time out.
+- Added local planner setup templates with `operance --planner-setup-template [generic|llama-cpp|ollama]`, keeping local model onboarding copy-pasteable, non-mutating, and bounded to the typed-action planner safety contract.
+- Improved planner readiness failure guidance so local model request timeouts are reported as timeout or warm-up issues instead of schema problems, and raised setup-template timeouts for local model profiles.
 - Added public beta activation diagnostics with `operance --getting-started`, `operance --planner-status`, user-facing supported-command groups, source and installed smoke coverage for those surfaces, and contributor command-authoring guidance that preserves the typed-action/provider/adapter boundary.
 - Extended controlled live command smoke to cover confirmation-gated desktop file delete, rename, and move flows in a temporary desktop fixture, then promoted those verified commands into the Fedora KDE Wayland supported subset.
 - Added `scripts/run_live_command_smoke.sh`, wired it into release readiness, fixed CLI transcript env overrides for `--desktop-dir`, and promoted `create folder on desktop called <name>` after live verification against a temporary desktop fixture.

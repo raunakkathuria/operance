@@ -78,6 +78,10 @@ class DeterministicIntentMatcher:
         if two_step_launch_plan is not None:
             return two_step_launch_plan
 
+        launch_notify_plan = self._launch_notify_plan(text, normalized)
+        if launch_notify_plan is not None:
+            return launch_notify_plan
+
         if normalized in {"open firefox", "launch firefox"}:
             return self._single_action_plan(
                 text,
@@ -574,6 +578,30 @@ class DeterministicIntentMatcher:
             actions=[
                 TypedAction(tool=ToolName.APPS_LAUNCH, args={"app": app_target}),
                 TypedAction(tool=ToolName.APPS_LAUNCH, args={"app": url_target}),
+            ],
+        )
+
+    def _launch_notify_plan(self, original_text: str, normalized: str) -> ActionPlan | None:
+        launch_notify_match = re.fullmatch(
+            r"(?:please )?(?:open|launch|start)(?: app)? (.+?) (?:and|then) notify me",
+            normalized,
+        )
+        if not launch_notify_match:
+            return None
+
+        app_target = _normalize_spoken_launch_target(launch_notify_match.group(1))
+        if not _is_simple_app_phrase(app_target, allow_url_like=True):
+            return None
+
+        return ActionPlan(
+            source=PlanSource.DETERMINISTIC,
+            original_text=original_text,
+            actions=[
+                TypedAction(tool=ToolName.APPS_LAUNCH, args={"app": app_target}),
+                TypedAction(
+                    tool=ToolName.NOTIFICATIONS_SHOW,
+                    args={"title": "Opened", "message": f"{app_target} opened"},
+                ),
             ],
         )
 

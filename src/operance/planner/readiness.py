@@ -59,11 +59,12 @@ def build_planner_readiness_report(
         planner_payload = _planner_client_plan(client, transcript)
         plan = parse_planner_payload(planner_payload, original_text=transcript)
     except (PlannerClientError, PlannerParseError, ValueError) as exc:
+        failure_detail = _planner_smoke_failure_detail(exc)
         checks.append(
             {
                 "name": "planner_smoke_valid",
                 "status": "failed",
-                "detail": str(exc),
+                "detail": failure_detail["detail"],
             }
         )
         return {
@@ -76,9 +77,7 @@ def build_planner_readiness_report(
             "transcript": transcript,
             "config": _planner_config_payload(config),
             "checks": checks,
-            "next_steps": [
-                "Fix the local planner response so it returns only the Operance typed action schema.",
-            ],
+            "next_steps": failure_detail["next_steps"],
         }
 
     validation_result = validator.validate(plan)
@@ -193,6 +192,41 @@ def _planner_config_payload(config: PlannerSettings) -> dict[str, object]:
         "max_retries": config.max_retries,
         "max_consecutive_failures": config.max_consecutive_failures,
         "failure_cooldown_seconds": config.failure_cooldown_seconds,
+    }
+
+
+def _planner_smoke_failure_detail(exc: Exception) -> dict[str, object]:
+    message = str(exc)
+    normalized = message.lower()
+    if isinstance(exc, PlannerClientError) and ("timed out" in normalized or "timeout" in normalized):
+        return {
+            "detail": {
+                "message": message,
+                "kind": "request_timeout",
+            },
+            "next_steps": [
+                "Warm the local model with a direct prompt, or increase OPERANCE_PLANNER_TIMEOUT_SECONDS, then rerun python3 -m operance.cli --planner-readiness.",
+                "For Ollama first-run testing, try: export OPERANCE_PLANNER_TIMEOUT_SECONDS=90.",
+            ],
+        }
+    if isinstance(exc, PlannerClientError):
+        return {
+            "detail": {
+                "message": message,
+                "kind": "request_failed",
+            },
+            "next_steps": [
+                "Fix the local planner server response, then rerun python3 -m operance.cli --planner-readiness.",
+            ],
+        }
+    return {
+        "detail": {
+            "message": message,
+            "kind": "schema_or_parse_error",
+        },
+        "next_steps": [
+            "Fix the local planner response so it returns only the Operance typed action schema.",
+        ],
     }
 
 
