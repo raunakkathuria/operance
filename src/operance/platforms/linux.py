@@ -1116,6 +1116,7 @@ def _build_setup_actions(
     )
     install_deb_packaging_tools_command = "./scripts/install_packaging_tools.sh --deb"
     install_rpm_packaging_tools_command = "./scripts/install_packaging_tools.sh --rpm"
+    build_release_artifacts_command = "./scripts/build_release_artifacts.sh"
     run_release_readiness_gate_command = "./scripts/run_release_readiness_gate.sh"
     run_installed_desktop_smoke_command = "./scripts/run_installed_desktop_smoke.sh"
     run_package_evidence_gate_command = "./scripts/run_package_evidence_gate.sh"
@@ -1632,6 +1633,22 @@ def _build_setup_actions(
             blocker_checks=("linux_platform", "python_3_12_plus", "virtualenv_active"),
         ),
         build_action(
+            action_id="build_release_artifacts",
+            label="Build release artifacts",
+            command=build_release_artifacts_command,
+            available=(
+                linux_ready
+                and str(checks_by_name.get("archive_packaging_cli_available", {}).get("status")) == "ok"
+                and str(checks_by_name.get("rpm_packaging_cli_available", {}).get("status")) == "ok"
+            ),
+            recommended=build_release_artifacts_command in recommended_set,
+            blocker_checks=(
+                "linux_platform",
+                "archive_packaging_cli_available",
+                "rpm_packaging_cli_available",
+            ),
+        ),
+        build_action(
             action_id="run_installed_desktop_smoke",
             label="Run installed desktop smoke",
             command=run_installed_desktop_smoke_command,
@@ -2133,6 +2150,13 @@ def _build_setup_next_steps(
         )
         next_steps.insert(
             insert_index + 3,
+            PlatformSetupNextStep(
+                label="Build release artifacts",
+                command="./scripts/build_release_artifacts.sh",
+            ),
+        )
+        next_steps.insert(
+            insert_index + 4,
             PlatformSetupNextStep(
                 label="Run Fedora gate",
                 command="./scripts/run_fedora_gate.sh --reset-user-services",

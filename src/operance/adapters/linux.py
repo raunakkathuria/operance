@@ -111,6 +111,10 @@ def _strip_desktop_suffix(app: str) -> str:
     return app[:-8] if app.endswith(".desktop") else app
 
 
+def _is_default_browser_target(app: str) -> bool:
+    return app.strip().casefold() in {"browser", "web browser", "default browser"}
+
+
 def _process_name_candidates_for_launch(app: str, command: list[str]) -> list[str]:
     candidates: list[str] = []
     launcher_names = {"gtk-launch", "xdg-open"}
@@ -135,6 +139,8 @@ class LinuxAppsAdapter:
 
     def launch(self, app: str) -> str:
         self._run_launch_command(app)
+        if _is_default_browser_target(app):
+            return "Opened default browser"
         if is_url_like_target(app):
             return f"Opened {normalize_launch_target(app)}"
         return f"Launched {app}"
@@ -223,7 +229,7 @@ class LinuxAppsAdapter:
                 self._require_launched_app_observable(app, command)
             return
         _require_success(self.run_command(command), command_label=command_label)
-        if not is_url_like_target(app):
+        if not is_url_like_target(app) and not _is_default_browser_target(app):
             self._require_launched_app_observable(app, command)
 
     def _resolve_launch_command(self, app: str) -> tuple[list[str], str]:
@@ -236,6 +242,18 @@ class LinuxAppsAdapter:
                 resolved_terminal = self.resolve_executable(candidate)
                 if resolved_terminal is not None:
                     return [resolved_terminal], "spawn"
+
+        if _is_default_browser_target(app):
+            gtk_launch = self.resolve_executable("gtk-launch")
+            xdg_settings = self.resolve_executable("xdg-settings")
+            if gtk_launch is not None and xdg_settings is not None:
+                default_browser = self._default_browser_desktop_entry(xdg_settings)
+                if default_browser is not None:
+                    return [gtk_launch, default_browser], "gtk-launch"
+
+            xdg_open = self.resolve_executable("xdg-open")
+            if xdg_open is not None:
+                return [xdg_open, "https://www.google.com"], "xdg-open"
 
         if is_url_like_target(app):
             xdg_open = self.resolve_executable("xdg-open")
@@ -251,6 +269,15 @@ class LinuxAppsAdapter:
             return [xdg_open, normalize_launch_target(app)], "xdg-open"
 
         raise ValueError(f"unable to resolve application launcher for {app}")
+
+    def _default_browser_desktop_entry(self, xdg_settings: str) -> str | None:
+        result = self.run_command([xdg_settings, "get", "default-web-browser"])
+        if result.returncode != 0:
+            return None
+        desktop_entry = result.stdout.strip()
+        if not desktop_entry or "/" in desktop_entry:
+            return None
+        return desktop_entry
 
     def _require_launched_app_observable(self, app: str, command: list[str]) -> None:
         pgrep = self.resolve_executable("pgrep")

@@ -135,6 +135,27 @@ def test_linux_apps_adapter_normalizes_localhost_targets_for_xdg_open() -> None:
     assert commands == [["/usr/bin/xdg-open", "http://localhost:3000"]]
 
 
+def test_linux_apps_adapter_normalizes_bare_domains_for_xdg_open() -> None:
+    from operance.adapters.linux import LinuxAppsAdapter
+
+    commands: list[list[str]] = []
+
+    adapter = LinuxAppsAdapter(
+        run_command=lambda command: commands.append(command) or subprocess.CompletedProcess(
+            command,
+            0,
+            stdout="",
+            stderr="",
+        ),
+        resolve_executable=lambda name: f"/usr/bin/{name}" if name == "xdg-open" else None,
+    )
+
+    message = adapter.launch("google.com")
+
+    assert message == "Opened https://google.com"
+    assert commands == [["/usr/bin/xdg-open", "https://google.com"]]
+
+
 def test_linux_apps_adapter_prefers_xdg_open_over_gtk_launch_for_url_like_targets() -> None:
     from operance.adapters.linux import LinuxAppsAdapter
 
@@ -159,6 +180,60 @@ def test_linux_apps_adapter_prefers_xdg_open_over_gtk_launch_for_url_like_target
 
     assert message == "Opened http://localhost:3000"
     assert commands == [["/usr/bin/xdg-open", "http://localhost:3000"]]
+
+
+@pytest.mark.parametrize("target", ["browser", "web browser", "default browser"])
+def test_linux_apps_adapter_opens_configured_default_browser_without_process_probe(
+    target: str,
+) -> None:
+    from operance.adapters.linux import LinuxAppsAdapter
+
+    commands: list[list[str]] = []
+
+    def resolve_executable(name: str) -> str | None:
+        if name in {"gtk-launch", "xdg-settings", "pgrep"}:
+            return f"/usr/bin/{name}"
+        return None
+
+    def run_command(command: list[str]) -> subprocess.CompletedProcess[str]:
+        commands.append(command)
+        if command == ["/usr/bin/xdg-settings", "get", "default-web-browser"]:
+            return subprocess.CompletedProcess(command, 0, stdout="firefox.desktop\n", stderr="")
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    adapter = LinuxAppsAdapter(
+        run_command=run_command,
+        resolve_executable=resolve_executable,
+    )
+
+    message = adapter.launch(target)
+
+    assert message == "Opened default browser"
+    assert commands == [
+        ["/usr/bin/xdg-settings", "get", "default-web-browser"],
+        ["/usr/bin/gtk-launch", "firefox.desktop"],
+    ]
+
+
+def test_linux_apps_adapter_falls_back_to_xdg_open_for_default_browser() -> None:
+    from operance.adapters.linux import LinuxAppsAdapter
+
+    commands: list[list[str]] = []
+
+    adapter = LinuxAppsAdapter(
+        run_command=lambda command: commands.append(command) or subprocess.CompletedProcess(
+            command,
+            0,
+            stdout="",
+            stderr="",
+        ),
+        resolve_executable=lambda name: f"/usr/bin/{name}" if name == "xdg-open" else None,
+    )
+
+    message = adapter.launch("browser")
+
+    assert message == "Opened default browser"
+    assert commands == [["/usr/bin/xdg-open", "https://www.google.com"]]
 
 
 def test_linux_apps_adapter_uses_gtk_launch_for_desktop_entries_and_requires_success() -> None:

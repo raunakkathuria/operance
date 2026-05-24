@@ -113,6 +113,18 @@ user-service reset, runs installed desktop smoke, captures an installed support
 bundle when requested, and leaves the package installed for the manual
 click-to-talk checks.
 
+After validation passes, prepare the public release upload set:
+
+```bash
+./scripts/build_release_artifacts.sh --bundle-python .venv/bin/python
+```
+
+Upload these generated files from `dist/release/` to GitHub releases:
+
+- `operance-0.1.0-1.noarch.rpm`
+- `SHA256SUMS`
+- `release-artifacts-manifest.json`
+
 Success means all of the following are true:
 
 - the RPM artifact is built at the documented path
@@ -129,6 +141,7 @@ Success means all of the following are true:
 - `scripts/check_installed_mvp_runtime.py --command operance` passes
 - the runnable supported-command subset can be projected from the installed command
 - the installed command can write a support bundle
+- the release upload set contains the RPM, checksums, and release artifact manifest
 
 ---
 

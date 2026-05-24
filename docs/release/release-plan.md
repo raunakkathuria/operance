@@ -45,6 +45,8 @@ The public release line has already established:
 - run `./scripts/run_package_evidence_gate.sh --bundle-python .venv/bin/python`
   before tagging a packaged Fedora release candidate
 - run a human installed tray plus microphone smoke before tagging
+- run `./scripts/build_release_artifacts.sh --bundle-python .venv/bin/python`
+  after validation to prepare GitHub release upload assets
 - publish release notes from the corresponding versioned release-note file
 
 ### Phase D: Early Feedback Loop
@@ -82,6 +84,7 @@ That work should focus on:
 - keeping fresh `mvp` RPM rebuilds repeatable before every release candidate
 - tightening the packaged tray plus click-to-talk path after the runtime gate
 - capturing installed-package evidence and support bundles before tagging
+- producing one repeatable release artifact set with RPM, checksums, and manifest
 - widening the release-verified command subset one command family at a time
 - improving outside-developer onboarding and failure capture
 - collecting Fedora KDE feedback before widening distro claims
@@ -113,4 +116,6 @@ For every release candidate:
 4. run `./scripts/run_release_readiness_gate.sh --run-package-gate` before tagging
 5. run `./scripts/run_package_evidence_gate.sh --bundle-python .venv/bin/python`
    before tagging a packaged Fedora release candidate
-6. tag only after the manual installed tray plus click-to-talk smoke passes
+6. run `./scripts/build_release_artifacts.sh --bundle-python .venv/bin/python`
+   to prepare release upload assets
+7. tag only after the manual installed tray plus click-to-talk smoke passes

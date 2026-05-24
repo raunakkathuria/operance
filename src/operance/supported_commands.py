@@ -104,7 +104,6 @@ def build_supported_command_help_text(catalog: dict[str, object]) -> dict[str, o
     blocked_count = _int_value(summary.get("blocked_commands"))
     confirmation_count = _int_value(summary.get("confirmation_gated_commands"))
 
-    examples: list[str] = []
     details_lines: list[str] = []
 
     for domain in domains:
@@ -127,29 +126,29 @@ def build_supported_command_help_text(catalog: dict[str, object]) -> dict[str, o
 
         if available_commands:
             details_lines.append(f"{label}:")
-            for command in available_commands:
-                line = _command_example_text(command)
+            for command in sorted(available_commands, key=_help_command_priority):
+                line = _command_example_text(command, prefer_usage_pattern=True)
                 details_lines.append(f"- {line}")
-                if len(examples) < 6:
-                    examples.append(line)
 
         if unverified_commands:
             details_lines.append(f"{label} not yet release-verified:")
-            for command in unverified_commands:
+            for command in sorted(unverified_commands, key=_help_command_priority):
                 target = command.get("release_verification_target")
                 target_text = (
                     f" -> {target}"
                     if isinstance(target, str) and target
                     else ""
                 )
-                details_lines.append(f"- {_command_example_text(command)}{target_text}")
+                details_lines.append(f"- {_command_example_text(command, prefer_usage_pattern=True)}{target_text}")
 
         if blocked_commands:
             details_lines.append(f"{label} blocked:")
-            for command in blocked_commands:
+            for command in sorted(blocked_commands, key=_help_command_priority):
                 blockers = command.get("live_runtime_blockers")
                 blockers_text = ", ".join(str(blocker) for blocker in blockers) if isinstance(blockers, list) else "Unavailable"
-                details_lines.append(f"- {_command_example_text(command)} -> {blockers_text}")
+                details_lines.append(
+                    f"- {_command_example_text(command, prefer_usage_pattern=True)} -> {blockers_text}"
+                )
 
     if not details_lines:
         details_lines.append("No supported command metadata is available.")
@@ -157,43 +156,98 @@ def build_supported_command_help_text(catalog: dict[str, object]) -> dict[str, o
     return {
         "title": "Supported commands",
         "summary": (
-            f"{available_count} release-verified and available, "
-            f"{unverified_count} unverified, {blocked_count} blocked, "
-            f"{confirmation_count} confirmation-gated."
+            f"{available_count} commands are ready on this machine. "
+            f"{confirmation_count} ask for confirmation before running. "
+            f"{blocked_count} need setup."
         ),
-        "examples": examples,
+        "examples": _help_examples(domains),
         "details": "\n".join(details_lines),
     }
 
 
-def _command_example_text(command: dict[str, object]) -> str:
-    usage_pattern = command.get("usage_pattern")
-    if isinstance(usage_pattern, str) and usage_pattern:
-        return (
-            f"{usage_pattern} (confirmation)"
-            if bool(command.get("requires_confirmation"))
-            else usage_pattern
-        )
+def _command_example_text(command: dict[str, object], *, prefer_usage_pattern: bool = False) -> str:
+    if prefer_usage_pattern:
+        usage_pattern = command.get("usage_pattern")
+        if isinstance(usage_pattern, str) and usage_pattern:
+            return _format_command_confirmation_suffix(
+                usage_pattern,
+                requires_confirmation=bool(command.get("requires_confirmation")),
+            )
     example_transcripts = command.get("example_transcripts")
     if isinstance(example_transcripts, list):
+        preferred_example = _preferred_example_transcript(command, example_transcripts)
+        if preferred_example is not None:
+            return _format_command_confirmation_suffix(
+                preferred_example,
+                requires_confirmation=bool(command.get("requires_confirmation")),
+            )
         for example in example_transcripts:
             if isinstance(example, str) and example:
-                return (
-                    f"{example} (confirmation)"
-                    if bool(command.get("requires_confirmation"))
-                    else example
+                return _format_command_confirmation_suffix(
+                    example,
+                    requires_confirmation=bool(command.get("requires_confirmation")),
                 )
     tool = str(command.get("tool") or "unknown")
-    return (
-        f"{tool} (confirmation)"
-        if bool(command.get("requires_confirmation"))
-        else tool
+    return _format_command_confirmation_suffix(
+        tool,
+        requires_confirmation=bool(command.get("requires_confirmation")),
     )
+
+
+def _format_command_confirmation_suffix(text: str, *, requires_confirmation: bool) -> str:
+    return f"{text} (asks for confirmation)" if requires_confirmation else text
+
+
+def _preferred_example_transcript(command: dict[str, object], examples: list[object]) -> str | None:
+    tool = command.get("tool")
+    if tool == ToolName.APPS_LAUNCH.value:
+        for candidate in ("open browser", "open google.com"):
+            if candidate in examples:
+                return candidate
+    return None
+
+
+def _help_command_priority(command: dict[str, object]) -> tuple[int, str]:
+    tool = str(command.get("tool") or "")
+    priority = {
+        ToolName.APPS_LAUNCH.value: 0,
+        ToolName.TIME_NOW.value: 1,
+        ToolName.NETWORK_WIFI_STATUS.value: 2,
+        ToolName.AUDIO_GET_VOLUME.value: 3,
+        ToolName.AUDIO_MUTE_STATUS.value: 4,
+        ToolName.AUDIO_SET_MUTED.value: 5,
+        ToolName.AUDIO_SET_VOLUME.value: 6,
+        ToolName.FILES_LIST_RECENT.value: 7,
+        ToolName.WINDOWS_LIST.value: 8,
+        ToolName.WINDOWS_SWITCH.value: 9,
+        ToolName.APPS_FOCUS.value: 10,
+        ToolName.APPS_QUIT.value: 11,
+    }
+    return (priority.get(tool, 100), tool)
+
+
+def _help_examples(domains: list[object], *, limit: int = 6) -> list[str]:
+    commands: list[dict[str, object]] = []
+    for domain in domains:
+        if not isinstance(domain, dict):
+            continue
+        domain_commands = domain.get("commands")
+        if not isinstance(domain_commands, list):
+            continue
+        commands.extend(
+            command
+            for command in domain_commands
+            if isinstance(command, dict) and command.get("live_runtime_status") == "available"
+        )
+    return [
+        _command_example_text(command)
+        for command in sorted(commands, key=_help_command_priority)[:limit]
+    ]
 
 
 def _tool_usage_pattern(tool: ToolName) -> str | None:
     patterns = {
-        ToolName.APPS_LAUNCH: "open <app name> | open http://localhost:3000 | browse to localhost 3000 | open <app> and load <url>",
+        ToolName.APPS_LAUNCH: "open browser | open google.com | open <app name> | open <app> and load <website>",
         ToolName.APPS_FOCUS: "focus <app name>",
         ToolName.APPS_QUIT: "quit <app name>",
         ToolName.WINDOWS_LIST: "list windows",
@@ -211,7 +265,7 @@ def _tool_usage_pattern(tool: ToolName) -> str | None:
 
 def _domain_label(domain: str) -> str:
     labels = {
-        "apps": "Apps and URLs",
+        "apps": "Apps and websites",
         "audio": "Audio",
         "clipboard": "Clipboard",
         "files": "Desktop files",

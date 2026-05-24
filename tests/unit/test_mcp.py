@@ -552,6 +552,8 @@ def test_mcp_server_exposes_tool_input_schemas() -> None:
     }
     assert tools["apps.launch"]["example_transcripts"] == [
         "open firefox",
+        "open browser",
+        "open google.com",
         "open http://localhost:3000",
         "browse to localhost 3000",
         "browse to docs.python.org/3",

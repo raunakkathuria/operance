@@ -73,6 +73,16 @@ user-service reset, runs installed desktop smoke, writes an installed support
 bundle when requested, and leaves the package installed for the manual
 click-to-talk checks.
 
+After the installed package evidence gate and manual tray checks pass, prepare
+the GitHub release upload set:
+
+```bash
+./scripts/build_release_artifacts.sh --bundle-python .venv/bin/python
+```
+
+That writes the normalized RPM, `SHA256SUMS`, and a release artifact manifest
+under `dist/release/`.
+
 Use `--support-bundle-out <path>` when the gate is being run for a release
 handoff and the source-checkout smoke should write a predictable support bundle
 artifact.
@@ -105,6 +115,8 @@ The current public release should require all of the following:
 - `./scripts/run_installed_desktop_smoke.sh` passes against that installed RPM
 - tray click-to-talk can open Firefox from a spoken command
 - tray click-to-talk can open a localhost URL from a spoken command
+- `./scripts/build_release_artifacts.sh --bundle-python .venv/bin/python`
+  prepares the RPM, checksums, and release artifact manifest for upload
 - `operance --supported-commands --supported-commands-available-only` lists only
   commands that have been smoke-tested on the target machine
 - README and Linux docs describe only the supported path, with deeper

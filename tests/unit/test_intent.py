@@ -16,6 +16,7 @@ from operance.models.actions import PlanSource, RiskTier, ToolName
         ("open localhost:3000", ToolName.APPS_LAUNCH, {"app": "localhost:3000"}, RiskTier.TIER_0, False),
         ("browse to localhost 3000", ToolName.APPS_LAUNCH, {"app": "http://localhost:3000"}, RiskTier.TIER_0, False),
         ("open url localhost port 3000", ToolName.APPS_LAUNCH, {"app": "http://localhost:3000"}, RiskTier.TIER_0, False),
+        ("open google.com", ToolName.APPS_LAUNCH, {"app": "google.com"}, RiskTier.TIER_0, False),
         ("browse to docs.python.org/3", ToolName.APPS_LAUNCH, {"app": "https://docs.python.org/3"}, RiskTier.TIER_0, False),
         (
             "open url github.com/openai/openai-python",

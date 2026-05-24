@@ -17,15 +17,18 @@ Describe the smallest useful behavior that should be added.
 ## Scope
 
 - [ ] portable core
-- [ ] Linux adapter
+- [ ] platform provider
+- [ ] OS adapter
 - [ ] voice pipeline
+- [ ] local AI planner
 - [ ] MCP or tray surface
 - [ ] setup or packaging
+- [ ] public beta onboarding or release artifacts
 - [ ] documentation only
 
 ## Safety and platform impact
 
-Note any confirmation, undo, planner, or desktop-integration impact.
+Note any confirmation, undo, planner, adapter, provider, or desktop-integration impact.
 
 ## Verification idea
 

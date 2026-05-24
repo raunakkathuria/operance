@@ -11,8 +11,14 @@ from queue import Empty, SimpleQueue
 from threading import Lock, Thread
 from typing import Any, Callable, Mapping, TextIO
 
+from ..activation import (
+    build_getting_started_report,
+    build_planner_setup_template,
+    build_planner_status_report,
+)
 from ..audio import build_default_audio_capture_source
 from ..daemon import OperanceDaemon
+from ..doctor import build_environment_report
 from ..installed_smoke import (
     InstalledSmokeCheck,
     InstalledSmokeResult,
@@ -36,6 +42,7 @@ from ..supported_commands import (
     build_supported_command_help_text,
 )
 from .setup import SetupRunResult, run_setup_action
+from .setup import build_setup_snapshot
 from ..voice import run_manual_voice_session
 from ..voice import DEFAULT_CLICK_TO_TALK_MAX_FRAMES
 from ..voice.runtime import (
@@ -267,6 +274,27 @@ class TrayController:
             validator=self.daemon.validator,
             policy=self.daemon.policy,
             transcript=transcript,
+        )
+
+    def planner_setup_template(self, profile: str = "ollama") -> dict[str, object]:
+        return build_planner_setup_template(
+            profile,
+            command_prefix=_command_prefix_for_identity(build_project_identity()),
+        )
+
+    def getting_started_report(self) -> dict[str, object]:
+        environment_report = build_environment_report()
+        setup_snapshot = build_setup_snapshot(environment_report)
+        command_catalog = build_supported_command_catalog(environment_report)
+        planner_status = build_planner_status_report(
+            self.daemon.config.planner,
+            environment_report=environment_report,
+        )
+        return build_getting_started_report(
+            setup_snapshot=setup_snapshot,
+            command_catalog=command_catalog,
+            planner_status=planner_status,
+            identity=build_project_identity(),
         )
 
     def start_click_to_talk(
@@ -577,6 +605,12 @@ def _format_about_highlights(identity: dict[str, object]) -> str:
     return "\n".join(lines)
 
 
+def _command_prefix_for_identity(identity: dict[str, object]) -> str:
+    if identity.get("install_mode") == "packaged":
+        return "operance"
+    return "python3 -m operance.cli"
+
+
 def _format_release_update_highlights(status: dict[str, object]) -> str:
     lines: list[str] = []
     installed_tag = status.get("installed_tag")
@@ -591,6 +625,63 @@ def _format_release_update_highlights(status: dict[str, object]) -> str:
         lines.append(f"Latest: {latest_tag}")
     if isinstance(suggested_command, str) and suggested_command:
         lines.append(f"Next: {suggested_command}")
+    return "\n".join(lines)
+
+
+def _format_getting_started_highlights(report: dict[str, object]) -> str:
+    lines = [f"Status: {report.get('status') or 'unknown'}"]
+    start_here = report.get("start_here")
+    if isinstance(start_here, list) and start_here:
+        first_step = start_here[0]
+        if isinstance(first_step, dict):
+            label = first_step.get("label")
+            command = first_step.get("command")
+            if isinstance(label, str) and isinstance(command, str):
+                lines.append(f"Start: {label} -> {command}")
+
+    try_commands = report.get("try_commands")
+    if isinstance(try_commands, list) and try_commands:
+        first_command = try_commands[0]
+        if isinstance(first_command, dict) and isinstance(first_command.get("say"), str):
+            lines.append(f"Try: {first_command['say']}")
+
+    return "\n".join(lines)
+
+
+def _format_getting_started_details(report: dict[str, object]) -> str:
+    sections: list[str] = []
+    local_ai_planner = report.get("local_ai_planner")
+    if isinstance(local_ai_planner, dict):
+        summary = local_ai_planner.get("summary")
+        if isinstance(summary, str) and summary:
+            sections.append(f"Local AI planner:\n{summary}")
+
+    contributor_next_steps = report.get("contributor_next_steps")
+    if isinstance(contributor_next_steps, list) and contributor_next_steps:
+        steps = [f"- {step}" for step in contributor_next_steps if isinstance(step, str)]
+        if steps:
+            sections.append("Contributor next steps:\n" + "\n".join(steps))
+
+    return "\n\n".join(sections)
+
+
+def _format_planner_setup_summary(report: dict[str, object]) -> str:
+    label = report.get("label")
+    if isinstance(label, str) and label:
+        return f"Local AI setup: {label}"
+    return "Local AI setup"
+
+
+def _format_planner_setup_highlights(report: dict[str, object]) -> str:
+    lines: list[str] = []
+    description = report.get("description")
+    if isinstance(description, str) and description:
+        lines.append(description)
+    next_steps = report.get("next_steps")
+    if isinstance(next_steps, list) and next_steps:
+        first_step = next_steps[0]
+        if isinstance(first_step, str) and first_step:
+            lines.append("Next: " + first_step)
     return "\n".join(lines)
 
 
@@ -622,6 +713,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     app = QApplication.instance()
     if app is None:
         app = QApplication([])
+    _configure_tray_application(app)
 
     if not QSystemTrayIcon.isSystemTrayAvailable():
         raise ValueError("system tray is not available")
@@ -643,6 +735,8 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     supported_commands_action = QAction("Show supported commands", menu)
     about_action = QAction("About Operance", menu)
     check_updates_action = QAction("Check for updates", menu)
+    getting_started_action = QAction("Getting started", menu)
+    planner_setup_action = QAction("Show local AI setup", menu)
     planner_readiness_action = QAction("Show planner readiness", menu)
     installed_readiness_action = QAction("Show installed readiness", menu)
     support_snapshot_action = QAction("Show support snapshot", menu)
@@ -669,6 +763,8 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     menu.addAction(supported_commands_action)
     menu.addAction(about_action)
     menu.addAction(check_updates_action)
+    menu.addAction(getting_started_action)
+    menu.addAction(planner_setup_action)
     menu.addAction(planner_readiness_action)
     menu.addAction(installed_readiness_action)
     menu.addAction(support_snapshot_action)
@@ -813,7 +909,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
             title=str(help_text["title"]),
             summary=str(help_text["summary"]),
             informative_text=(
-                "Try: " + "; ".join(str(example) for example in examples)
+                "Try saying:\n" + "\n".join(f"- {example}" for example in examples)
                 if isinstance(examples, list) and examples
                 else None
             ),
@@ -846,6 +942,42 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
             summary=str(status.get("message") or "Release status checked."),
             informative_text=_format_release_update_highlights(status),
             details=json.dumps(status, indent=2, sort_keys=True),
+        )
+
+    def show_getting_started() -> None:
+        try:
+            report = controller.getting_started_report()
+        except Exception as exc:
+            tray.showMessage(
+                "Getting started unavailable",
+                str(exc),
+                _resolve_notification_icon(QSystemTrayIcon, "warning"),
+            )
+            return
+        _show_information_dialog(
+            QMessageBox,
+            title="Getting started",
+            summary=str(report.get("headline") or "Operance getting started"),
+            informative_text=_format_getting_started_highlights(report),
+            details=_format_getting_started_details(report) or json.dumps(report, indent=2, sort_keys=True),
+        )
+
+    def show_planner_setup() -> None:
+        try:
+            report = controller.planner_setup_template()
+        except Exception as exc:
+            tray.showMessage(
+                "Local AI setup unavailable",
+                str(exc),
+                _resolve_notification_icon(QSystemTrayIcon, "warning"),
+            )
+            return
+        _show_information_dialog(
+            QMessageBox,
+            title="Local AI setup",
+            summary=_format_planner_setup_summary(report),
+            informative_text=_format_planner_setup_highlights(report),
+            details=json.dumps(report, indent=2, sort_keys=True),
         )
 
     def show_installed_readiness() -> None:
@@ -947,7 +1079,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
             return
         tray.showMessage(
             "Support bundle saved",
-            str(artifact_path),
+            f"Attach this file to a GitHub issue if something fails: {artifact_path}",
             _resolve_notification_icon(QSystemTrayIcon, "info"),
         )
 
@@ -982,6 +1114,8 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     supported_commands_action.triggered.connect(show_supported_commands)
     about_action.triggered.connect(show_about)
     check_updates_action.triggered.connect(show_update_status)
+    getting_started_action.triggered.connect(show_getting_started)
+    planner_setup_action.triggered.connect(show_planner_setup)
     planner_readiness_action.triggered.connect(show_planner_readiness)
     installed_readiness_action.triggered.connect(show_installed_readiness)
     support_snapshot_action.triggered.connect(show_support_snapshot)
@@ -1008,7 +1142,10 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
             startup_notification.message,
             _resolve_notification_icon(QSystemTrayIcon, startup_notification.level),
         )
-    if not daemon.config.runtime.developer_mode:
+    if _should_check_installed_readiness_on_startup(
+        developer_mode=daemon.config.runtime.developer_mode,
+        identity=build_project_identity(),
+    ):
         try:
             installed_notification = build_installed_readiness_notification(
                 controller.installed_readiness_report()
@@ -1032,6 +1169,26 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
         daemon.stop()
 
     return 0
+
+
+def _configure_tray_application(app: object) -> None:
+    set_quit_on_last_window_closed = getattr(app, "setQuitOnLastWindowClosed", None)
+    if callable(set_quit_on_last_window_closed):
+        set_quit_on_last_window_closed(False)
+    set_application_name = getattr(app, "setApplicationName", None)
+    if callable(set_application_name):
+        set_application_name("Operance")
+    set_application_display_name = getattr(app, "setApplicationDisplayName", None)
+    if callable(set_application_display_name):
+        set_application_display_name("Operance")
+
+
+def _should_check_installed_readiness_on_startup(
+    *,
+    developer_mode: bool,
+    identity: dict[str, object],
+) -> bool:
+    return not developer_mode and identity.get("install_mode") == "packaged"
 
 
 def _build_confirmation_dialog(status: StatusSnapshot) -> TrayConfirmationDialog | None:

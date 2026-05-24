@@ -5,11 +5,25 @@
 
 Turn intent into action.
 
-Operance lets developers control a Linux desktop with natural language through a tray-first click-to-talk workflow. In the current Fedora KDE Wayland release, it can open apps and URLs, focus or quit apps with confirmation, list recent files, manage desktop folders or files with confirmation, list or switch windows, answer desktop-status questions, and control basic audio state.
+Operance is a local-first desktop action layer. It lets a developer speak or type
+an intent, turns that intent into typed desktop actions, validates the plan, and
+then executes it through OS-specific adapters. The current public beta is
+Fedora KDE Plasma Wayland first and uses a tray-first click-to-talk workflow.
 
-Under the hood, Operance is a local-first desktop action runtime for Linux desktops, with a shared portable core, per-platform adapters, and an MCP-compatible control surface. Every command flows through typed actions, validation, and policy before execution.
+Today, Operance can open apps and websites, focus or quit apps with confirmation,
+list recent files, manage Desktop files or folders with confirmation, list or
+switch windows, answer desktop-status questions, and control basic audio state.
 
-The current MVP interaction path is tray plus click-to-talk through the repo-local `./scripts/run_mvp.sh` launcher. Wake-word and continuous voice-loop paths remain available for diagnostics and later product work, but they are not the default public supported path.
+The tray and verified commands work without an AI model. A local
+OpenAI-compatible model, such as an Ollama-served Qwen model, can be enabled as
+a bounded planner fallback after `operance --planner-readiness` reports it is
+safe to enable. Model output is still constrained to Operance's typed action
+schema and goes through validation, policy, and confirmation gates.
+
+Under the hood, Operance has a shared portable core, per-platform providers and
+adapters, and an MCP-compatible control surface. The current delivery scope
+stays Linux-first while keeping the core portable for later Windows and macOS
+adapters.
 
 Platform roadmap:
 
@@ -20,6 +34,44 @@ Platform roadmap:
 The implementation stays Linux-first today. The portable core remains shared across platforms, including the voice pipeline orchestration, planner, typed action schema, safety model, and MCP server, while platform providers own host-specific readiness, setup workflow, and release-verification rules and OS-specific execution or input translation stays behind per-platform adapters. That keeps the current delivery scope KISS and YAGNI-compliant without closing off the later Windows and macOS paths.
 
 Windows and macOS provider scaffolds exist for adapter authors, but they are intentionally unverified and block live desktop commands until native adapters are implemented.
+
+## Public Beta Quickstart
+
+Use the packaged Fedora RPM when you want the closest outside-developer beta
+experience:
+
+```bash
+sudo dnf install -y ./operance-0.1.0-1.noarch.rpm
+systemctl --user enable --now operance-tray.service
+operance --version
+operance --installed-smoke
+```
+
+Then click the tray icon and say:
+
+```text
+open browser
+open google.com
+open firefox
+open localhost:3000
+open firefox and notify me
+what time is it
+wifi status
+what is the volume
+```
+
+If anything fails, collect a support bundle before changing the machine:
+
+```bash
+operance --support-bundle
+```
+
+The tray menu also exposes **Getting started**, **Show supported commands**,
+**Show local AI setup**, **Show installed readiness**, and **Save support
+bundle**, so normal beta use does not require memorizing CLI diagnostics.
+
+Use [docs/release/public-beta.md](docs/release/public-beta.md) for the public
+beta install, local AI planner, release artifact, and feedback path.
 
 ## Developer Quickstart
 
@@ -97,6 +149,10 @@ Operance is ready for a **Fedora KDE Wayland developer release** for outside dev
 - First-run activation diagnostic: `operance --getting-started`
 - Explicit release-channel check: `operance --check-updates`
 - Local AI planner status check: `operance --planner-status`
+- Tray-first onboarding: Getting started, supported commands, local AI setup,
+  installed readiness, and support-bundle capture are available from the tray
+  menu
+- Public beta distribution guide: [docs/release/public-beta.md](docs/release/public-beta.md)
 - Packaged release-candidate evidence gate: `./scripts/run_package_evidence_gate.sh`
 - Wake-word and TTS assets or backends remain optional and are not part of the packaged support contract
 - Windows and macOS are architecture targets only; their current providers are scaffolds, not supported runtimes
@@ -108,7 +164,7 @@ Not yet claimed:
 - wake-word-first as the default interaction model
 - a zero-setup consumer install story
 
-Use [docs/release/public-handoff.md](docs/release/public-handoff.md) for the current public handoff, [docs/release/release-readiness.md](docs/release/release-readiness.md) for the release stop line, [docs/release/fedora-checklist.md](docs/release/fedora-checklist.md) for the exact Fedora gate, [docs/release/release-plan.md](docs/release/release-plan.md) for the current release sequence, [docs/requirements/linux.md](docs/requirements/linux.md) for Linux setup, packaging, and advanced diagnostics, and [docs/release/public-repo-metadata.md](docs/release/public-repo-metadata.md) for suggested GitHub About metadata.
+Use [docs/release/public-beta.md](docs/release/public-beta.md) for the public beta distribution path, [docs/release/public-handoff.md](docs/release/public-handoff.md) for the current public handoff, [docs/release/release-readiness.md](docs/release/release-readiness.md) for the release stop line, [docs/release/fedora-checklist.md](docs/release/fedora-checklist.md) for the exact Fedora gate, [docs/release/release-plan.md](docs/release/release-plan.md) for the current release sequence, [docs/requirements/linux.md](docs/requirements/linux.md) for Linux setup, packaging, and advanced diagnostics, and [docs/release/public-repo-metadata.md](docs/release/public-repo-metadata.md) for suggested GitHub About metadata.
 
 ## How To Contribute
 
@@ -132,7 +188,7 @@ Operance already has a coherent Linux-first developer release path: a typed and 
 What works now:
 
 - Core runtime: typed action models, deterministic intent matching, validator and policy enforcement, local audit logging, bounded local planner fallback, and MCP-compatible control surfaces.
-- Verified command subset on Fedora KDE Wayland: `open <app name>` or URL targets, safe two-step launch phrases such as `open firefox and load localhost:3000` or `open firefox and notify me`, `focus <app name>`, confirmation-gated `quit <app name>`, `show recent files`, `create folder on desktop called <name>`, confirmation-gated desktop file or folder delete, rename, and move commands, `list windows`, `switch to window <title>`, `what time is it`, `what is my battery level`, `wifi status`, `what is the volume`, `is audio muted`, `set volume to 50 percent`, `mute audio`, and `unmute audio`.
+- Verified command subset on Fedora KDE Wayland: `open browser`, `open google.com`, `open <app name>`, safe two-step launch phrases such as `open firefox and load localhost:3000` or `open firefox and notify me`, `focus <app name>`, confirmation-gated `quit <app name>`, `show recent files`, `create folder on desktop called <name>`, confirmation-gated desktop file or folder delete, rename, and move commands, `list windows`, `switch to window <title>`, `what time is it`, `what is my battery level`, `wifi status`, `what is the volume`, `is audio muted`, `set volume to 50 percent`, `mute audio`, and `unmute audio`.
 - Voice and tray MVP: tray app, bounded click-to-talk, confirmation flows, last-interaction reporting, optional wake-word, STT, and TTS probe paths, plus repo-local background voice-loop support.
 - Diagnostics and support: version/about provenance, explicit release-channel checks, doctor, setup actions, installed readiness checks, runnable-command catalog, runtime status resources, support snapshot, support bundle, audit inspection, and source-checkout smoke scripts.
 - Packaging and release gates: reproducible Linux bootstrap, source-checkout install or uninstall helpers, repo-local systemd helpers, Debian or RPM scaffolds, installed-package smoke, package evidence capture, and the Fedora gate.
@@ -153,6 +209,7 @@ README intentionally stays narrow for the public developer release. Use these do
 
 - [docs/requirements/linux.md](docs/requirements/linux.md) for Linux setup, packaging, systemd, planner, and optional voice diagnostics
 - [docs/release/public-handoff.md](docs/release/public-handoff.md) for the outside-developer handoff
+- [docs/release/public-beta.md](docs/release/public-beta.md) for public beta install, local AI planner, and feedback flow
 - [docs/release/fedora-checklist.md](docs/release/fedora-checklist.md) for the Fedora release gate
 - [CONTRIBUTING.md](CONTRIBUTING.md) for contributor workflow and verification expectations
 
@@ -177,6 +234,8 @@ The repo now also includes a baseline public-project trust surface:
   for adding a typed command without leaking platform details into core
 - [docs/release/fedora-checklist.md](docs/release/fedora-checklist.md)
   for the current Fedora KDE release gate and stop line
+- [docs/release/public-beta.md](docs/release/public-beta.md) for the packaged
+  public beta distribution and feedback path
 - [docs/requirements/linux.md](docs/requirements/linux.md) for Linux machine
   setup and live integration status
 - `.github/workflows/ci.yml`, which runs the full test suite, minimal CLI smoke

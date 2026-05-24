@@ -314,6 +314,7 @@ def test_build_setup_snapshot_reports_partial_ready_state() -> None:
         "build_deb_package_artifact",
         "build_rpm_package_artifact",
         "run_release_readiness_gate",
+        "build_release_artifacts",
         "run_installed_desktop_smoke",
         "run_package_evidence_gate",
         "run_fedora_gate",
@@ -2607,6 +2608,13 @@ def test_build_setup_snapshot_exposes_package_actions_when_tooling_is_ready(
         "label": "Run release readiness gate",
         "recommended": False,
     }
+    assert actions["build_release_artifacts"] == {
+        "action_id": "build_release_artifacts",
+        "available": True,
+        "command": "./scripts/build_release_artifacts.sh",
+        "label": "Build release artifacts",
+        "recommended": False,
+    }
     assert actions["run_installed_desktop_smoke"] == {
         "action_id": "run_installed_desktop_smoke",
         "available": True,
@@ -2788,6 +2796,10 @@ def test_build_setup_snapshot_exposes_fedora_gate_next_step_when_checkout_and_pa
     assert next_steps["Run package evidence gate before tagging"] == {
         "label": "Run package evidence gate before tagging",
         "command": "./scripts/run_package_evidence_gate.sh",
+    }
+    assert next_steps["Build release artifacts"] == {
+        "label": "Build release artifacts",
+        "command": "./scripts/build_release_artifacts.sh",
     }
     assert next_steps["Run Fedora gate"] == {
         "label": "Run Fedora gate",
