@@ -1118,6 +1118,7 @@ def _build_setup_actions(
     install_rpm_packaging_tools_command = "./scripts/install_packaging_tools.sh --rpm"
     run_release_readiness_gate_command = "./scripts/run_release_readiness_gate.sh"
     run_installed_desktop_smoke_command = "./scripts/run_installed_desktop_smoke.sh"
+    run_package_evidence_gate_command = "./scripts/run_package_evidence_gate.sh"
     run_fedora_gate_command = "./scripts/run_fedora_gate.sh --reset-user-services"
     run_installed_rpm_package_smoke_command = shlex.join(
         [
@@ -1639,6 +1640,26 @@ def _build_setup_actions(
             blocker_checks=("linux_platform", "systemctl_user_available"),
         ),
         build_action(
+            action_id="run_package_evidence_gate",
+            label="Run package evidence gate",
+            command=run_package_evidence_gate_command,
+            available=(
+                linux_ready
+                and str(checks_by_name.get("archive_packaging_cli_available", {}).get("status")) == "ok"
+                and str(checks_by_name.get("rpm_packaging_cli_available", {}).get("status")) == "ok"
+                and str(checks_by_name.get("rpm_package_installer_available", {}).get("status")) == "ok"
+                and systemctl_ready
+            ),
+            recommended=run_package_evidence_gate_command in recommended_set,
+            blocker_checks=(
+                "linux_platform",
+                "archive_packaging_cli_available",
+                "rpm_packaging_cli_available",
+                "rpm_package_installer_available",
+                "systemctl_user_available",
+            ),
+        ),
+        build_action(
             action_id="run_fedora_gate",
             label="Run Fedora gate",
             command=run_fedora_gate_command,
@@ -2105,6 +2126,13 @@ def _build_setup_next_steps(
         )
         next_steps.insert(
             insert_index + 2,
+            PlatformSetupNextStep(
+                label="Run package evidence gate before tagging",
+                command="./scripts/run_package_evidence_gate.sh",
+            ),
+        )
+        next_steps.insert(
+            insert_index + 3,
             PlatformSetupNextStep(
                 label="Run Fedora gate",
                 command="./scripts/run_fedora_gate.sh --reset-user-services",

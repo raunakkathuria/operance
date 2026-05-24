@@ -44,6 +44,7 @@ That gate runs:
 - the source-checkout smoke
 - the reset-aware Fedora package gate in dry-run mode
 - the installed desktop smoke checklist in dry-run mode
+- the packaged evidence gate in dry-run mode
 
 Before tagging a release candidate, run the full package gate as well:
 
@@ -59,6 +60,18 @@ Fresh release-candidate package rebuilds must also pass:
 ./scripts/build_package_artifacts.sh --rpm --bundle-profile mvp
 rpm -Kv dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm
 ```
+
+For the current Fedora KDE packaged beta path, prefer the packaged evidence gate
+before tagging:
+
+```bash
+./scripts/run_package_evidence_gate.sh --bundle-python .venv/bin/python
+```
+
+That gate rebuilds the `mvp` RPM, verifies the artifact, installs it with stale
+user-service reset, runs installed desktop smoke, writes an installed support
+bundle when requested, and leaves the package installed for the manual
+click-to-talk checks.
 
 Use `--support-bundle-out <path>` when the gate is being run for a release
 handoff and the source-checkout smoke should write a predictable support bundle
@@ -84,6 +97,8 @@ The current public release should require all of the following:
 
 - `./scripts/run_release_readiness_gate.sh --run-package-gate` passes on the
   target Fedora KDE Wayland machine
+- `./scripts/run_package_evidence_gate.sh --bundle-python .venv/bin/python`
+  passes on the target Fedora KDE Wayland machine before tagging
 - a fresh `./scripts/build_package_artifacts.sh --rpm --bundle-profile mvp`
   rebuild completes and the normalized RPM passes `rpm -Kv`
 - a fresh installed RPM can launch the tray app from the desktop session

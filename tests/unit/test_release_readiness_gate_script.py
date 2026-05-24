@@ -27,6 +27,7 @@ def test_release_readiness_gate_dry_run_prints_default_steps() -> None:
         "+ ./scripts/run_checkout_smoke.sh --python .venv/bin/python",
         "+ ./scripts/run_fedora_gate.sh --reset-user-services --dry-run",
         "+ ./scripts/run_installed_desktop_smoke.sh --dry-run",
+        "+ ./scripts/run_package_evidence_gate.sh --dry-run",
     ]
     assert result.stderr == ""
 

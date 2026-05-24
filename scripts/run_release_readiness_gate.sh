@@ -135,3 +135,8 @@ if [[ "${run_package_gate}" -eq 0 ]]; then
     installed_desktop_args+=("--dry-run")
 fi
 run_step "${installed_desktop_display}" bash "${installed_desktop_args[@]}"
+
+if [[ "${run_package_gate}" -eq 0 ]]; then
+    run_step "./scripts/run_package_evidence_gate.sh --dry-run" \
+        bash "./scripts/run_package_evidence_gate.sh" "--dry-run"
+fi

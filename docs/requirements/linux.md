@@ -421,7 +421,7 @@ operance --check-updates
 python3 scripts/check_installed_mvp_runtime.py --command operance --check-tray-service
 ```
 
-`operance --print-config` should report `"developer_mode": false`. `operance --about` reports whether the command is a packaged install or source checkout plus package profile, build commit, tag when available, build time, and install root. `operance --check-updates` checks the configured release channel and prints whether the installed packaged build matches the latest release; it does not auto-install packages or invoke `sudo`. `operance --installed-smoke` summarizes installed package readiness, warns when the tray service is not active, fails when packaged build identity or runtime dependencies are missing, and catches stale repo-local user units shadowing the packaged service. `preset: disabled` in `systemctl --user status` is normal Fedora preset metadata; verify `Loaded`, `Active`, and the `ExecStart` path instead. `./scripts/run_installed_desktop_smoke.sh` starts/enables the packaged tray user service before checking status, so `Active: inactive (dead)` is a smoke failure.
+`operance --print-config` should report `"developer_mode": false`. `operance --about` reports whether the command is a packaged install or source checkout plus package profile, build commit, tag when available, build time, and install root. `operance --check-updates` checks the configured release channel and prints whether the installed packaged build matches the latest release; it does not auto-install packages or invoke `sudo`. `operance --installed-smoke` summarizes installed package readiness, warns when the tray service is not active, fails when packaged build identity or runtime dependencies are missing, catches stale repo-local user units shadowing the packaged service, and includes structured evidence for build identity, runtime mode, tray service state, and failed or warning checks. `preset: disabled` in `systemctl --user status` is normal Fedora preset metadata; verify `Loaded`, `Active`, and the `ExecStart` path instead. `./scripts/run_installed_desktop_smoke.sh` starts/enables the packaged tray user service before checking status, so `Active: inactive (dead)` is a smoke failure.
 The packaged tray shows `Check for updates` and the same diagnostic from `Show installed readiness`, so users can inspect release-channel status, readiness, and next steps after install without finding the CLI command first.
 
 Install a built native package artifact through the matching distro package manager:
@@ -462,7 +462,7 @@ Run the full Fedora gate from the same checkout when you want one command that c
 ./scripts/run_fedora_gate.sh --support-bundle-out /tmp/operance-release-support.tar.gz --dry-run
 ```
 
-The setup surface now also exposes `run_release_readiness_gate`, `run_installed_desktop_smoke`, `run_fedora_gate`, `run_fedora_release_smoke`, and `run_installed_rpm_package_smoke` with reset-aware Fedora commands when the current machine has the right checkout and RPM build or install prerequisites, so the same package handoff path stays discoverable from `python3 -m operance.cli --setup-actions`. When Fedora prerequisites are present, setup next steps now surface the release-readiness gate and installed desktop smoke directly.
+The setup surface now also exposes `run_release_readiness_gate`, `run_package_evidence_gate`, `run_installed_desktop_smoke`, `run_fedora_gate`, `run_fedora_release_smoke`, and `run_installed_rpm_package_smoke` with reset-aware Fedora commands when the current machine has the right checkout and RPM build or install prerequisites, so the same package handoff path stays discoverable from `python3 -m operance.cli --setup-actions`. When Fedora prerequisites are present, setup next steps now surface the release-readiness gate, package evidence gate, and installed desktop smoke directly.
 That same setup surface now also exposes `install_deb_packaging_tools` and `install_rpm_packaging_tools` when the corresponding package-build CLI is missing but the host can install it, so Fedora bring-up no longer stops at a passive `rpmbuild` warning.
 
 Run the release-readiness gate when validating a larger release batch:
@@ -474,6 +474,20 @@ Run the release-readiness gate when validating a larger release batch:
 ```
 
 The default release-readiness gate runs the package portion as a dry-run so it stays usable during normal development. Use `--run-package-gate` before a release candidate or when explicitly validating a full installed RPM path on the target Fedora KDE Wayland machine. The full package gate keeps the RPM installed so the installed desktop smoke and manual tray click-to-talk checks run against the same package payload.
+
+Run the packaged evidence gate before tagging a Fedora KDE package release candidate:
+
+```bash
+./scripts/run_package_evidence_gate.sh --dry-run
+./scripts/run_package_evidence_gate.sh --bundle-python .venv/bin/python
+./scripts/run_package_evidence_gate.sh --support-bundle-out /tmp/operance-installed-support.tar.gz
+```
+
+This gate rebuilds the `mvp` RPM, verifies the normalized RPM artifact with
+`rpm -Kv`, installs it with `--replace-existing --reset-user-services`, runs
+installed desktop smoke, captures `operance --support-bundle` from the installed
+command, and prints the manual tray click-to-talk commands that still require
+microphone access and an active KDE session.
 
 Run the installed desktop smoke after installing the RPM in the active KDE session:
 

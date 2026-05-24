@@ -67,6 +67,16 @@ touch your real Desktop directory:
 ./scripts/run_release_readiness_gate.sh
 ```
 
+Before tagging a packaged release candidate on Fedora KDE, run the packaged
+evidence gate from the same checkout. It rebuilds the `mvp` RPM, verifies the
+artifact, installs it with stale user-service reset, runs installed desktop
+smoke, captures a support bundle from the installed command, and then prints the
+manual tray click-to-talk checks that still require your active desktop session:
+
+```bash
+./scripts/run_package_evidence_gate.sh
+```
+
 Current assumptions for that path:
 
 - Linux
@@ -87,6 +97,7 @@ Operance is ready for a **Fedora KDE Wayland developer release** for outside dev
 - First-run activation diagnostic: `operance --getting-started`
 - Explicit release-channel check: `operance --check-updates`
 - Local AI planner status check: `operance --planner-status`
+- Packaged release-candidate evidence gate: `./scripts/run_package_evidence_gate.sh`
 - Wake-word and TTS assets or backends remain optional and are not part of the packaged support contract
 - Windows and macOS are architecture targets only; their current providers are scaffolds, not supported runtimes
 
@@ -124,7 +135,7 @@ What works now:
 - Verified command subset on Fedora KDE Wayland: `open <app name>` or URL targets, safe two-step launch phrases such as `open firefox and load localhost:3000` or `open firefox and notify me`, `focus <app name>`, confirmation-gated `quit <app name>`, `show recent files`, `create folder on desktop called <name>`, confirmation-gated desktop file or folder delete, rename, and move commands, `list windows`, `switch to window <title>`, `what time is it`, `what is my battery level`, `wifi status`, `what is the volume`, `is audio muted`, `set volume to 50 percent`, `mute audio`, and `unmute audio`.
 - Voice and tray MVP: tray app, bounded click-to-talk, confirmation flows, last-interaction reporting, optional wake-word, STT, and TTS probe paths, plus repo-local background voice-loop support.
 - Diagnostics and support: version/about provenance, explicit release-channel checks, doctor, setup actions, installed readiness checks, runnable-command catalog, runtime status resources, support snapshot, support bundle, audit inspection, and source-checkout smoke scripts.
-- Packaging and release gates: reproducible Linux bootstrap, source-checkout install or uninstall helpers, repo-local systemd helpers, Debian or RPM scaffolds, installed-package smoke, and the Fedora gate.
+- Packaging and release gates: reproducible Linux bootstrap, source-checkout install or uninstall helpers, repo-local systemd helpers, Debian or RPM scaffolds, installed-package smoke, package evidence capture, and the Fedora gate.
 
 What is intentionally not implemented yet:
 
@@ -459,6 +470,20 @@ Run the release-readiness gate from a checkout:
 The full package gate keeps the RPM installed so the installed desktop smoke and
 manual tray click-to-talk checks can run against that package.
 
+Run the packaged evidence gate before tagging a Fedora KDE package release
+candidate:
+
+```bash
+./scripts/run_package_evidence_gate.sh --dry-run
+./scripts/run_package_evidence_gate.sh --bundle-python .venv/bin/python
+./scripts/run_package_evidence_gate.sh --support-bundle-out /tmp/operance-installed-support.tar.gz
+```
+
+This gate rebuilds the `mvp` RPM, verifies the normalized RPM artifact, installs
+it with `--replace-existing --reset-user-services`, runs installed desktop
+smoke, captures `operance --support-bundle` from the installed command, and
+prints the manual tray click-to-talk checks to run before tagging.
+
 Run the installed desktop smoke after installing the RPM in an active Fedora KDE
 Wayland session:
 
@@ -607,7 +632,7 @@ operance --check-updates
 python3 scripts/check_installed_mvp_runtime.py --command operance --check-tray-service
 ```
 
-`operance --print-config` should report `"developer_mode": false`. `operance --about` reports whether the command is a packaged install or source checkout plus package profile, build commit, tag when available, build time, and install root. `operance --getting-started` prints the current first-run path, commands to try, local AI planner state, and contributor next steps. `operance --planner-setup-template` prints copy-paste local planner setup templates without mutating the host. `operance --planner-status` prints non-executing local planner status plus the safety contract that keeps model output bounded to typed actions. `operance --check-updates` checks the configured release channel and prints whether the installed packaged build matches the latest release; it does not auto-install packages or invoke `sudo`. `operance --installed-smoke` summarizes installed package readiness, warns when the tray service is not active, fails when packaged build identity or runtime dependencies are missing, and catches stale repo-local user units shadowing the packaged service. If stale user units are reported, reinstall with `./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --replace-existing --reset-user-services`. In `systemctl --user status`, `preset: disabled` is normal on Fedora; `Loaded`, `Active`, and the `ExecStart` command path are the parts to verify.
+`operance --print-config` should report `"developer_mode": false`. `operance --about` reports whether the command is a packaged install or source checkout plus package profile, build commit, tag when available, build time, and install root. `operance --getting-started` prints the current first-run path, commands to try, local AI planner state, and contributor next steps. `operance --planner-setup-template` prints copy-paste local planner setup templates without mutating the host. `operance --planner-status` prints non-executing local planner status plus the safety contract that keeps model output bounded to typed actions. `operance --check-updates` checks the configured release channel and prints whether the installed packaged build matches the latest release; it does not auto-install packages or invoke `sudo`. `operance --installed-smoke` summarizes installed package readiness, warns when the tray service is not active, fails when packaged build identity or runtime dependencies are missing, catches stale repo-local user units shadowing the packaged service, and includes evidence for build identity, live mode, tray service state, and failed or warning checks. If stale user units are reported, reinstall with `./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --replace-existing --reset-user-services`. In `systemctl --user status`, `preset: disabled` is normal on Fedora; `Loaded`, `Active`, and the `ExecStart` command path are the parts to verify.
 `./scripts/run_installed_desktop_smoke.sh` starts/enables the packaged tray user service before checking status, so `Active: inactive (dead)` is a smoke failure rather than a successful desktop state.
 The tray menu also exposes `Check for updates` and `Show installed readiness`, so users can inspect release-channel status and installed-smoke next steps without requiring a terminal.
 

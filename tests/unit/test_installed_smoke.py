@@ -66,8 +66,18 @@ def test_installed_smoke_passes_for_packaged_active_tray_service(monkeypatch, tm
         report=_report(),
     )
 
+    payload = result.to_dict()
+
     assert result.status == "ok"
-    assert result.to_dict()["next_steps"] == ["systemctl --user status operance-tray.service --no-pager"]
+    assert payload["next_steps"] == ["systemctl --user status operance-tray.service --no-pager"]
+    assert payload["evidence"]["developer_mode"] is False
+    assert payload["evidence"]["install_mode"] == "packaged"
+    assert payload["evidence"]["package_profile"] == "mvp"
+    assert payload["evidence"]["build_git_commit_short"] == "abcdef1"
+    assert payload["evidence"]["tray_service"]["active_state"] == "active"
+    assert payload["evidence"]["tray_service"]["fragment_path"] == "/usr/lib/systemd/user/operance-tray.service"
+    assert payload["evidence"]["failed_checks"] == []
+    assert payload["evidence"]["warning_checks"] == []
 
 
 def test_installed_smoke_fails_for_developer_mode_and_missing_runtime(tmp_path: Path) -> None:

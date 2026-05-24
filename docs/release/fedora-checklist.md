@@ -101,6 +101,18 @@ Or use the combined release gate:
 The combined Fedora gate above already covers both the source-checkout gate and
 this RPM gate in one command for a prepared Fedora checkout.
 
+Before tagging a packaged Fedora release candidate, run the package evidence
+gate:
+
+```bash
+./scripts/run_package_evidence_gate.sh --bundle-python .venv/bin/python
+```
+
+That gate rebuilds and verifies the `mvp` RPM, installs it with stale
+user-service reset, runs installed desktop smoke, captures an installed support
+bundle when requested, and leaves the package installed for the manual
+click-to-talk checks.
+
 Success means all of the following are true:
 
 - the RPM artifact is built at the documented path
@@ -112,6 +124,7 @@ Success means all of the following are true:
 - `operance --doctor` runs from the installed command
 - `operance --print-config` reports `"developer_mode": false`
 - `operance --installed-smoke` runs from the installed command and reports package-local next steps
+- `operance --installed-smoke` reports evidence for build identity, live mode, tray service state, and failed or warning checks
 - `scripts/check_installed_build_identity.py --command operance --package-profile mvp` passes
 - `scripts/check_installed_mvp_runtime.py --command operance` passes
 - the runnable supported-command subset can be projected from the installed command
