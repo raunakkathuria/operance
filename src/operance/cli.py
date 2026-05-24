@@ -388,13 +388,20 @@ def main(argv: Sequence[str] | None = None) -> int:
             daemon.config.planner,
             environment_report=environment_report,
         )
+        identity = build_project_identity()
+        installed_readiness = (
+            build_installed_smoke_result(env=env, report=environment_report).to_dict()
+            if identity.get("install_mode") == "packaged"
+            else None
+        )
         print(
             json.dumps(
                 build_getting_started_report(
                     setup_snapshot=setup_snapshot,
                     command_catalog=command_catalog,
                     planner_status=planner_status,
-                    identity=build_project_identity(),
+                    identity=identity,
+                    installed_readiness=installed_readiness,
                 ),
                 sort_keys=True,
             )

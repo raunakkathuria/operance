@@ -290,11 +290,18 @@ class TrayController:
             self.daemon.config.planner,
             environment_report=environment_report,
         )
+        identity = build_project_identity()
+        installed_readiness = (
+            build_installed_smoke_result(env=self.env, report=environment_report).to_dict()
+            if identity.get("install_mode") == "packaged"
+            else None
+        )
         return build_getting_started_report(
             setup_snapshot=setup_snapshot,
             command_catalog=command_catalog,
             planner_status=planner_status,
-            identity=build_project_identity(),
+            identity=identity,
+            installed_readiness=installed_readiness,
         )
 
     def start_click_to_talk(
@@ -645,16 +652,77 @@ def _format_getting_started_highlights(report: dict[str, object]) -> str:
         if isinstance(first_command, dict) and isinstance(first_command.get("say"), str):
             lines.append(f"Try: {first_command['say']}")
 
+    click_to_talk_smoke = report.get("click_to_talk_smoke")
+    if isinstance(click_to_talk_smoke, dict):
+        commands = click_to_talk_smoke.get("commands")
+        if isinstance(commands, list) and commands:
+            first_smoke = commands[0]
+            if isinstance(first_smoke, dict) and isinstance(first_smoke.get("say"), str):
+                lines.append(f"First voice test: {first_smoke['say']}")
+
     return "\n".join(lines)
 
 
 def _format_getting_started_details(report: dict[str, object]) -> str:
     sections: list[str] = []
+    activation_checklist = report.get("activation_checklist")
+    if isinstance(activation_checklist, list) and activation_checklist:
+        lines: list[str] = []
+        for item in activation_checklist:
+            if not isinstance(item, dict):
+                continue
+            label = item.get("label")
+            status = item.get("status")
+            if isinstance(label, str) and isinstance(status, str):
+                lines.append(f"- {label}: {status}")
+        if lines:
+            sections.append("First-run checklist:\n" + "\n".join(lines))
+
+    click_to_talk_smoke = report.get("click_to_talk_smoke")
+    if isinstance(click_to_talk_smoke, dict):
+        commands = click_to_talk_smoke.get("commands")
+        if isinstance(commands, list) and commands:
+            lines = []
+            for command in commands:
+                if not isinstance(command, dict):
+                    continue
+                say = command.get("say")
+                expected = command.get("expected")
+                if isinstance(say, str) and isinstance(expected, str):
+                    lines.append(f"- {say}: {expected}")
+            if lines:
+                sections.append("Click-to-talk smoke:\n" + "\n".join(lines))
+
     local_ai_planner = report.get("local_ai_planner")
     if isinstance(local_ai_planner, dict):
         summary = local_ai_planner.get("summary")
         if isinstance(summary, str) and summary:
-            sections.append(f"Local AI planner:\n{summary}")
+            lines = [summary]
+            activation_status = local_ai_planner.get("activation_status")
+            if isinstance(activation_status, str):
+                lines.append(f"Status: {activation_status}")
+            readiness_command = local_ai_planner.get("readiness_command")
+            if isinstance(readiness_command, str):
+                lines.append(f"Validate: {readiness_command}")
+            sections.append("Local AI planner:\n" + "\n".join(lines))
+
+    issue_capture = report.get("issue_capture")
+    if isinstance(issue_capture, dict):
+        command = issue_capture.get("command")
+        when = issue_capture.get("when")
+        lines = []
+        if isinstance(command, str):
+            lines.append(f"Command: {command}")
+        if isinstance(when, str):
+            lines.append(when)
+        include = issue_capture.get("include")
+        if isinstance(include, list) and include:
+            include_items = [f"  - {item}" for item in include if isinstance(item, str)]
+            if include_items:
+                lines.append("Include:")
+                lines.extend(include_items)
+        if lines:
+            sections.append("Support bundle:\n" + "\n".join(lines))
 
     contributor_next_steps = report.get("contributor_next_steps")
     if isinstance(contributor_next_steps, list) and contributor_next_steps:
@@ -735,7 +803,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     supported_commands_action = QAction("Show supported commands", menu)
     about_action = QAction("About Operance", menu)
     check_updates_action = QAction("Check for updates", menu)
-    getting_started_action = QAction("Getting started", menu)
+    getting_started_action = QAction("First run setup", menu)
     planner_setup_action = QAction("Show local AI setup", menu)
     planner_readiness_action = QAction("Show planner readiness", menu)
     installed_readiness_action = QAction("Show installed readiness", menu)
@@ -956,7 +1024,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
             return
         _show_information_dialog(
             QMessageBox,
-            title="Getting started",
+            title="First run setup",
             summary=str(report.get("headline") or "Operance getting started"),
             informative_text=_format_getting_started_highlights(report),
             details=_format_getting_started_details(report) or json.dumps(report, indent=2, sort_keys=True),

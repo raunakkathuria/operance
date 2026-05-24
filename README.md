@@ -66,9 +66,12 @@ If anything fails, collect a support bundle before changing the machine:
 operance --support-bundle
 ```
 
-The tray menu also exposes **Getting started**, **Show supported commands**,
-**Show local AI setup**, **Show installed readiness**, and **Save support
-bundle**, so normal beta use does not require memorizing CLI diagnostics.
+The tray menu also exposes **First run setup**, **Show supported commands**,
+**Show local AI setup**, **Show planner readiness**, **Show installed
+readiness**, and **Save support bundle**, so normal beta use does not require
+memorizing CLI diagnostics. **First run setup** includes packaged-install
+readiness when running the RPM, the supported click-to-talk smoke commands,
+optional local AI validation, and what to attach to an issue.
 
 Use [docs/release/public-beta.md](docs/release/public-beta.md) for the public
 beta install, local AI planner, release artifact, and feedback path.
@@ -149,9 +152,9 @@ Operance is ready for a **Fedora KDE Wayland developer release** for outside dev
 - First-run activation diagnostic: `operance --getting-started`
 - Explicit release-channel check: `operance --check-updates`
 - Local AI planner status check: `operance --planner-status`
-- Tray-first onboarding: Getting started, supported commands, local AI setup,
-  installed readiness, and support-bundle capture are available from the tray
-  menu
+- Tray-first onboarding: First run setup, supported commands, local AI setup,
+  planner readiness, installed readiness, and support-bundle capture are
+  available from the tray menu
 - Public beta distribution guide: [docs/release/public-beta.md](docs/release/public-beta.md)
 - Packaged release-candidate evidence gate: `./scripts/run_package_evidence_gate.sh`
 - Wake-word and TTS assets or backends remain optional and are not part of the packaged support contract

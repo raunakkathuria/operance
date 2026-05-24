@@ -108,6 +108,7 @@ def build_getting_started_report(
     command_catalog: dict[str, object],
     planner_status: dict[str, object],
     identity: dict[str, object],
+    installed_readiness: dict[str, object] | None = None,
 ) -> dict[str, object]:
     """Build one concise first-run activation report."""
     ready_for_mvp = bool(getattr(setup_snapshot, "ready_for_mvp", False))
@@ -127,6 +128,20 @@ def build_getting_started_report(
         status = "needs_setup"
         headline = "Operance needs setup before the current developer path is runnable."
         primary_command = f"{command_prefix} --setup-run-recommended --setup-dry-run"
+
+    planner_commands = planner_status.get("commands", {})
+    if not isinstance(planner_commands, dict):
+        planner_commands = {}
+
+    activation_checklist = _activation_checklist(
+        command_prefix=command_prefix,
+        primary_command=primary_command,
+        ready_for_local_runtime=ready_for_local_runtime,
+        ready_for_mvp=ready_for_mvp,
+        planner_status=planner_status,
+        planner_commands=planner_commands,
+        installed_readiness=installed_readiness,
+    )
 
     return {
         "status": status,
@@ -154,17 +169,34 @@ def build_getting_started_report(
                 "command": f"{command_prefix} --support-bundle",
             },
         ],
+        "activation_checklist": activation_checklist,
+        "installed_readiness": installed_readiness,
+        "click_to_talk_smoke": {
+            "instructions": "Click the tray icon once, speak one command, and wait for the result notification.",
+            "commands": _click_to_talk_smoke_commands(),
+        },
         "try_commands": available_examples,
         "local_ai_planner": {
             "mode": planner_status.get("mode"),
             "summary": planner_status.get("summary"),
-            "readiness_command": planner_status.get("commands", {}).get("readiness")
-            if isinstance(planner_status.get("commands"), dict)
-            else None,
-            "setup_template_command": planner_status.get("commands", {}).get("setup_template")
-            if isinstance(planner_status.get("commands"), dict)
-            else None,
+            "activation_status": _local_ai_activation_status(planner_status),
+            "required_for_tray": False,
+            "readiness_command": planner_commands.get("readiness"),
+            "setup_template_command": planner_commands.get("setup_template"),
+            "execute_test_command": planner_commands.get("execute"),
+            "enable_command": planner_commands.get("enable"),
             "safe_to_enable": planner_status.get("safe_to_enable"),
+        },
+        "issue_capture": {
+            "command": f"{command_prefix} --support-bundle",
+            "when": "Run this before changing the machine if tray, voice, packaging, or planner setup fails.",
+            "include": [
+                "support bundle archive",
+                "installed readiness status",
+                "spoken command or CLI transcript",
+                "expected behavior",
+                "actual behavior",
+            ],
         },
         "contributor_next_steps": [
             "Read docs/contributing/command-authoring.md before adding commands.",
@@ -172,6 +204,67 @@ def build_getting_started_report(
             "Run pytest plus the release-readiness gate before opening a PR.",
         ],
     }
+
+
+def _activation_checklist(
+    *,
+    command_prefix: str,
+    primary_command: str,
+    ready_for_local_runtime: bool,
+    ready_for_mvp: bool,
+    planner_status: dict[str, object],
+    planner_commands: dict[str, object],
+    installed_readiness: dict[str, object] | None,
+) -> list[dict[str, object]]:
+    checklist: list[dict[str, object]] = [
+        {
+            "label": "Confirm runtime readiness",
+            "status": "ready" if ready_for_local_runtime else "needs_setup",
+            "command": f"{command_prefix} --doctor",
+        }
+    ]
+    if installed_readiness is not None:
+        checklist.append(
+            {
+                "label": "Verify packaged install",
+                "status": _installed_readiness_activation_status(installed_readiness),
+                "command": f"{command_prefix} --installed-smoke",
+            }
+        )
+    checklist.extend(
+        [
+            {
+                "label": "Start tray click-to-talk",
+                "status": "ready" if ready_for_mvp else "needs_setup",
+                "command": primary_command,
+            },
+            {
+                "label": "Try verified voice commands",
+                "status": "ready" if ready_for_mvp else "blocked",
+                "commands": _click_to_talk_smoke_commands(),
+            },
+            {
+                "label": "Validate optional local AI planner",
+                "status": _local_ai_activation_status(planner_status),
+                "command": planner_commands.get("readiness"),
+            },
+            {
+                "label": "Capture support bundle if anything fails",
+                "status": "available",
+                "command": f"{command_prefix} --support-bundle",
+            },
+        ]
+    )
+    return checklist
+
+
+def _installed_readiness_activation_status(installed_readiness: dict[str, object]) -> str:
+    status = installed_readiness.get("status")
+    if status == "ok":
+        return "ready"
+    if status in {"warn", "failed"}:
+        return str(status)
+    return "unknown"
 
 
 def _command_prefix(identity: dict[str, object]) -> str:
@@ -206,6 +299,34 @@ def _available_examples(catalog: dict[str, object], *, limit: int) -> list[dict[
             if len(examples) >= limit:
                 return examples
     return examples
+
+
+def _click_to_talk_smoke_commands() -> list[dict[str, str]]:
+    return [
+        {
+            "say": "open browser",
+            "expected": "The default browser opens.",
+            "verifies": "app and default-browser launch path",
+        },
+        {
+            "say": "open google.com",
+            "expected": "The default browser opens https://google.com.",
+            "verifies": "website launch path",
+        },
+        {
+            "say": "what time is it",
+            "expected": "Operance answers with the current local time.",
+            "verifies": "read-only desktop status path",
+        },
+    ]
+
+
+def _local_ai_activation_status(planner_status: dict[str, object]) -> str:
+    if planner_status.get("runtime_fallback_enabled") is True and planner_status.get("status") == "ok":
+        return "enabled"
+    if planner_status.get("safe_to_enable") is True:
+        return "ready_to_enable"
+    return "optional_setup_needed"
 
 
 def _command_priority(command: dict[str, object]) -> tuple[int, str]:
