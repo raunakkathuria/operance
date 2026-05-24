@@ -858,6 +858,124 @@ def test_tray_controller_can_build_planner_readiness_report(monkeypatch, tmp_pat
     assert received["policy"] is daemon.policy
 
 
+def test_tray_controller_can_build_getting_started_report(monkeypatch, tmp_path: Path) -> None:
+    from operance.daemon import OperanceDaemon
+    from operance.ui import TrayController
+    from operance.ui.setup import SetupSnapshot
+
+    daemon = OperanceDaemon.build_default(
+        {
+            "OPERANCE_DATA_DIR": str(tmp_path / "data"),
+            "OPERANCE_DESKTOP_DIR": str(tmp_path / "Desktop"),
+        }
+    )
+    environment_report = {"checks": [{"name": "python_3_12_plus", "status": "ok"}]}
+    setup_snapshot = SetupSnapshot(
+        steps=[],
+        recommended_commands=[],
+        blocked_recommendations=[],
+        actions=[],
+        next_steps=[],
+        ready_for_local_runtime=True,
+        ready_for_voice=True,
+        ready_for_mvp=True,
+        ready_for_packaging=True,
+        available_package_formats=[],
+        summary_status="ok",
+    )
+    command_catalog = {"domains": []}
+    planner_status = {"mode": "disabled_needs_setup"}
+    identity = {"install_mode": "source", "version": "1.2.3"}
+    received: dict[str, object] = {}
+
+    monkeypatch.setattr("operance.ui.tray.build_environment_report", lambda: environment_report)
+    monkeypatch.setattr("operance.ui.tray.build_setup_snapshot", lambda report: setup_snapshot)
+    monkeypatch.setattr("operance.ui.tray.build_supported_command_catalog", lambda report: command_catalog)
+    monkeypatch.setattr(
+        "operance.ui.tray.build_planner_status_report",
+        lambda config, *, environment_report: planner_status,
+    )
+    monkeypatch.setattr("operance.ui.tray.build_project_identity", lambda: identity)
+
+    def fake_getting_started_report(**kwargs):
+        received.update(kwargs)
+        return {
+            "status": "ready",
+            "headline": "Operance is ready.",
+            "start_here": [{"label": "Show runnable commands", "command": "operance --supported-commands"}],
+            "try_commands": [{"group": "Apps", "say": "open browser"}],
+            "local_ai_planner": {"summary": "Planner disabled."},
+            "contributor_next_steps": ["Add adapters without changing core."],
+        }
+
+    monkeypatch.setattr("operance.ui.tray.build_getting_started_report", fake_getting_started_report)
+
+    report = TrayController(daemon).getting_started_report()
+
+    assert report["headline"] == "Operance is ready."
+    assert received == {
+        "setup_snapshot": setup_snapshot,
+        "command_catalog": command_catalog,
+        "planner_status": planner_status,
+        "identity": identity,
+    }
+
+
+def test_tray_controller_can_build_planner_setup_template(monkeypatch, tmp_path: Path) -> None:
+    from operance.daemon import OperanceDaemon
+    from operance.ui import TrayController
+
+    daemon = OperanceDaemon.build_default(
+        {
+            "OPERANCE_DATA_DIR": str(tmp_path / "data"),
+            "OPERANCE_DESKTOP_DIR": str(tmp_path / "Desktop"),
+        }
+    )
+    received: dict[str, object] = {}
+
+    def fake_planner_setup_template(profile: str, *, command_prefix: str):
+        received["profile"] = profile
+        received["command_prefix"] = command_prefix
+        return {
+            "status": "ok",
+            "label": "Ollama",
+            "export_commands": ["export OPERANCE_PLANNER_MODEL=qwen2.5:3b"],
+            "validation_commands": ["operance --planner-readiness"],
+        }
+
+    monkeypatch.setattr("operance.ui.tray.build_planner_setup_template", fake_planner_setup_template)
+    monkeypatch.setattr("operance.ui.tray.build_project_identity", lambda: {"install_mode": "packaged"})
+
+    report = TrayController(daemon).planner_setup_template()
+
+    assert report["label"] == "Ollama"
+    assert received == {"profile": "ollama", "command_prefix": "operance"}
+
+
+def test_format_getting_started_highlights_for_tray_dialog() -> None:
+    from operance.ui.tray import _format_getting_started_details, _format_getting_started_highlights
+
+    report = {
+        "status": "ready",
+        "start_here": [{"label": "Show runnable commands", "command": "operance --supported-commands"}],
+        "try_commands": [{"group": "Apps", "say": "open browser"}],
+        "local_ai_planner": {"summary": "Planner disabled."},
+        "contributor_next_steps": ["Add adapters without changing core."],
+    }
+
+    assert _format_getting_started_highlights(report) == (
+        "Status: ready\n"
+        "Start: Show runnable commands -> operance --supported-commands\n"
+        "Try: open browser"
+    )
+    assert _format_getting_started_details(report) == (
+        "Local AI planner:\n"
+        "Planner disabled.\n\n"
+        "Contributor next steps:\n"
+        "- Add adapters without changing core."
+    )
+
+
 def test_show_confirmation_dialog_returns_cancel_when_cancel_button_clicked() -> None:
     from operance.ui.tray import TrayConfirmationDialog, _show_confirmation_dialog
 

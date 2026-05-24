@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added consumer-beta tray onboarding actions for Getting started and local AI setup, reusing existing readiness, command-catalog, planner, and contribution guidance without adding a new setup framework.
+- Added Linux default-browser and website launch resolution for `open browser`, `open web browser`, `open default browser`, and phrases like `open google.com`, so common non-technical phrasing opens the system browser instead of probing for a literal desktop entry.
 - Added `scripts/build_release_artifacts.sh`, which builds the Fedora `mvp` RPM release upload set, verifies the RPM, copies it to `dist/release/`, writes `SHA256SUMS`, and emits a release artifact manifest.
 - Added `docs/release/public-beta.md` and tightened the README, public handoff, issue templates, and release docs around the outside-developer beta path, local AI planner expectations, support-bundle feedback loop, and GitHub release artifact workflow.
 - Added `scripts/run_package_evidence_gate.sh`, a Fedora packaged-runtime evidence gate that rebuilds the `mvp` RPM, verifies it with `rpm -Kv`, installs it with stale user-service reset, runs installed desktop smoke, captures an installed support bundle, and prints the manual tray click-to-talk checks required before tagging.

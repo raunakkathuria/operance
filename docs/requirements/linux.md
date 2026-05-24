@@ -57,8 +57,8 @@ The current public support contract is:
 
 Current supported command subset on that target:
 
-- `open <app name>` and URL-like launch targets such as `open localhost:3000`
-- safe two-step app plus URL launch phrases such as `open firefox and load localhost:3000`
+- `open <app name>` and website launch targets such as `open localhost:3000`
+- safe two-step app plus website launch phrases such as `open firefox and load localhost:3000`
 - `focus <app name>`
 - `show recent files`
 - `create folder on desktop called <name>`
@@ -324,7 +324,7 @@ Those doctor and setup surfaces now only escalate stale runtime heartbeats when 
 The CLI now also exposes `python3 -m operance.cli --voice-loop-service-status`, which collapses service install and enable state, the selected repo-local config, the latest runtime heartbeat, and the next recommended remediation into one service-level snapshot.
 When the voice-loop service is installed and active but that heartbeat goes stale, the setup projection now escalates it into a restart recommendation through `./scripts/control_systemd_user_services.sh restart --voice-loop` instead of leaving the stale heartbeat as inspection-only metadata.
 The tray snapshot and optional PySide6 tray app now also project that same repo-local heartbeat file, so the tray surface can show background voice-loop activity and surface stale-heartbeat warnings without opening `--doctor` or `--setup-actions`.
-That same tray menu now also exposes `Show supported commands` plus `Show support snapshot`, so developers can inspect command coverage and one aggregated machine-diagnostics payload without dropping back to raw CLI output.
+That same tray menu now also exposes `Getting started`, `Show supported commands`, `Show local AI setup`, and `Show support snapshot`, so beta users can inspect command coverage, local planner setup, contribution guidance, and aggregated machine diagnostics without dropping back to raw CLI output.
 That same tray menu now also exposes `Save support snapshot`, which writes the same redacted diagnostics payload to `data_dir/support-snapshots/` for issue reports without requiring terminal copy-paste.
 That same tray menu now also exposes `Save support bundle`, which writes the preferred redacted `tar.gz` issue-report artifact to `data_dir/support-bundles/` without requiring a separate shell command.
 Those tray-saved support snapshot and support-bundle artifacts now also include the current Operance version in their generated filenames, so files collected from multiple builds do not collapse into ambiguous timestamp-only names.
@@ -340,7 +340,8 @@ Click-to-talk startup failures now also fail closed across both the tray and CLI
 When the tray is otherwise idle, its tooltip now prefers the MVP hint `Left-click to talk` over the background loop’s benign `waiting_for_wake` activity text, so the first-run Linux interaction path stays explicit even when the optional voice loop is healthy.
 The tray app now also shows that same guidance once at startup with an `Operance is ready` info bubble that adds `Right-click for supported commands.`, and the tray menu now exposes a shared supported-command help view so developers can discover runnable commands from the product surface instead of dropping back to raw CLI JSON first.
 Deterministic `open ...`, `launch ...`, `focus ...`, and `switch to ...` app commands now also accept simple app names beyond the original Firefox and Terminal examples. Narrow launch-plus-notification phrases such as `open firefox and notify me` execute as typed two-step deterministic plans instead of relying on local model routing.
-Deterministic launch matching now also accepts narrow two-step app plus URL phrases such as `open firefox and load localhost:3000`; both steps remain the existing `apps.launch` tool, and non-URL chained phrases still stay out of the deterministic path.
+On Linux, `open browser`, `open web browser`, and `open default browser` now resolve through the adapter to the system default browser instead of trying to launch a literal `browser.desktop` entry. Website phrases such as `open google.com` are treated as browser navigation and normalized to `https://google.com` before execution.
+Deterministic launch matching now also accepts narrow two-step app plus website phrases such as `open firefox and load localhost:3000`; both steps remain the existing `apps.launch` tool, and non-website chained phrases still stay out of the deterministic path.
 Those same deterministic app commands now also accept the more voice-like variants `please open ...`, `open app ...`, `focus app ...`, and `switch to app ...`, which reduces filler-word brittleness in the current MVP path without widening the execution surface itself.
 That same supported-command catalog and tray help now also render generic app patterns like `open <app name>` and `quit <app name>` instead of implying those commands are limited to the example app names used in the underlying registry metadata.
 The tray menu now also exposes `Show installed readiness`, which runs the same installed-package diagnostic as `operance --installed-smoke` and renders check failures, warnings, next-step commands, and manual click-to-talk checks from the product surface.
@@ -755,7 +756,7 @@ Broader implemented Linux-backed paths that are not all release-verified yet:
 - app focus prefers a KWin scripting bridge over the session bus
 - app launch reuses the existing executable, desktop-file, and `xdg-open` fallback path, and now also normalizes localhost dev-server targets like `localhost:3000` to `http://localhost:3000` before live launch
 - spoken dev-server phrases like `browse to localhost 3000` and `open url localhost port 3000` now normalize into that same launch path, which keeps the developer MVP usable without requiring literal punctuation in every voice transcript
-- two-step launch phrases like `open firefox and load localhost:3000` execute app launch first and then URL launch, and narrow launch-plus-notification phrases like `open firefox and notify me` execute app launch first and then notification display
+- two-step launch phrases like `open firefox and load localhost:3000` execute app launch first and then website launch, and narrow launch-plus-notification phrases like `open firefox and notify me` execute app launch first and then notification display
 - explicit URL phrases like `browse to docs.python.org/3` and `open url github.com/openai/openai-python` now also normalize bare hostnames to `https://...`, so developer docs and repository browsing work without widening the generic app-launch path
 - app quit reuses the same KWin window-close path and now executes after an in-session confirmation reply
 - file open commands are implemented but remain outside the release-verified subset until their live smoke path can assert external launcher behavior without relying on a user-visible app

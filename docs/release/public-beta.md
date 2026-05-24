@@ -34,7 +34,7 @@ tray UI runtime, and STT runtime needed for click-to-talk.
 
 Supported command families are intentionally conservative:
 
-- open apps and URLs
+- open apps, the default browser, and websites
 - focus or quit apps, with confirmation for quit
 - answer time, battery, Wi-Fi, volume, and mute status
 - set, mute, and unmute audio
@@ -64,6 +64,8 @@ operance --installed-smoke
 Open the tray icon and try:
 
 ```text
+open browser
+open google.com
 open firefox
 open localhost:3000
 open firefox and notify me
@@ -71,6 +73,10 @@ what time is it
 wifi status
 what is the volume
 ```
+
+The tray menu is the primary non-terminal surface. Use it to open Getting
+started, show supported commands, inspect local AI setup, check installed
+readiness, and save a support bundle.
 
 If anything fails, collect one support bundle before changing the machine:
 

@@ -10,7 +10,7 @@ an intent, turns that intent into typed desktop actions, validates the plan, and
 then executes it through OS-specific adapters. The current public beta is
 Fedora KDE Plasma Wayland first and uses a tray-first click-to-talk workflow.
 
-Today, Operance can open apps and URLs, focus or quit apps with confirmation,
+Today, Operance can open apps and websites, focus or quit apps with confirmation,
 list recent files, manage Desktop files or folders with confirmation, list or
 switch windows, answer desktop-status questions, and control basic audio state.
 
@@ -50,6 +50,8 @@ operance --installed-smoke
 Then click the tray icon and say:
 
 ```text
+open browser
+open google.com
 open firefox
 open localhost:3000
 open firefox and notify me
@@ -63,6 +65,10 @@ If anything fails, collect a support bundle before changing the machine:
 ```bash
 operance --support-bundle
 ```
+
+The tray menu also exposes **Getting started**, **Show supported commands**,
+**Show local AI setup**, **Show installed readiness**, and **Save support
+bundle**, so normal beta use does not require memorizing CLI diagnostics.
 
 Use [docs/release/public-beta.md](docs/release/public-beta.md) for the public
 beta install, local AI planner, release artifact, and feedback path.
@@ -143,6 +149,9 @@ Operance is ready for a **Fedora KDE Wayland developer release** for outside dev
 - First-run activation diagnostic: `operance --getting-started`
 - Explicit release-channel check: `operance --check-updates`
 - Local AI planner status check: `operance --planner-status`
+- Tray-first onboarding: Getting started, supported commands, local AI setup,
+  installed readiness, and support-bundle capture are available from the tray
+  menu
 - Public beta distribution guide: [docs/release/public-beta.md](docs/release/public-beta.md)
 - Packaged release-candidate evidence gate: `./scripts/run_package_evidence_gate.sh`
 - Wake-word and TTS assets or backends remain optional and are not part of the packaged support contract
@@ -179,7 +188,7 @@ Operance already has a coherent Linux-first developer release path: a typed and 
 What works now:
 
 - Core runtime: typed action models, deterministic intent matching, validator and policy enforcement, local audit logging, bounded local planner fallback, and MCP-compatible control surfaces.
-- Verified command subset on Fedora KDE Wayland: `open <app name>` or URL targets, safe two-step launch phrases such as `open firefox and load localhost:3000` or `open firefox and notify me`, `focus <app name>`, confirmation-gated `quit <app name>`, `show recent files`, `create folder on desktop called <name>`, confirmation-gated desktop file or folder delete, rename, and move commands, `list windows`, `switch to window <title>`, `what time is it`, `what is my battery level`, `wifi status`, `what is the volume`, `is audio muted`, `set volume to 50 percent`, `mute audio`, and `unmute audio`.
+- Verified command subset on Fedora KDE Wayland: `open browser`, `open google.com`, `open <app name>`, safe two-step launch phrases such as `open firefox and load localhost:3000` or `open firefox and notify me`, `focus <app name>`, confirmation-gated `quit <app name>`, `show recent files`, `create folder on desktop called <name>`, confirmation-gated desktop file or folder delete, rename, and move commands, `list windows`, `switch to window <title>`, `what time is it`, `what is my battery level`, `wifi status`, `what is the volume`, `is audio muted`, `set volume to 50 percent`, `mute audio`, and `unmute audio`.
 - Voice and tray MVP: tray app, bounded click-to-talk, confirmation flows, last-interaction reporting, optional wake-word, STT, and TTS probe paths, plus repo-local background voice-loop support.
 - Diagnostics and support: version/about provenance, explicit release-channel checks, doctor, setup actions, installed readiness checks, runnable-command catalog, runtime status resources, support snapshot, support bundle, audit inspection, and source-checkout smoke scripts.
 - Packaging and release gates: reproducible Linux bootstrap, source-checkout install or uninstall helpers, repo-local systemd helpers, Debian or RPM scaffolds, installed-package smoke, package evidence capture, and the Fedora gate.

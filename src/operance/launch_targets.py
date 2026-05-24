@@ -13,7 +13,11 @@ def is_url_like_target(value: str) -> bool:
     candidate = value.strip()
     if not candidate or " " in candidate:
         return False
-    return bool(_URL_SCHEME_RE.match(candidate) or _LOCALHOST_TARGET_RE.fullmatch(candidate))
+    return bool(
+        _URL_SCHEME_RE.match(candidate)
+        or _LOCALHOST_TARGET_RE.fullmatch(candidate)
+        or _BARE_HOST_TARGET_RE.fullmatch(candidate)
+    )
 
 
 def normalize_launch_target(value: str) -> str:
@@ -24,6 +28,8 @@ def normalize_launch_target(value: str) -> str:
         return candidate
     if _LOCALHOST_TARGET_RE.fullmatch(candidate):
         return f"http://{candidate}"
+    if _BARE_HOST_TARGET_RE.fullmatch(candidate):
+        return f"https://{candidate}"
     return candidate
 
 

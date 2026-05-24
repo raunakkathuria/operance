@@ -30,6 +30,8 @@ def test_default_action_registry_exposes_seed_command_specs() -> None:
     assert launch_spec.risk_tier == RiskTier.TIER_0
     assert launch_spec.example_transcripts == (
         "open firefox",
+        "open browser",
+        "open google.com",
         "open http://localhost:3000",
         "browse to localhost 3000",
         "browse to docs.python.org/3",

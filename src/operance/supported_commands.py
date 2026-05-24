@@ -193,7 +193,7 @@ def _command_example_text(command: dict[str, object]) -> str:
 
 def _tool_usage_pattern(tool: ToolName) -> str | None:
     patterns = {
-        ToolName.APPS_LAUNCH: "open <app name> | open http://localhost:3000 | browse to localhost 3000 | open <app> and load <url>",
+        ToolName.APPS_LAUNCH: "open browser | open google.com | open <app name> | open <app> and load <website>",
         ToolName.APPS_FOCUS: "focus <app name>",
         ToolName.APPS_QUIT: "quit <app name>",
         ToolName.WINDOWS_LIST: "list windows",
@@ -211,7 +211,7 @@ def _tool_usage_pattern(tool: ToolName) -> str | None:
 
 def _domain_label(domain: str) -> str:
     labels = {
-        "apps": "Apps and URLs",
+        "apps": "Apps and websites",
         "audio": "Audio",
         "clipboard": "Clipboard",
         "files": "Desktop files",

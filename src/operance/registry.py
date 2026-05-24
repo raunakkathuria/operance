@@ -65,6 +65,8 @@ def build_default_action_registry() -> ActionRegistry:
             input_schema=_object_schema({"app": {"type": "string"}}, required=("app",)),
             example_transcripts=(
                 "open firefox",
+                "open browser",
+                "open google.com",
                 "open http://localhost:3000",
                 "browse to localhost 3000",
                 "browse to docs.python.org/3",
