@@ -773,7 +773,71 @@ def test_cli_getting_started_prints_activation_path(monkeypatch, capsys) -> None
     } in payload["try_commands"]
     assert payload["local_ai_planner"]["readiness_command"] == "python3 -m operance.cli --planner-readiness"
     assert payload["local_ai_planner"]["setup_template_command"] == "python3 -m operance.cli --planner-setup-template"
+    assert payload["local_ai_planner"]["required_for_tray"] is False
+    assert payload["local_ai_planner"]["activation_status"] == "ready_to_enable"
+    assert payload["activation_checklist"][0] == {
+        "command": "python3 -m operance.cli --doctor",
+        "label": "Confirm runtime readiness",
+        "status": "ready",
+    }
+    assert payload["activation_checklist"][2]["label"] == "Try verified voice commands"
+    assert payload["click_to_talk_smoke"]["instructions"] == (
+        "Click the tray icon once, speak one command, and wait for the result notification."
+    )
+    assert payload["click_to_talk_smoke"]["commands"][0] == {
+        "expected": "The default browser opens.",
+        "say": "open browser",
+        "verifies": "app and default-browser launch path",
+    }
+    assert payload["issue_capture"]["command"] == "python3 -m operance.cli --support-bundle"
+    assert payload["issue_capture"]["include"] == [
+        "support bundle archive",
+        "installed readiness status",
+        "spoken command or CLI transcript",
+        "expected behavior",
+        "actual behavior",
+    ]
     assert payload["contributor_next_steps"][0] == "Read docs/contributing/command-authoring.md before adding commands."
+
+
+def test_cli_getting_started_includes_packaged_install_readiness(monkeypatch, capsys) -> None:
+    class FakeInstalledSmokeResult:
+        def to_dict(self) -> dict[str, object]:
+            return {
+                "status": "ok",
+                "checks": [],
+                "manual_checks": ["Click the tray icon and say: open firefox"],
+                "next_steps": ["systemctl --user status operance-tray.service --no-pager"],
+            }
+
+    monkeypatch.setattr("operance.cli.build_environment_report", _ready_linux_report)
+    monkeypatch.setattr(
+        "operance.cli.build_project_identity",
+        lambda: {
+            "install_mode": "packaged",
+            "version": "0.1.0",
+            "package_profile": "mvp",
+        },
+    )
+    monkeypatch.setattr(
+        "operance.cli.build_installed_smoke_result",
+        lambda **kwargs: FakeInstalledSmokeResult(),
+    )
+
+    exit_code = main(["--getting-started"])
+
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+
+    assert exit_code == 0
+    assert payload["start_here"][1]["command"] == "operance --mvp-launch"
+    assert payload["installed_readiness"]["status"] == "ok"
+    assert payload["activation_checklist"][1] == {
+        "command": "operance --installed-smoke",
+        "label": "Verify packaged install",
+        "status": "ready",
+    }
+    assert payload["activation_checklist"][2]["label"] == "Start tray click-to-talk"
 
 
 def test_cli_planner_setup_template_prints_generic_profile(capsys) -> None:

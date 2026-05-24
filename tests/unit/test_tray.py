@@ -918,6 +918,7 @@ def test_tray_controller_can_build_getting_started_report(monkeypatch, tmp_path:
         "command_catalog": command_catalog,
         "planner_status": planner_status,
         "identity": identity,
+        "installed_readiness": None,
     }
 
 
@@ -959,18 +960,50 @@ def test_format_getting_started_highlights_for_tray_dialog() -> None:
         "status": "ready",
         "start_here": [{"label": "Show runnable commands", "command": "operance --supported-commands"}],
         "try_commands": [{"group": "Apps", "say": "open browser"}],
-        "local_ai_planner": {"summary": "Planner disabled."},
+        "activation_checklist": [
+            {"label": "Confirm runtime readiness", "status": "ready"},
+            {"label": "Start tray click-to-talk", "status": "ready"},
+        ],
+        "click_to_talk_smoke": {
+            "commands": [
+                {"say": "open browser", "expected": "The default browser opens."},
+            ],
+        },
+        "local_ai_planner": {
+            "activation_status": "optional_setup_needed",
+            "readiness_command": "operance --planner-readiness",
+            "summary": "Planner disabled.",
+        },
+        "issue_capture": {
+            "command": "operance --support-bundle",
+            "include": ["support bundle archive", "expected behavior"],
+            "when": "Attach this to a bug report.",
+        },
         "contributor_next_steps": ["Add adapters without changing core."],
     }
 
     assert _format_getting_started_highlights(report) == (
         "Status: ready\n"
         "Start: Show runnable commands -> operance --supported-commands\n"
-        "Try: open browser"
+        "Try: open browser\n"
+        "First voice test: open browser"
     )
     assert _format_getting_started_details(report) == (
+        "First-run checklist:\n"
+        "- Confirm runtime readiness: ready\n"
+        "- Start tray click-to-talk: ready\n\n"
+        "Click-to-talk smoke:\n"
+        "- open browser: The default browser opens.\n\n"
         "Local AI planner:\n"
-        "Planner disabled.\n\n"
+        "Planner disabled.\n"
+        "Status: optional_setup_needed\n"
+        "Validate: operance --planner-readiness\n\n"
+        "Support bundle:\n"
+        "Command: operance --support-bundle\n"
+        "Attach this to a bug report.\n"
+        "Include:\n"
+        "  - support bundle archive\n"
+        "  - expected behavior\n\n"
         "Contributor next steps:\n"
         "- Add adapters without changing core."
     )

@@ -74,9 +74,11 @@ wifi status
 what is the volume
 ```
 
-The tray menu is the primary non-terminal surface. Use it to open Getting
-started, show supported commands, inspect local AI setup, check installed
-readiness, and save a support bundle.
+The tray menu is the primary non-terminal surface. Use **First run setup** to
+walk through runtime readiness, packaged-install readiness when running the RPM,
+the click-to-talk smoke commands, optional local AI planner validation, and
+support-bundle capture. The same menu also shows supported commands, local AI
+setup, planner readiness, installed readiness, and support-bundle actions.
 
 If anything fails, collect one support bundle before changing the machine:
 
