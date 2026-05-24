@@ -57,6 +57,7 @@ You do not need to land a large code feature to help. Useful contribution shapes
 If you want to propose a larger feature, open an issue first and keep the initial patch on the smallest runnable slice.
 
 Read [docs/release/public-handoff.md](docs/release/public-handoff.md) before proposing work that broadens the public surface, and [docs/release/fedora-checklist.md](docs/release/fedora-checklist.md) before changing the current release gate.
+If you want to add a desktop command, read [docs/contributing/command-authoring.md](docs/contributing/command-authoring.md) first; it defines the typed-action, provider, adapter, test, and documentation path.
 
 ## Architecture boundary
 

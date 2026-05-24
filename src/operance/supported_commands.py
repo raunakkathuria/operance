@@ -62,7 +62,8 @@ def build_supported_command_catalog(
     domains = [
         {
             "domain": domain,
-            "label": domain.replace("_", " ").title(),
+            "label": _domain_label(domain),
+            "description": _domain_description(domain),
             "commands": commands_by_domain[domain],
         }
         for domain in sorted(commands_by_domain)
@@ -206,6 +207,42 @@ def _tool_usage_pattern(tool: ToolName) -> str | None:
         ToolName.FILES_OPEN: "open file on desktop called <name> | open recent file called <name>",
     }
     return patterns.get(tool)
+
+
+def _domain_label(domain: str) -> str:
+    labels = {
+        "apps": "Apps and URLs",
+        "audio": "Audio",
+        "clipboard": "Clipboard",
+        "files": "Desktop files",
+        "keyboard": "Keyboard",
+        "network": "Network",
+        "notifications": "Notifications",
+        "power": "Power",
+        "screen": "Screen",
+        "text": "Text input",
+        "time": "Time",
+        "windows": "Windows",
+    }
+    return labels.get(domain, domain.replace("_", " ").title())
+
+
+def _domain_description(domain: str) -> str:
+    descriptions = {
+        "apps": "Open apps, open URLs, focus apps, or quit apps with confirmation when needed.",
+        "audio": "Inspect and control basic desktop audio state.",
+        "clipboard": "Clipboard commands that depend on Wayland clipboard tooling.",
+        "files": "Work with Desktop files and folders through confirmation-gated actions when needed.",
+        "keyboard": "Keyboard input commands that depend on safe text-input backends.",
+        "network": "Inspect local network state.",
+        "notifications": "Show local desktop notifications.",
+        "power": "Inspect battery and power state.",
+        "screen": "Inspect or control screen state.",
+        "text": "Type semantic text through the active platform adapter.",
+        "time": "Answer local time questions.",
+        "windows": "List or switch desktop windows.",
+    }
+    return descriptions.get(domain, "Commands in this action group.")
 
 
 def _tool_live_runtime_status(
