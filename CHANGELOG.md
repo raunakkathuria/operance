@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added `operance --planner-execute`, an explicit local-model execution test that bypasses deterministic matching, validates and policy-checks planner output, executes only auto-approved typed actions, and stops before confirmation-gated actions.
+- Documented the PR completion rule that release claims must be tested through the actual user-facing workflow they propose to ship, not only lower-level or non-executing checks.
 - Added deterministic two-step handling for narrow launch-plus-notification commands such as `open firefox and notify me`, keeping common public demo commands reliable without depending on local model routing.
 - Reduced local planner prompt size by removing the duplicate inline JSON schema from prompt messages while keeping the machine-enforced schema in the chat-completions request, which makes Ollama CPU readiness checks less likely to truncate or time out.
 - Added local planner setup templates with `operance --planner-setup-template [generic|llama-cpp|ollama]`, keeping local model onboarding copy-pasteable, non-mutating, and bounded to the typed-action planner safety contract.

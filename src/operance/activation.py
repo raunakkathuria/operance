@@ -93,6 +93,7 @@ def build_planner_status_report(
             "health": "python3 -m operance.cli --planner-health",
             "readiness": "python3 -m operance.cli --planner-readiness",
             "smoke": "python3 -m operance.cli --planner-smoke \"open firefox and notify me\"",
+            "execute": "python3 -m operance.cli --planner-execute \"let me know when this is done\"",
             "setup_template": "python3 -m operance.cli --planner-setup-template",
             "enable": "export OPERANCE_PLANNER_ENABLED=1",
         },

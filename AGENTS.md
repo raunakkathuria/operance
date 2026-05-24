@@ -95,6 +95,12 @@ Before calling a feature complete:
 - verify docs do not claim unsupported or untested behavior
 - run the relevant tests, including architecture-boundary tests when provider,
   adapter, or core boundaries are touched
+- run at least one end-to-end command that exercises the user-facing workflow
+  the PR claims to release; do not mark a PR complete only because lower-level
+  unit tests or non-executing smoke tests passed
+- when a feature adds a diagnostic or readiness command, also test the real
+  runtime command path it is preparing users to run, or document exactly why
+  that live path could not be exercised yet
 
 When using Codex or other coding agents on this repo, treat these as enforcement rules:
 
