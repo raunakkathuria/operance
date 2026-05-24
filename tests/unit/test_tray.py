@@ -1087,15 +1087,42 @@ def test_configure_tray_application_keeps_app_running_after_dialogs_close() -> N
     class FakeApplication:
         def __init__(self) -> None:
             self.quit_on_last_window_closed = True
+            self.application_name = None
+            self.application_display_name = None
 
         def setQuitOnLastWindowClosed(self, value: bool) -> None:
             self.quit_on_last_window_closed = value
+
+        def setApplicationName(self, value: str) -> None:
+            self.application_name = value
+
+        def setApplicationDisplayName(self, value: str) -> None:
+            self.application_display_name = value
 
     app = FakeApplication()
 
     _configure_tray_application(app)
 
     assert app.quit_on_last_window_closed is False
+    assert app.application_name == "Operance"
+    assert app.application_display_name == "Operance"
+
+
+def test_installed_readiness_startup_check_only_runs_for_packaged_live_mode() -> None:
+    from operance.ui.tray import _should_check_installed_readiness_on_startup
+
+    assert _should_check_installed_readiness_on_startup(
+        developer_mode=False,
+        identity={"install_mode": "packaged"},
+    ) is True
+    assert _should_check_installed_readiness_on_startup(
+        developer_mode=True,
+        identity={"install_mode": "packaged"},
+    ) is False
+    assert _should_check_installed_readiness_on_startup(
+        developer_mode=False,
+        identity={"install_mode": "source_checkout"},
+    ) is False
 
 
 def test_save_support_snapshot_artifact_writes_redacted_json(tmp_path: Path, monkeypatch) -> None:

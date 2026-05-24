@@ -909,7 +909,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
             title=str(help_text["title"]),
             summary=str(help_text["summary"]),
             informative_text=(
-                "Try: " + "; ".join(str(example) for example in examples)
+                "Try saying:\n" + "\n".join(f"- {example}" for example in examples)
                 if isinstance(examples, list) and examples
                 else None
             ),
@@ -1142,7 +1142,10 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
             startup_notification.message,
             _resolve_notification_icon(QSystemTrayIcon, startup_notification.level),
         )
-    if not daemon.config.runtime.developer_mode:
+    if _should_check_installed_readiness_on_startup(
+        developer_mode=daemon.config.runtime.developer_mode,
+        identity=build_project_identity(),
+    ):
         try:
             installed_notification = build_installed_readiness_notification(
                 controller.installed_readiness_report()
@@ -1172,6 +1175,20 @@ def _configure_tray_application(app: object) -> None:
     set_quit_on_last_window_closed = getattr(app, "setQuitOnLastWindowClosed", None)
     if callable(set_quit_on_last_window_closed):
         set_quit_on_last_window_closed(False)
+    set_application_name = getattr(app, "setApplicationName", None)
+    if callable(set_application_name):
+        set_application_name("Operance")
+    set_application_display_name = getattr(app, "setApplicationDisplayName", None)
+    if callable(set_application_display_name):
+        set_application_display_name("Operance")
+
+
+def _should_check_installed_readiness_on_startup(
+    *,
+    developer_mode: bool,
+    identity: dict[str, object],
+) -> bool:
+    return not developer_mode and identity.get("install_mode") == "packaged"
 
 
 def _build_confirmation_dialog(status: StatusSnapshot) -> TrayConfirmationDialog | None:

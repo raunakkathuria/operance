@@ -69,15 +69,15 @@ def test_build_supported_command_help_text_renders_examples_and_blockers() -> No
 
     assert help_text["title"] == "Supported commands"
     assert help_text["summary"] == (
-        "2 release-verified and available, 1 unverified, 2 blocked, 1 confirmation-gated."
+        "2 commands are ready on this machine. 1 ask for confirmation before running. 2 need setup."
     )
     assert help_text["examples"] == [
-        "open <app name>",
-        "quit <app name> (confirmation)",
+        "open firefox",
+        "quit firefox (asks for confirmation)",
     ]
     assert "Apps:" in help_text["details"]
     assert "- open <app name>" in help_text["details"]
-    assert "- quit <app name> (confirmation)" in help_text["details"]
+    assert "- quit <app name> (asks for confirmation)" in help_text["details"]
     assert "Apps not yet release-verified:" in help_text["details"]
     assert "- focus <app name> -> fedora_kde_wayland" in help_text["details"]
     assert "Clipboard blocked:" in help_text["details"]
