@@ -108,6 +108,13 @@ If that path still fails and you need one issue artifact:
 .venv/bin/python -m operance.cli --support-bundle
 ```
 
+The bundle includes `issue-report.md`, a redacted paste-ready GitHub issue
+draft. To generate only the draft:
+
+```bash
+.venv/bin/python -m operance.cli --issue-report
+```
+
 ### Try a few commands
 
 Use developer-mode mocks first when you only want to validate parsing and responses. These commands are simulated and do not touch the real desktop; the transcript payload now returns `"simulated": true` in this mode. The `--supported-commands --supported-commands-available-only` view is intentionally conservative: it shows only commands that are both environment-ready and release-verified for the current Fedora KDE release target.

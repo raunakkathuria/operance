@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added `operance --issue-report` and bundled `issue-report.md` drafts in support bundles, so outside testers can paste a redacted GitHub issue summary without manually assembling environment, readiness, planner, and warning details.
+- Added a command-failure GitHub issue template and tightened public feedback docs around the supported install, smoke, support-bundle, and issue-report path.
+- Added `--issue-report` checks to the source-checkout and installed smoke scripts so the release-readiness gate verifies the new public feedback surface.
 - Fixed packaged first-run setup so a healthy RPM install is treated as ready for tray click-to-talk instead of falling back to source-checkout MVP readiness.
 - Expanded first-run onboarding with a tray-first setup checklist, packaged-install readiness, click-to-talk smoke commands, optional local AI planner validation status, and support-bundle guidance.
 - Fixed planner execution failures so adapter runtime errors return structured failed JSON instead of crashing `operance --planner-execute`.

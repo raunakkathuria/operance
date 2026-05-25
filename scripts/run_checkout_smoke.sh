@@ -86,6 +86,7 @@ run_step \
 run_step \
     "${python_bin} -m operance.cli --planner-fixture tests/fixtures/planner_mvp.jsonl" \
     "${python_bin}" "-m" "operance.cli" "--planner-fixture" "tests/fixtures/planner_mvp.jsonl"
+run_step "${python_bin} -m operance.cli --issue-report" "${python_bin}" "-m" "operance.cli" "--issue-report"
 
 support_bundle_display="${python_bin} -m operance.cli --support-bundle"
 support_bundle_command=("${python_bin}" "-m" "operance.cli" "--support-bundle")

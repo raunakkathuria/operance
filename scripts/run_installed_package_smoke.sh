@@ -213,6 +213,7 @@ fi
 run_step \
     "${command_path} --supported-commands --supported-commands-available-only" \
     "${command_path}" "--supported-commands" "--supported-commands-available-only"
+run_step "${command_path} --issue-report" "${command_path}" "--issue-report"
 
 support_bundle_display="${command_path} --support-bundle"
 support_bundle_command=("${command_path}" "--support-bundle")

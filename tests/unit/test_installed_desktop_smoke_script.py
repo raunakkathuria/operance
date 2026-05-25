@@ -29,6 +29,7 @@ def test_installed_desktop_smoke_dry_run_prints_default_steps() -> None:
         "+ operance --planner-setup-template",
         "+ operance --planner-status",
         "+ operance --supported-commands --supported-commands-available-only",
+        "+ operance --issue-report",
         "Manual tray click-to-talk checks:",
         "- open firefox",
         "- open localhost:3000",

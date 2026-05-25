@@ -790,8 +790,10 @@ def test_cli_getting_started_prints_activation_path(monkeypatch, capsys) -> None
         "verifies": "app and default-browser launch path",
     }
     assert payload["issue_capture"]["command"] == "python3 -m operance.cli --support-bundle"
+    assert payload["issue_capture"]["issue_report_command"] == "python3 -m operance.cli --issue-report"
     assert payload["issue_capture"]["include"] == [
         "support bundle archive",
+        "issue-report.md draft from the support bundle",
         "installed readiness status",
         "spoken command or CLI transcript",
         "expected behavior",
@@ -1249,10 +1251,55 @@ def test_cli_support_snapshot_out_requires_support_snapshot(capsys, tmp_path: Pa
     assert "--support-snapshot-out requires --support-snapshot" in captured.err
 
 
+def test_cli_issue_report_prints_markdown_draft(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(
+        "operance.cli.build_support_snapshot",
+        lambda env=None, redact=False: {
+            "build": {"version": "0.1.0", "install_mode": "source_checkout"},
+            "doctor": {"platform": "Linux", "checks": []},
+            "setup": {"summary_status": "ready", "ready_for_mvp": True},
+        },
+    )
+
+    exit_code = main(["--issue-report"])
+
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "# Operance issue report" in captured.out
+    assert "- Version: 0.1.0" in captured.out
+    assert "- Install mode: source_checkout" in captured.out
+    assert "- Setup summary: ready" in captured.out
+
+
+def test_cli_issue_report_can_write_markdown_to_file(monkeypatch, capsys, tmp_path: Path) -> None:
+    output_path = tmp_path / "issue.md"
+    monkeypatch.setattr(
+        "operance.cli.build_support_snapshot",
+        lambda env=None, redact=False: {"build": {"version": "0.1.0"}},
+    )
+
+    exit_code = main(["--issue-report", "--issue-report-out", str(output_path)])
+
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert captured.out == str(output_path) + "\n"
+    assert output_path.read_text(encoding="utf-8").startswith("# Operance issue report")
+
+
+def test_cli_issue_report_out_requires_issue_report(capsys, tmp_path: Path) -> None:
+    with pytest.raises(SystemExit):
+        main(["--issue-report-out", str(tmp_path / "issue.md")])
+
+    captured = capsys.readouterr()
+    assert "--issue-report-out requires --issue-report" in captured.err
+
+
 def test_cli_support_bundle_writes_default_artifact(monkeypatch, capsys) -> None:
     result = {
         "bundle_path": "/tmp/operance-support.tar.gz",
-        "included_files": ["manifest.json", "support-snapshot.json"],
+        "included_files": ["issue-report.md", "manifest.json", "support-snapshot.json"],
         "warning_count": 0,
         "warnings": [],
         "redacted": True,

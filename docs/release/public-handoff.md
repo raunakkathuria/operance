@@ -174,6 +174,13 @@ When possible, attach:
 .venv/bin/python -m operance.cli --support-bundle
 ```
 
+The support bundle includes `issue-report.md`, a redacted paste-ready issue
+draft. If the archive is not needed, generate only the draft:
+
+```bash
+.venv/bin/python -m operance.cli --issue-report
+```
+
 Also include:
 
 - Fedora version

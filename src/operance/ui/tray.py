@@ -713,6 +713,9 @@ def _format_getting_started_details(report: dict[str, object]) -> str:
         lines = []
         if isinstance(command, str):
             lines.append(f"Command: {command}")
+        issue_report_command = issue_capture.get("issue_report_command")
+        if isinstance(issue_report_command, str):
+            lines.append(f"Issue draft: {issue_report_command}")
         if isinstance(when, str):
             lines.append(when)
         include = issue_capture.get("include")

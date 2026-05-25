@@ -51,7 +51,7 @@ The public release line has already established:
 
 ### Phase D: Early Feedback Loop
 
-- collect issues with support bundles
+- collect issues with support bundles and the generated `issue-report.md` draft
 - focus on Fedora KDE bring-up, packaging, and MVP runtime reliability
 - keep the public verified command subset conservative
 - graduate additional commands only after live Fedora KDE smoke

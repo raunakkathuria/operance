@@ -140,7 +140,8 @@ Success means all of the following are true:
 - `scripts/check_installed_build_identity.py --command operance --package-profile mvp` passes
 - `scripts/check_installed_mvp_runtime.py --command operance` passes
 - the runnable supported-command subset can be projected from the installed command
-- the installed command can write a support bundle
+- the installed command can write a support bundle that includes `issue-report.md`
+- `operance --issue-report` prints a redacted paste-ready issue draft
 - the release upload set contains the RPM, checksums, and release artifact manifest
 
 ---
@@ -167,6 +168,7 @@ Attach that bundle to the bug report together with:
 - KDE Plasma version
 - session type
 - install method
+- the bundled `issue-report.md` draft, or `operance --issue-report` output
 - exact script or command that failed
 
 ---

@@ -83,6 +83,7 @@ def test_write_support_bundle_artifact_writes_expected_archive(monkeypatch, tmp_
     assert result["redacted"] is True
     assert result["warning_count"] == 0
     assert sorted(result["included_files"]) == [
+        "issue-report.md",
         "logs/operance-tray.service.log",
         "logs/operance-voice-loop.service.log",
         "manifest.json",
@@ -102,6 +103,8 @@ def test_write_support_bundle_artifact_writes_expected_archive(monkeypatch, tmp_
     }
     assert json.loads(members["support-snapshot.json"]) == snapshot
     assert json.loads(members["support-help.json"]) == help_text
+    assert "# Operance issue report" in members["issue-report.md"]
+    assert "support bundle archive" in members["issue-report.md"]
     assert runtime["status_file_path"] == "~/.operance/voice-loop-status.json"
     assert "~/.config/operance/runtime.log" in members["logs/operance-tray.service.log"]
 

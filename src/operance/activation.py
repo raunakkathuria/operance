@@ -207,9 +207,11 @@ def build_getting_started_report(
         },
         "issue_capture": {
             "command": f"{command_prefix} --support-bundle",
+            "issue_report_command": f"{command_prefix} --issue-report",
             "when": "Run this before changing the machine if tray, voice, packaging, or planner setup fails.",
             "include": [
                 "support bundle archive",
+                "issue-report.md draft from the support bundle",
                 "installed readiness status",
                 "spoken command or CLI transcript",
                 "expected behavior",

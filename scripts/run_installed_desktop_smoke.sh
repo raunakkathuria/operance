@@ -108,4 +108,5 @@ run_step "${command_path} --planner-setup-template" "${command_path}" --planner-
 run_step "${command_path} --planner-status" "${command_path}" --planner-status
 run_step "${command_path} --supported-commands --supported-commands-available-only" \
     "${command_path}" --supported-commands --supported-commands-available-only
+run_step "${command_path} --issue-report" "${command_path}" --issue-report
 print_manual_checks
