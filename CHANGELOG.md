@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Fixed packaged first-run setup so a healthy RPM install is treated as ready for tray click-to-talk instead of falling back to source-checkout MVP readiness.
 - Expanded first-run onboarding with a tray-first setup checklist, packaged-install readiness, click-to-talk smoke commands, optional local AI planner validation status, and support-bundle guidance.
 - Fixed planner execution failures so adapter runtime errors return structured failed JSON instead of crashing `operance --planner-execute`.
 - Tightened local planner prompt guidance and schema repair so open/launch/start requests are routed to `apps.launch` instead of `windows.switch`.

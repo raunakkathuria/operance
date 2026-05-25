@@ -115,19 +115,37 @@ def build_getting_started_report(
     ready_for_local_runtime = bool(getattr(setup_snapshot, "ready_for_local_runtime", False))
     command_prefix = _command_prefix(identity)
     available_examples = _available_examples(command_catalog, limit=8)
+    installed_ready = _installed_readiness_activation_status(installed_readiness) == "ready"
+    packaged_install = identity.get("install_mode") == "packaged"
 
-    if ready_for_mvp:
+    if packaged_install and installed_ready:
+        status = "ready"
+        headline = "Operance packaged install is ready for tray click-to-talk."
+        primary_command = "Click the tray icon, then say: open browser"
+        primary_label = "Use the tray click-to-talk path"
+        ready_for_activation = True
+        ready_for_runtime_check = True
+    elif ready_for_mvp:
         status = "ready"
         headline = "Operance is ready for the current click-to-talk developer path."
         primary_command = f"{command_prefix} --mvp-launch"
+        primary_label = "Launch the preferred interaction path"
+        ready_for_activation = True
+        ready_for_runtime_check = ready_for_local_runtime
     elif ready_for_local_runtime:
         status = "partial"
         headline = "Operance core runtime is ready, but the click-to-talk path still needs setup."
         primary_command = f"{command_prefix} --setup-actions"
+        primary_label = "Launch the preferred interaction path"
+        ready_for_activation = False
+        ready_for_runtime_check = True
     else:
         status = "needs_setup"
         headline = "Operance needs setup before the current developer path is runnable."
         primary_command = f"{command_prefix} --setup-run-recommended --setup-dry-run"
+        primary_label = "Launch the preferred interaction path"
+        ready_for_activation = False
+        ready_for_runtime_check = False
 
     planner_commands = planner_status.get("commands", {})
     if not isinstance(planner_commands, dict):
@@ -136,8 +154,8 @@ def build_getting_started_report(
     activation_checklist = _activation_checklist(
         command_prefix=command_prefix,
         primary_command=primary_command,
-        ready_for_local_runtime=ready_for_local_runtime,
-        ready_for_mvp=ready_for_mvp,
+        ready_for_runtime_check=ready_for_runtime_check,
+        ready_for_activation=ready_for_activation,
         planner_status=planner_status,
         planner_commands=planner_commands,
         installed_readiness=installed_readiness,
@@ -157,7 +175,7 @@ def build_getting_started_report(
                 "command": f"{command_prefix} --doctor",
             },
             {
-                "label": "Launch the preferred interaction path",
+                "label": primary_label,
                 "command": primary_command,
             },
             {
@@ -210,8 +228,8 @@ def _activation_checklist(
     *,
     command_prefix: str,
     primary_command: str,
-    ready_for_local_runtime: bool,
-    ready_for_mvp: bool,
+    ready_for_runtime_check: bool,
+    ready_for_activation: bool,
     planner_status: dict[str, object],
     planner_commands: dict[str, object],
     installed_readiness: dict[str, object] | None,
@@ -219,7 +237,7 @@ def _activation_checklist(
     checklist: list[dict[str, object]] = [
         {
             "label": "Confirm runtime readiness",
-            "status": "ready" if ready_for_local_runtime else "needs_setup",
+            "status": "ready" if ready_for_runtime_check else "needs_setup",
             "command": f"{command_prefix} --doctor",
         }
     ]
@@ -235,12 +253,12 @@ def _activation_checklist(
         [
             {
                 "label": "Start tray click-to-talk",
-                "status": "ready" if ready_for_mvp else "needs_setup",
+                "status": "ready" if ready_for_activation else "needs_setup",
                 "command": primary_command,
             },
             {
                 "label": "Try verified voice commands",
-                "status": "ready" if ready_for_mvp else "blocked",
+                "status": "ready" if ready_for_activation else "blocked",
                 "commands": _click_to_talk_smoke_commands(),
             },
             {
@@ -258,7 +276,9 @@ def _activation_checklist(
     return checklist
 
 
-def _installed_readiness_activation_status(installed_readiness: dict[str, object]) -> str:
+def _installed_readiness_activation_status(installed_readiness: dict[str, object] | None) -> str:
+    if installed_readiness is None:
+        return "unknown"
     status = installed_readiness.get("status")
     if status == "ok":
         return "ready"
