@@ -36,6 +36,16 @@ def _normalize_spoken_launch_target(value: str) -> str:
     return candidate
 
 
+_SPOKEN_APP_ALIASES = {
+    "firefall": "firefox",
+}
+
+
+def _normalize_spoken_app_target(value: str) -> str:
+    candidate = _normalize_spoken_launch_target(value)
+    return _SPOKEN_APP_ALIASES.get(candidate, candidate)
+
+
 def _is_simple_app_phrase(value: str, *, allow_url_like: bool = False) -> bool:
     candidate = value.strip()
     if not candidate:
@@ -118,7 +128,7 @@ class DeterministicIntentMatcher:
 
         launch_app_match = re.fullmatch(r"(?:please )?(?:open|launch)(?: app)? (.+)", normalized)
         if launch_app_match:
-            target = _normalize_spoken_launch_target(launch_app_match.group(1))
+            target = _normalize_spoken_app_target(launch_app_match.group(1))
             if _is_simple_app_phrase(target, allow_url_like=True):
                 return self._single_action_plan(
                     text,
@@ -141,11 +151,14 @@ class DeterministicIntentMatcher:
             )
 
         quit_app_match = re.fullmatch(r"quit( app)? (.+)", normalized)
-        if quit_app_match and _is_simple_app_phrase(quit_app_match.group(2)):
+        if quit_app_match:
+            target = _normalize_spoken_app_target(quit_app_match.group(2))
+            if not _is_simple_app_phrase(target):
+                return None
             return self._single_action_plan(
                 text,
                 ToolName.APPS_QUIT,
-                args={"app": quit_app_match.group(2)},
+                args={"app": target},
                 risk_tier=RiskTier.TIER_2,
                 requires_confirmation=True,
             )
@@ -165,11 +178,14 @@ class DeterministicIntentMatcher:
             )
 
         focus_app_match = re.fullmatch(r"(?:please )?(?:focus|switch to)(?: app)? (.+)", normalized)
-        if focus_app_match and _is_simple_app_phrase(focus_app_match.group(1)):
+        if focus_app_match:
+            target = _normalize_spoken_app_target(focus_app_match.group(1))
+            if not _is_simple_app_phrase(target):
+                return None
             return self._single_action_plan(
                 text,
                 ToolName.APPS_FOCUS,
-                args={"app": focus_app_match.group(1)},
+                args={"app": target},
             )
 
         window_minimize_match = re.fullmatch(r"minimize window (.+)", normalized)
@@ -567,7 +583,7 @@ class DeterministicIntentMatcher:
         if not launch_chain_match:
             return None
 
-        app_target = _normalize_spoken_launch_target(launch_chain_match.group(1))
+        app_target = _normalize_spoken_app_target(launch_chain_match.group(1))
         url_target = _normalize_chain_url_target(launch_chain_match.group(2), launch_chain_match.group(3))
         if url_target is None or not _is_simple_app_phrase(app_target):
             return None
@@ -589,7 +605,7 @@ class DeterministicIntentMatcher:
         if not launch_notify_match:
             return None
 
-        app_target = _normalize_spoken_launch_target(launch_notify_match.group(1))
+        app_target = _normalize_spoken_app_target(launch_notify_match.group(1))
         if not _is_simple_app_phrase(app_target, allow_url_like=True):
             return None
 

@@ -8,6 +8,7 @@ from operance.models.actions import PlanSource, RiskTier, ToolName
     [
         ("open firefox", ToolName.APPS_LAUNCH, {"app": "firefox"}, RiskTier.TIER_0, False),
         ("Open Firefox", ToolName.APPS_LAUNCH, {"app": "firefox"}, RiskTier.TIER_0, False),
+        ("open firefall", ToolName.APPS_LAUNCH, {"app": "firefox"}, RiskTier.TIER_0, False),
         ("open terminal", ToolName.APPS_LAUNCH, {"app": "terminal"}, RiskTier.TIER_0, False),
         ("open code", ToolName.APPS_LAUNCH, {"app": "code"}, RiskTier.TIER_0, False),
         ("please open code", ToolName.APPS_LAUNCH, {"app": "code"}, RiskTier.TIER_0, False),
@@ -33,12 +34,14 @@ from operance.models.actions import PlanSource, RiskTier, ToolName
             False,
         ),
         ("focus firefox", ToolName.APPS_FOCUS, {"app": "firefox"}, RiskTier.TIER_0, False),
+        ("focus firefall", ToolName.APPS_FOCUS, {"app": "firefox"}, RiskTier.TIER_0, False),
         ("focus terminal", ToolName.APPS_FOCUS, {"app": "terminal"}, RiskTier.TIER_0, False),
         ("focus code", ToolName.APPS_FOCUS, {"app": "code"}, RiskTier.TIER_0, False),
         ("switch to code", ToolName.APPS_FOCUS, {"app": "code"}, RiskTier.TIER_0, False),
         ("focus app code", ToolName.APPS_FOCUS, {"app": "code"}, RiskTier.TIER_0, False),
         ("switch to app code", ToolName.APPS_FOCUS, {"app": "code"}, RiskTier.TIER_0, False),
         ("quit firefox", ToolName.APPS_QUIT, {"app": "firefox"}, RiskTier.TIER_2, True),
+        ("quit firefall", ToolName.APPS_QUIT, {"app": "firefox"}, RiskTier.TIER_2, True),
         ("list windows", ToolName.WINDOWS_LIST, {}, RiskTier.TIER_0, False),
         ("switch to window firefox", ToolName.WINDOWS_SWITCH, {"window": "firefox"}, RiskTier.TIER_0, False),
         ("minimize window firefox", ToolName.WINDOWS_MINIMIZE, {"window": "firefox"}, RiskTier.TIER_1, False),
@@ -241,6 +244,7 @@ def test_deterministic_intent_matcher_returns_none_for_unknown_command() -> None
     ("text", "expected_url"),
     [
         ("open firefox and load localhost:3000", "http://localhost:3000"),
+        ("open firefall and load localhost:3000", "http://localhost:3000"),
         ("open firefox and open localhost:3000", "localhost:3000"),
         ("launch firefox then browse to localhost 3000", "http://localhost:3000"),
         ("open firefox then load docs.python.org/3", "https://docs.python.org/3"),
@@ -267,6 +271,7 @@ def test_deterministic_intent_matcher_builds_two_step_launch_plan(text: str, exp
     ("text", "expected_app"),
     [
         ("open firefox and notify me", "firefox"),
+        ("open firefall and notify me", "firefox"),
         ("launch code then notify me", "code"),
         ("start localhost:3000 and notify me", "localhost:3000"),
     ],
