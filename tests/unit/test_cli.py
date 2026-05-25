@@ -830,7 +830,12 @@ def test_cli_getting_started_includes_packaged_install_readiness(monkeypatch, ca
     payload = json.loads(captured.out)
 
     assert exit_code == 0
-    assert payload["start_here"][1]["command"] == "operance --mvp-launch"
+    assert payload["status"] == "ready"
+    assert payload["headline"] == "Operance packaged install is ready for tray click-to-talk."
+    assert payload["start_here"][1] == {
+        "command": "Click the tray icon, then say: open browser",
+        "label": "Use the tray click-to-talk path",
+    }
     assert payload["installed_readiness"]["status"] == "ok"
     assert payload["activation_checklist"][1] == {
         "command": "operance --installed-smoke",
