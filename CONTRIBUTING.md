@@ -166,7 +166,8 @@ Use the issue templates for reproducible bugs or feature requests. Include:
 - platform and desktop session details
 - `.venv/bin/python -m operance.cli --version` output so maintainers can tie the report back to an exact version and checkout
 - `.venv/bin/python -m operance.cli --support-bundle` output or the saved archive path when the bug involves setup, voice, tray, or Linux runtime behavior
-  The bundle is redacted by default and is the preferred issue artifact because it packages the support snapshot, voice-loop runtime snapshot, and any available service log excerpts in one file.
+  The bundle is redacted by default and is the preferred issue artifact because it packages the support snapshot, voice-loop runtime snapshot, paste-ready `issue-report.md` draft, and any available service log excerpts in one file.
+- `.venv/bin/python -m operance.cli --issue-report` output when you want to paste the generated issue draft without creating the archive.
 - `.venv/bin/python -m operance.cli --support-snapshot` output only when the raw JSON is easier to inspect inline
   This output also redacts home-directory paths by default; use `--support-snapshot-raw` only when exact local paths matter.
 - whether you are using developer mode, mock adapters, or live Linux adapters

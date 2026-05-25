@@ -22,6 +22,7 @@ from .adapters import validate_adapter_set
 from .corpus import run_default_corpus
 from .daemon import OperanceDaemon
 from .doctor import build_environment_report
+from .feedback import build_issue_report_draft
 from .installed_smoke import build_installed_smoke_result
 from .mcp import MCPServer, run_mcp_fixture
 from .mcp.stdio import run_stdio_session
@@ -147,6 +148,15 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--support-bundle-out",
         help="Write the --support-bundle archive to a specific path",
+    )
+    parser.add_argument(
+        "--issue-report",
+        action="store_true",
+        help="Print a paste-ready GitHub issue report draft from the redacted support snapshot",
+    )
+    parser.add_argument(
+        "--issue-report-out",
+        help="Write the --issue-report Markdown draft to a specific path",
     )
     parser.add_argument("--setup-snapshot", action="store_true", help="Print the projected setup-status snapshot")
     parser.add_argument("--setup-actions", action="store_true", help="Print the projected setup actions")
@@ -357,6 +367,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.error("--support-snapshot-out requires --support-snapshot")
     if args.support_bundle_out and not args.support_bundle:
         parser.error("--support-bundle-out requires --support-bundle")
+    if args.issue_report_out and not args.issue_report:
+        parser.error("--issue-report-out requires --issue-report")
 
     if args.version:
         identity = build_project_identity()
@@ -453,6 +465,22 @@ def main(argv: Sequence[str] | None = None) -> int:
             redact=True,
         )
         print(json.dumps(payload, sort_keys=True))
+        return 0
+
+    if args.issue_report:
+        payload = build_issue_report_draft(
+            build_support_snapshot(
+                env=env,
+                redact=True,
+            )
+        )
+        if args.issue_report_out:
+            output_path = Path(args.issue_report_out)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(payload, encoding="utf-8")
+            print(str(output_path))
+        else:
+            print(payload, end="")
         return 0
 
     if args.setup_snapshot:

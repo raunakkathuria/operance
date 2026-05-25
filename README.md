@@ -66,6 +66,13 @@ If anything fails, collect a support bundle before changing the machine:
 operance --support-bundle
 ```
 
+The bundle includes `issue-report.md`, a redacted paste-ready GitHub issue
+draft. If you only need the draft without creating an archive, run:
+
+```bash
+operance --issue-report
+```
+
 The tray menu also exposes **First run setup**, **Show supported commands**,
 **Show local AI setup**, **Show planner readiness**, **Show installed
 readiness**, and **Save support bundle**, so normal beta use does not require
@@ -112,6 +119,13 @@ If the MVP path fails or you need to file a bug, collect the current issue artif
 .venv/bin/python -m operance.cli --support-bundle
 ```
 
+That archive includes a generated `issue-report.md` draft. For a quick paste-only
+draft from a source checkout, use:
+
+```bash
+.venv/bin/python -m operance.cli --issue-report
+```
+
 For release-readiness work, use the repository gate that combines tests, branding
 guard, source-checkout smoke, reset-aware Fedora package gate dry-run, and the
 installed desktop smoke checklist. The gate also runs controlled live command
@@ -152,6 +166,7 @@ Operance is ready for a **Fedora KDE Wayland developer release** for outside dev
 - First-run activation diagnostic: `operance --getting-started`
 - Explicit release-channel check: `operance --check-updates`
 - Local AI planner status check: `operance --planner-status`
+- Paste-ready feedback draft: `operance --issue-report`
 - Tray-first onboarding: First run setup, supported commands, local AI setup,
   planner readiness, installed readiness, and support-bundle capture are
   available from the tray menu
@@ -180,7 +195,7 @@ Anyone can contribute right now through one of these paths:
 
 This is still a founder-maintained developer release. Small, focused fixes and high-quality issue reports are more useful than broad rewrites.
 
-Start with [CONTRIBUTING.md](CONTRIBUTING.md). If you want to add a desktop command, read [docs/contributing/command-authoring.md](docs/contributing/command-authoring.md) before changing core modules. If you are reporting a problem instead of sending a patch, attach the output artifact from `.venv/bin/python -m operance.cli --support-bundle` whenever possible.
+Start with [CONTRIBUTING.md](CONTRIBUTING.md). If you want to add a desktop command, read [docs/contributing/command-authoring.md](docs/contributing/command-authoring.md) before changing core modules. If you are reporting a problem instead of sending a patch, attach the output artifact from `.venv/bin/python -m operance.cli --support-bundle` whenever possible and paste the bundled `issue-report.md` draft into the issue body.
 
 This repository already contains the Phase 0A foundation plus the later planner, MCP, Linux-adapter, tray, voice, and release-tooling slices needed for the current developer release. Keep `README.md` for the public stop line and use [CHANGELOG.md](CHANGELOG.md) when you need the feature-by-feature implementation history.
 
@@ -660,7 +675,7 @@ python3 -m operance.cli --tray-run
 
 ## CLI
 
-Most developers only need `--version`, `--about`, `--check-updates`, `--doctor`, `--getting-started`, `--planner-setup-template`, `--planner-status`, `--planner-execute`, `--supported-commands --supported-commands-available-only`, `--transcript`, `--mvp-launch`, and `--support-bundle`. In the current developer release, `--supported-commands --supported-commands-available-only` is intentionally conservative: it prints only the commands that are both environment-ready and release-verified for the Fedora KDE Wayland target. The rest of this section is the lower-level CLI reference surface.
+Most developers only need `--version`, `--about`, `--check-updates`, `--doctor`, `--getting-started`, `--planner-setup-template`, `--planner-status`, `--planner-execute`, `--supported-commands --supported-commands-available-only`, `--transcript`, `--mvp-launch`, `--support-bundle`, and `--issue-report`. In the current developer release, `--supported-commands --supported-commands-available-only` is intentionally conservative: it prints only the commands that are both environment-ready and release-verified for the Fedora KDE Wayland target. The rest of this section is the lower-level CLI reference surface.
 
 Print the effective config:
 
@@ -691,10 +706,11 @@ operance --getting-started
 operance --planner-setup-template
 operance --planner-status
 operance --check-updates
+operance --issue-report
 python3 scripts/check_installed_mvp_runtime.py --command operance --check-tray-service
 ```
 
-`operance --print-config` should report `"developer_mode": false`. `operance --about` reports whether the command is a packaged install or source checkout plus package profile, build commit, tag when available, build time, and install root. `operance --getting-started` prints the current first-run path, commands to try, local AI planner state, and contributor next steps. `operance --planner-setup-template` prints copy-paste local planner setup templates without mutating the host. `operance --planner-status` prints non-executing local planner status plus the safety contract that keeps model output bounded to typed actions. `operance --check-updates` checks the configured release channel and prints whether the installed packaged build matches the latest release; it does not auto-install packages or invoke `sudo`. `operance --installed-smoke` summarizes installed package readiness, warns when the tray service is not active, fails when packaged build identity or runtime dependencies are missing, catches stale repo-local user units shadowing the packaged service, and includes evidence for build identity, live mode, tray service state, and failed or warning checks. If stale user units are reported, reinstall with `./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --replace-existing --reset-user-services`. In `systemctl --user status`, `preset: disabled` is normal on Fedora; `Loaded`, `Active`, and the `ExecStart` command path are the parts to verify.
+`operance --print-config` should report `"developer_mode": false`. `operance --about` reports whether the command is a packaged install or source checkout plus package profile, build commit, tag when available, build time, and install root. `operance --getting-started` prints the current first-run path, commands to try, local AI planner state, and contributor next steps. `operance --planner-setup-template` prints copy-paste local planner setup templates without mutating the host. `operance --planner-status` prints non-executing local planner status plus the safety contract that keeps model output bounded to typed actions. `operance --issue-report` prints a redacted paste-ready GitHub issue draft from the current support snapshot. `operance --check-updates` checks the configured release channel and prints whether the installed packaged build matches the latest release; it does not auto-install packages or invoke `sudo`. `operance --installed-smoke` summarizes installed package readiness, warns when the tray service is not active, fails when packaged build identity or runtime dependencies are missing, catches stale repo-local user units shadowing the packaged service, and includes evidence for build identity, live mode, tray service state, and failed or warning checks. If stale user units are reported, reinstall with `./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --replace-existing --reset-user-services`. In `systemctl --user status`, `preset: disabled` is normal on Fedora; `Loaded`, `Active`, and the `ExecStart` command path are the parts to verify.
 `./scripts/run_installed_desktop_smoke.sh` starts/enables the packaged tray user service before checking status, so `Active: inactive (dead)` is a smoke failure rather than a successful desktop state.
 The tray menu also exposes `Check for updates` and `Show installed readiness`, so users can inspect release-channel status and installed-smoke next steps without requiring a terminal.
 

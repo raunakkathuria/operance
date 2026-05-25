@@ -976,7 +976,8 @@ def test_format_getting_started_highlights_for_tray_dialog() -> None:
         },
         "issue_capture": {
             "command": "operance --support-bundle",
-            "include": ["support bundle archive", "expected behavior"],
+            "issue_report_command": "operance --issue-report",
+            "include": ["support bundle archive", "issue-report.md draft", "expected behavior"],
             "when": "Attach this to a bug report.",
         },
         "contributor_next_steps": ["Add adapters without changing core."],
@@ -1000,9 +1001,11 @@ def test_format_getting_started_highlights_for_tray_dialog() -> None:
         "Validate: operance --planner-readiness\n\n"
         "Support bundle:\n"
         "Command: operance --support-bundle\n"
+        "Issue draft: operance --issue-report\n"
         "Attach this to a bug report.\n"
         "Include:\n"
         "  - support bundle archive\n"
+        "  - issue-report.md draft\n"
         "  - expected behavior\n\n"
         "Contributor next steps:\n"
         "- Add adapters without changing core."

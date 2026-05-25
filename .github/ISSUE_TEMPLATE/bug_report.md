@@ -23,6 +23,8 @@ Do not use this template for security issues. Follow `SECURITY.md` instead.
 - Developer mode or live adapters:
 - Installed smoke, if using an RPM (`operance --installed-smoke`):
 - Local AI planner status, if relevant (`operance --planner-status` or `.venv/bin/python -m operance.cli --planner-status`):
+- Support bundle path (`operance --support-bundle` or `.venv/bin/python -m operance.cli --support-bundle`):
+- Issue draft source: bundled `issue-report.md` or `--issue-report` output
 
 ## Reproduction
 
@@ -49,4 +51,4 @@ Describe what happened instead.
 
 ## Notes
 
-Attach the `--support-bundle` archive path or upload the saved bundle file when possible. For packaged RPM reports, collect the bundle with `operance --support-bundle` from the installed command. If you need to paste inline details instead, add logs, screenshots, transcript text, audit details, or the `--support-snapshot` JSON here. Home-directory paths are redacted by default; only use `--support-snapshot-raw` if exact local paths are required.
+Attach the `--support-bundle` archive path or upload the saved bundle file when possible. The bundle includes `issue-report.md`, a redacted paste-ready issue draft. For packaged RPM reports, collect the bundle with `operance --support-bundle` from the installed command. If you need to paste inline details instead, run `operance --issue-report` or add logs, screenshots, transcript text, audit details, or the `--support-snapshot` JSON here. Home-directory paths are redacted by default; only use `--support-snapshot-raw` if exact local paths are required.

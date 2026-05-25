@@ -43,6 +43,7 @@ def test_installed_package_smoke_script_dry_run_prints_expected_steps() -> None:
         "+ operance --planner-setup-template",
         "+ operance --planner-status",
         "+ operance --supported-commands --supported-commands-available-only",
+        "+ operance --issue-report",
         "+ operance --support-bundle",
     ]
     assert result.stderr == ""
@@ -66,6 +67,7 @@ def test_installed_package_smoke_script_can_require_mvp_runtime_in_dry_run() -> 
         "+ python3 scripts/check_installed_build_identity.py --command operance --package-profile mvp",
         "+ python3 scripts/check_installed_mvp_runtime.py --command operance --check-tray-service",
         "+ operance --supported-commands --supported-commands-available-only",
+        "+ operance --issue-report",
         "+ operance --support-bundle",
     ]
     assert result.stderr == ""
@@ -194,6 +196,7 @@ def test_installed_package_smoke_script_can_install_run_and_uninstall_with_fake_
         f"+ {fake_bin / 'operance'} --planner-setup-template",
         f"+ {fake_bin / 'operance'} --planner-status",
         f"+ {fake_bin / 'operance'} --supported-commands --supported-commands-available-only",
+        f"+ {fake_bin / 'operance'} --issue-report",
         f"+ {fake_bin / 'operance'} --support-bundle --support-bundle-out {support_bundle_path}",
         "+ ./scripts/uninstall_native_package.sh --installer dnf --package-name operance --no-sudo",
         "+ dnf remove -y operance",
@@ -213,6 +216,7 @@ def test_installed_package_smoke_script_can_install_run_and_uninstall_with_fake_
         "--planner-setup-template",
         "--planner-status",
         "--supported-commands --supported-commands-available-only",
+        "--issue-report",
         f"--support-bundle --support-bundle-out {support_bundle_path}",
     ]
     assert support_bundle_path.exists()

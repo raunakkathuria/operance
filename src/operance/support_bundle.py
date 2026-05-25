@@ -11,6 +11,7 @@ import tarfile
 from typing import Mapping
 
 from .config import AppConfig
+from .feedback import build_issue_report_draft
 from .project_info import build_project_identity, project_version
 from .support_snapshot import (
     build_support_snapshot,
@@ -67,6 +68,10 @@ def write_support_bundle_artifact(
             members[f"logs/{unit_name}.log"] = _text_bytes(log_text)
         if warning is not None:
             warnings.append(f"{unit_name}: {warning}")
+
+    members["issue-report.md"] = _text_bytes(
+        build_issue_report_draft(snapshot, bundle_path=str(bundle_path))
+    )
 
     manifest = {
         "bundle_version": 1,

@@ -140,7 +140,8 @@ Prioritize larger coherent batches:
 - **Verified command graduation:** expand the supported command subset one
   command family at a time only after live KDE smoke passes.
 - **Onboarding and issue capture:** improve setup output, support bundle
-  content, and troubleshooting docs based on real external failure modes.
+  content, generated `issue-report.md` drafts, and troubleshooting docs based
+  on real external failure modes.
 
 Avoid unrelated feature accumulation in release branches. Each PR should
 represent one release-quality batch with tests, docs, and validation.

@@ -86,7 +86,19 @@ If anything fails, collect one support bundle before changing the machine:
 operance --support-bundle
 ```
 
-Attach that archive to a GitHub issue.
+Attach that archive to a GitHub issue. The archive includes:
+
+- `issue-report.md`: a redacted paste-ready GitHub issue draft
+- `support-snapshot.json`: doctor, setup, command, planner, release, and audit state
+- `support-help.json`: human-readable diagnostic highlights
+- `voice-loop-runtime.json`: latest voice-loop runtime status
+- service log excerpts when available
+
+If you only need the issue text without writing the archive, run:
+
+```bash
+operance --issue-report
+```
 
 ---
 
@@ -106,6 +118,12 @@ Collect a source-checkout support bundle with:
 
 ```bash
 .venv/bin/python -m operance.cli --support-bundle
+```
+
+For a paste-ready source-checkout issue draft:
+
+```bash
+.venv/bin/python -m operance.cli --issue-report
 ```
 
 ---
@@ -178,6 +196,7 @@ Useful issues include:
 - output from `operance --version`
 - output from `operance --installed-smoke` for RPM reports
 - the support bundle archive
+- the bundled `issue-report.md` draft or `operance --issue-report` output
 - the spoken command or CLI transcript that failed
 - expected behavior versus actual behavior
 - whether the issue is tray, microphone, local AI planner, packaging, or a
