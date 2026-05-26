@@ -12,6 +12,8 @@ def test_github_pages_workflow_deploys_static_site_artifact() -> None:
 
     assert "name: Pages" in workflow
     assert "site/**" in workflow
+    assert "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true" in workflow
+    assert "enablement: true" in workflow
     assert "site/index.html site/styles.css" in workflow
     assert "assets/icons/operance.svg" in workflow
     assert 'html.replace("../assets/icons/operance.svg", "assets/icons/operance.svg")' in workflow
