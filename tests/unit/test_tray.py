@@ -973,6 +973,7 @@ def test_format_getting_started_highlights_for_tray_dialog() -> None:
             "activation_status": "optional_setup_needed",
             "readiness_command": "operance --planner-readiness",
             "summary": "Planner disabled.",
+            "setup_policy": "Optional. Operance does not install model servers.",
         },
         "issue_capture": {
             "command": "operance --support-bundle",
@@ -995,8 +996,9 @@ def test_format_getting_started_highlights_for_tray_dialog() -> None:
         "- Start tray click-to-talk: ready\n\n"
         "Click-to-talk smoke:\n"
         "- open browser: The default browser opens.\n\n"
-        "Local AI planner:\n"
+        "Optional local AI planner:\n"
         "Planner disabled.\n"
+        "Optional. Operance does not install model servers.\n"
         "Status: optional_setup_needed\n"
         "Validate: operance --planner-readiness\n\n"
         "Support bundle:\n"

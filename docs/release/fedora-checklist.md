@@ -122,6 +122,7 @@ After validation passes, prepare the public release upload set:
 Upload these generated files from `dist/release/` to GitHub releases:
 
 - `operance-0.1.0-1.noarch.rpm`
+- `setup.sh`
 - `SHA256SUMS`
 - `release-artifacts-manifest.json`
 

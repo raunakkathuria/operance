@@ -53,6 +53,7 @@ The current public support contract is:
 - wake word and the continuous voice loop as secondary diagnostics, not the primary release workflow
 - the supported Fedora RPM path vendors the tray UI and STT runtime dependencies needed for click-to-talk
 - first installed-package diagnostic: `operance --installed-smoke`
+- stable packaged setup entrypoint: `./scripts/setup.sh --package ./operance-0.1.0-1.noarch.rpm`
 - wake-word and TTS assets or backends remain optional and outside the packaged support contract
 
 Current supported command subset on that target:
@@ -224,6 +225,17 @@ The matching uninstall orchestrator removes that source-checkout service setup a
 ./scripts/uninstall_local_linux_app.sh --remove-venv --dry-run
 ./scripts/uninstall_local_linux_app.sh --voice-loop --dry-run
 ```
+
+For the outside-developer packaged path, prefer the stable setup entrypoint
+instead of asking testers to stitch together package install, stale service
+reset, tray startup, readiness, and support capture commands:
+
+```bash
+./scripts/setup.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --dry-run
+```
+
+User-facing script filenames should describe stable lifecycle intent. Do not
+introduce release-phase names such as alpha or beta into script names.
 
 Current repo setup also remains compatible with the standard venv flow:
 
@@ -504,9 +516,13 @@ Prepare the release upload artifacts after that evidence gate passes:
 ./scripts/build_release_artifacts.sh --bundle-python .venv/bin/python
 ```
 
-This writes the normalized `mvp` RPM, `SHA256SUMS`, and
+This writes the normalized `mvp` RPM, stable `setup.sh`, `SHA256SUMS`, and
 `release-artifacts-manifest.json` under `dist/release/` so maintainers can
-upload one predictable artifact set to GitHub releases.
+upload one predictable artifact set to GitHub releases. The manifest install
+command intentionally points at `bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm`
+so public testers use the same setup workflow that resets stale user services,
+starts the tray, runs installed smoke, prints runnable commands, and captures a
+support bundle.
 
 Run the installed desktop smoke after installing the RPM in the active KDE session:
 
