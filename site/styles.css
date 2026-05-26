@@ -61,8 +61,27 @@ nav {
 
 .brand {
   gap: 10px;
-  font-weight: 800;
   text-decoration: none;
+}
+
+.brand span {
+  display: grid;
+  gap: 2px;
+}
+
+.brand strong {
+  color: var(--gray-900);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.brand small {
+  color: var(--gray-600);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 nav {
@@ -459,10 +478,8 @@ pre {
 }
 
 footer {
-  display: flex;
-  justify-content: space-between;
-  gap: 18px;
   padding: 28px clamp(20px, 5vw, 72px);
+  text-align: center;
   color: var(--gray-600);
   border-top: 1px solid rgba(209, 213, 219, 0.7);
 }
@@ -486,8 +503,7 @@ footer {
 }
 
 @media (max-width: 860px) {
-  .site-header,
-  footer {
+  .site-header {
     align-items: flex-start;
     flex-direction: column;
   }
