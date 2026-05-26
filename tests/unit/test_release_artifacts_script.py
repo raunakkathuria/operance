@@ -1,5 +1,6 @@
 import subprocess
 from pathlib import Path
+from textwrap import dedent
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -86,3 +87,14 @@ def test_release_artifacts_forwards_options_in_dry_run(tmp_path: Path) -> None:
         f"- {manifest_path}",
     ]
     assert result.stderr == ""
+
+
+def test_release_artifacts_manifest_uses_stable_setup_command() -> None:
+    script = SCRIPT_PATH.read_text(encoding="utf-8")
+
+    assert '"type": "setup-script"' in script
+    assert dedent(
+        '''
+            "install_command": f"bash ./setup.sh --package ./{rpm_path.name}",
+        '''
+    ).strip() in script

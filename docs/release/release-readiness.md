@@ -80,8 +80,12 @@ the GitHub release upload set:
 ./scripts/build_release_artifacts.sh --bundle-python .venv/bin/python
 ```
 
-That writes the normalized RPM, `SHA256SUMS`, and a release artifact manifest
-under `dist/release/`.
+That writes the normalized RPM, stable `setup.sh`, `SHA256SUMS`, and a release
+artifact manifest under `dist/release/`. The manifest install command should
+point at `bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm`, not raw
+`dnf install`, so the public release path exercises stale user-service reset,
+tray startup, installed smoke, runnable-command discovery, and support-bundle
+capture.
 
 Use `--support-bundle-out <path>` when the gate is being run for a release
 handoff and the source-checkout smoke should write a predictable support bundle

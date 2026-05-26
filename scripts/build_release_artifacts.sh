@@ -194,7 +194,7 @@ payload = {
     "git_commit": git_value("rev-parse", "HEAD"),
     "git_commit_short": git_value("rev-parse", "--short", "HEAD"),
     "git_tag": git_value("describe", "--tags", "--exact-match"),
-    "install_command": f"sudo dnf install -y {rpm_path.name}",
+    "install_command": f"bash ./setup.sh --package ./{rpm_path.name}",
     "package_version": version,
     "supported_target": "Fedora KDE Plasma Wayland",
     "validation_commands": [

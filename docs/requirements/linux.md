@@ -516,9 +516,13 @@ Prepare the release upload artifacts after that evidence gate passes:
 ./scripts/build_release_artifacts.sh --bundle-python .venv/bin/python
 ```
 
-This writes the normalized `mvp` RPM, `SHA256SUMS`, and
+This writes the normalized `mvp` RPM, stable `setup.sh`, `SHA256SUMS`, and
 `release-artifacts-manifest.json` under `dist/release/` so maintainers can
-upload one predictable artifact set to GitHub releases.
+upload one predictable artifact set to GitHub releases. The manifest install
+command intentionally points at `bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm`
+so public testers use the same setup workflow that resets stale user services,
+starts the tray, runs installed smoke, prints runnable commands, and captures a
+support bundle.
 
 Run the installed desktop smoke after installing the RPM in the active KDE session:
 

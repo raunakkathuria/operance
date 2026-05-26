@@ -138,8 +138,11 @@ Maintainers preparing GitHub release assets should run:
 ./scripts/build_release_artifacts.sh --bundle-python .venv/bin/python
 ```
 
-Upload the generated RPM, `SHA256SUMS`, and release artifact manifest from
-`dist/release/`.
+Upload the generated RPM, `setup.sh`, `SHA256SUMS`, and release artifact
+manifest from `dist/release/`. The public install command for those assets is
+`bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm`, so outside testers
+use the same reset, tray startup, installed-smoke, command-discovery, and
+support-bundle path that maintainers validate.
 
 ---
 
