@@ -91,6 +91,10 @@ signing story are published.
 Use [docs/release/public-beta.md](docs/release/public-beta.md) for the public
 beta install, local AI planner, release artifact, and feedback path.
 
+The repository also includes a static public landing page at
+[site/index.html](site/index.html). It explains Operance for new users and links
+back to the canonical Markdown docs for developer details.
+
 ## Developer Quickstart
 
 Use this path when developing Operance itself from a source checkout:
