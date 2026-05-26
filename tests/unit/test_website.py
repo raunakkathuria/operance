@@ -8,6 +8,7 @@ import re
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SITE_INDEX = REPO_ROOT / "site" / "index.html"
 SITE_STYLES = REPO_ROOT / "site" / "styles.css"
+GITHUB_DOC_BASE = "https://github.com/raunakkathuria/operance/blob/main/"
 
 
 class SiteParser(HTMLParser):
@@ -83,16 +84,19 @@ def test_developer_section_links_to_existing_markdown_docs() -> None:
     parser = _parse_site()
 
     expected_links = {
-        "../README.md",
-        "../docs/release/public-beta.md",
-        "../docs/architecture/overview.md",
-        "../docs/architecture/adapter-authoring.md",
-        "../docs/contributing/command-authoring.md",
-        "../docs/requirements/linux.md",
-        "../CONTRIBUTING.md",
+        f"{GITHUB_DOC_BASE}README.md",
+        f"{GITHUB_DOC_BASE}docs/release/public-beta.md",
+        f"{GITHUB_DOC_BASE}docs/architecture/overview.md",
+        f"{GITHUB_DOC_BASE}docs/architecture/adapter-authoring.md",
+        f"{GITHUB_DOC_BASE}docs/contributing/command-authoring.md",
+        f"{GITHUB_DOC_BASE}docs/requirements/linux.md",
+        f"{GITHUB_DOC_BASE}CONTRIBUTING.md",
     }
 
     assert expected_links <= parser.links
     for href in expected_links:
-        if href.startswith(".."):
-            assert (SITE_INDEX.parent / href).resolve().exists()
+        repo_path = href.removeprefix(GITHUB_DOC_BASE)
+        assert href != repo_path
+        assert (REPO_ROOT / repo_path).exists()
+
+    assert not any(href.startswith("../") and href.endswith(".md") for href in parser.links)
