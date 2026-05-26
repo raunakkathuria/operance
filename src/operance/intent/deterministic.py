@@ -9,6 +9,7 @@ from ..key_presses import normalize_supported_key
 from ..launch_targets import is_url_like_target, normalize_explicit_url_target
 from ..models.actions import ActionPlan, PlanSource, RiskTier, ToolName, TypedAction
 from ..registry import derive_action_safety_metadata
+from .speech_recovery import recover_spoken_app_target
 
 
 def _normalize_text(text: str) -> str:
@@ -36,18 +37,9 @@ def _normalize_spoken_launch_target(value: str) -> str:
     return candidate
 
 
-_SPOKEN_APP_ALIASES = {
-    "firefall": "firefox",
-    "fire fall": "firefox",
-    "fire force": "firefox",
-    "fire fox": "firefox",
-    "fireforth": "firefox",
-}
-
-
 def _normalize_spoken_app_target(value: str) -> str:
     candidate = _normalize_spoken_launch_target(value)
-    return _SPOKEN_APP_ALIASES.get(candidate, candidate)
+    return recover_spoken_app_target(candidate)
 
 
 def _is_simple_app_phrase(value: str, *, allow_url_like: bool = False) -> bool:

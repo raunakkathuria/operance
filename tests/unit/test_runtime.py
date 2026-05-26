@@ -201,6 +201,53 @@ def test_daemon_routes_high_confidence_unknown_transcript_to_planner_when_enable
     assert daemon.state_machine.current_state == RuntimeState.RESPONDING
 
 
+def test_daemon_uses_speech_recovery_before_planner_fallback(tmp_path: Path) -> None:
+    class StubPlannerClient:
+        def __init__(self) -> None:
+            self.calls: list[str] = []
+
+        def plan(self, transcript: str, **_: object) -> dict[str, object]:
+            self.calls.append(transcript)
+            return {
+                "actions": [
+                    {
+                        "tool": "notifications.show",
+                        "args": {"title": "Planner", "message": "Fallback executed"},
+                    }
+                ]
+            }
+
+    planner_client = StubPlannerClient()
+    daemon = OperanceDaemon.build_default(
+        {
+            "OPERANCE_DATA_DIR": str(tmp_path / "data"),
+            "OPERANCE_DESKTOP_DIR": str(tmp_path / "Desktop"),
+            "OPERANCE_PLANNER_ENABLED": "1",
+        }
+    )
+    daemon.planner_client = planner_client
+    responses: list[ResponseEvent] = []
+    planned_events: list[ActionPlanEvent] = []
+    daemon.event_bus.subscribe(ResponseEvent, responses.append)
+    daemon.event_bus.subscribe(ActionPlanEvent, planned_events.append)
+
+    daemon.start()
+    daemon.emit_wake_detected("operance")
+    daemon.emit_transcript("open fire force", confidence=0.93, is_final=True)
+
+    assert planner_client.calls == []
+    assert len(planned_events) == 1
+    assert planned_events[0].plan.source == PlanSource.DETERMINISTIC
+    assert planned_events[0].plan.actions[0].tool == ToolName.APPS_LAUNCH
+    assert planned_events[0].plan.actions[0].args == {"app": "firefox"}
+    assert responses[-1].status == "success"
+    assert responses[-1].text == "Launched firefox"
+    snapshot = daemon.status_snapshot()
+    assert snapshot.last_plan_source == "deterministic"
+    assert snapshot.last_routing_reason == "deterministic_match"
+    assert snapshot.last_planner_error is None
+
+
 def test_daemon_requires_confirmation_for_destructive_planner_action(tmp_path: Path) -> None:
     class StubPlannerClient:
         def plan(self, transcript: str, **_: object) -> dict[str, object]:
