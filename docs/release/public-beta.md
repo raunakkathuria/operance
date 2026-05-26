@@ -52,14 +52,21 @@ operance --supported-commands --supported-commands-available-only
 
 ## 3. Try The Packaged Beta
 
-Download the Fedora RPM from the GitHub release assets, then install it:
+Download `setup.sh` and the Fedora RPM from the same GitHub release assets,
+then install it:
 
 ```bash
-sudo dnf install -y ./operance-0.1.0-1.noarch.rpm
-systemctl --user enable --now operance-tray.service
+bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm
 operance --version
 operance --installed-smoke
 ```
+
+The setup script is the stable local setup surface for the current packaged
+path. It installs the RPM, resets stale user-scoped Operance services, starts
+the tray service, runs installed readiness, prints the supported command
+catalog, captures a support bundle, and lists the manual tray checks to run.
+Do not use release-phase names such as alpha or beta for script filenames; keep
+setup and gate names stable across releases.
 
 Open the tray icon and try:
 
@@ -161,6 +168,10 @@ For an explicit one-off model execution test, use:
 operance --planner-execute "let me know when this is done"
 ```
 
+Operance does not install Ollama, pull models, write planner configuration, or
+enable planner fallback automatically in this release path. Treat local AI as an
+optional planner layer after the deterministic tray commands work.
+
 ---
 
 ## 6. Maintainer Release Artifact Build
@@ -174,6 +185,7 @@ Before publishing a GitHub release, build the upload set:
 That writes:
 
 - `dist/release/operance-0.1.0-1.noarch.rpm`
+- `dist/release/setup.sh`
 - `dist/release/SHA256SUMS`
 - `dist/release/release-artifacts-manifest.json`
 
@@ -183,8 +195,16 @@ Then run the installed package evidence gate on the target Fedora KDE machine:
 ./scripts/run_package_evidence_gate.sh --bundle-python .venv/bin/python --support-bundle-out /tmp/operance-installed-support.tar.gz
 ```
 
-Publish the RPM, `SHA256SUMS`, and release artifact manifest as GitHub release
-assets only after the manual tray click-to-talk checks pass.
+Publish the RPM, `setup.sh`, `SHA256SUMS`, and release artifact manifest as
+GitHub release assets only after the manual tray click-to-talk checks pass.
+
+Future hosted setup may take the shape below, but do not publish it as a live
+install command until the project has a stable public URL, release asset policy,
+and checksum or signing story:
+
+```bash
+curl -fsSL https://operance.dev/setup.sh | sh
+```
 
 ---
 

@@ -199,6 +199,10 @@ def build_getting_started_report(
             "summary": planner_status.get("summary"),
             "activation_status": _local_ai_activation_status(planner_status),
             "required_for_tray": False,
+            "setup_policy": (
+                "Optional. Operance does not install model servers, pull models, "
+                "or enable planner fallback automatically."
+            ),
             "readiness_command": planner_commands.get("readiness"),
             "setup_template_command": planner_commands.get("setup_template"),
             "execute_test_command": planner_commands.get("execute"),
@@ -334,6 +338,16 @@ def _click_to_talk_smoke_commands() -> list[dict[str, str]]:
             "say": "open google.com",
             "expected": "The default browser opens https://google.com.",
             "verifies": "website launch path",
+        },
+        {
+            "say": "open firefox",
+            "expected": "Firefox opens.",
+            "verifies": "app launch path",
+        },
+        {
+            "say": "open firefox and notify me",
+            "expected": "Firefox opens and Operance shows a notification.",
+            "verifies": "two-step launch plus notification path",
         },
         {
             "say": "what time is it",

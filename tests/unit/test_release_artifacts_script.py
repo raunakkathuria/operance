@@ -23,6 +23,7 @@ def test_release_artifacts_dry_run_prints_default_steps() -> None:
     output_dir = REPO_ROOT / "dist/release"
     rpm_path = root_dir / "rpm/operance-0.1.0-1.noarch.rpm"
     public_rpm_path = output_dir / "operance-0.1.0-1.noarch.rpm"
+    public_setup_path = output_dir / "setup.sh"
     checksums_path = output_dir / "SHA256SUMS"
     manifest_path = output_dir / "release-artifacts-manifest.json"
 
@@ -32,10 +33,12 @@ def test_release_artifacts_dry_run_prints_default_steps() -> None:
         f"+ rpm -Kv {rpm_path}",
         f"+ mkdir -p {output_dir}",
         f"+ cp {rpm_path} {public_rpm_path}",
-        f"+ cd {output_dir} && sha256sum operance-0.1.0-1.noarch.rpm > SHA256SUMS",
+        f"+ cp scripts/setup.sh {public_setup_path}",
+        f"+ cd {output_dir} && sha256sum operance-0.1.0-1.noarch.rpm setup.sh > SHA256SUMS",
         f"+ render release artifact manifest -> {manifest_path}",
         "Release artifacts:",
         f"- {public_rpm_path}",
+        f"- {public_setup_path}",
         f"- {checksums_path}",
         f"- {manifest_path}",
     ]
@@ -62,6 +65,7 @@ def test_release_artifacts_forwards_options_in_dry_run(tmp_path: Path) -> None:
 
     rpm_path = root_dir / "rpm/operance-2.3.4-1.noarch.rpm"
     public_rpm_path = output_dir / "operance-2.3.4-1.noarch.rpm"
+    public_setup_path = output_dir / "setup.sh"
     checksums_path = output_dir / "SHA256SUMS"
     manifest_path = output_dir / "release-artifacts-manifest.json"
 
@@ -72,10 +76,12 @@ def test_release_artifacts_forwards_options_in_dry_run(tmp_path: Path) -> None:
         f"+ rpm -Kv {rpm_path}",
         f"+ mkdir -p {output_dir}",
         f"+ cp {rpm_path} {public_rpm_path}",
-        f"+ cd {output_dir} && sha256sum operance-2.3.4-1.noarch.rpm > SHA256SUMS",
+        f"+ cp scripts/setup.sh {public_setup_path}",
+        f"+ cd {output_dir} && sha256sum operance-2.3.4-1.noarch.rpm setup.sh > SHA256SUMS",
         f"+ render release artifact manifest -> {manifest_path}",
         "Release artifacts:",
         f"- {public_rpm_path}",
+        f"- {public_setup_path}",
         f"- {checksums_path}",
         f"- {manifest_path}",
     ]

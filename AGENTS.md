@@ -16,6 +16,11 @@ python3 -m pip install -e ".[dev]"
 
 Run the full test suite with `.venv/bin/python -m pytest`. Run the CLI locally with `.venv/bin/python -m operance.cli --print-config` or `.venv/bin/python -m operance.cli --doctor`. Use `.venv/bin/python -m operance.cli --planner-request "open firefox"` to inspect planner payloads during development, and `.venv/bin/python -m operance.cli --planner-readiness "open firefox and notify me"` to validate local planner health plus non-executing smoke before enabling live fallback.
 
+Use stable lifecycle names for user-facing scripts. Do not add release-phase
+names such as `alpha`, `beta`, or similar maturity labels to script filenames;
+prefer names like `scripts/setup.sh`, `scripts/run_fedora_gate.sh`, or
+`scripts/run_release_readiness_gate.sh` that remain valid across releases.
+
 ## Coding Style & Naming Conventions
 
 Target Python `3.12+`. Use 4-space indentation, type hints, and small typed data models. Prefer `snake_case` for functions, modules, and variables, and `PascalCase` for classes and dataclasses. Keep platform-specific APIs out of portable core modules; expose them through adapter interfaces in `src/operance/adapters/base.py`. Match existing direct, minimal docstrings and avoid broad refactors in feature slices.

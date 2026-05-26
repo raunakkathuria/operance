@@ -774,6 +774,10 @@ def test_cli_getting_started_prints_activation_path(monkeypatch, capsys) -> None
     assert payload["local_ai_planner"]["readiness_command"] == "python3 -m operance.cli --planner-readiness"
     assert payload["local_ai_planner"]["setup_template_command"] == "python3 -m operance.cli --planner-setup-template"
     assert payload["local_ai_planner"]["required_for_tray"] is False
+    assert payload["local_ai_planner"]["setup_policy"] == (
+        "Optional. Operance does not install model servers, pull models, "
+        "or enable planner fallback automatically."
+    )
     assert payload["local_ai_planner"]["activation_status"] == "ready_to_enable"
     assert payload["activation_checklist"][0] == {
         "command": "python3 -m operance.cli --doctor",
@@ -789,6 +793,13 @@ def test_cli_getting_started_prints_activation_path(monkeypatch, capsys) -> None
         "say": "open browser",
         "verifies": "app and default-browser launch path",
     }
+    assert [command["say"] for command in payload["click_to_talk_smoke"]["commands"]] == [
+        "open browser",
+        "open google.com",
+        "open firefox",
+        "open firefox and notify me",
+        "what time is it",
+    ]
     assert payload["issue_capture"]["command"] == "python3 -m operance.cli --support-bundle"
     assert payload["issue_capture"]["issue_report_command"] == "python3 -m operance.cli --issue-report"
     assert payload["issue_capture"]["include"] == [

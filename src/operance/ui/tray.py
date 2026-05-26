@@ -698,13 +698,16 @@ def _format_getting_started_details(report: dict[str, object]) -> str:
         summary = local_ai_planner.get("summary")
         if isinstance(summary, str) and summary:
             lines = [summary]
+            setup_policy = local_ai_planner.get("setup_policy")
+            if isinstance(setup_policy, str) and setup_policy:
+                lines.append(setup_policy)
             activation_status = local_ai_planner.get("activation_status")
             if isinstance(activation_status, str):
                 lines.append(f"Status: {activation_status}")
             readiness_command = local_ai_planner.get("readiness_command")
             if isinstance(readiness_command, str):
                 lines.append(f"Validate: {readiness_command}")
-            sections.append("Local AI planner:\n" + "\n".join(lines))
+            sections.append("Optional local AI planner:\n" + "\n".join(lines))
 
     issue_capture = report.get("issue_capture")
     if isinstance(issue_capture, dict):

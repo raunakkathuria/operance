@@ -112,6 +112,7 @@ root_dir="${root_dir%/}"
 output_dir="${output_dir%/}"
 rpm_path="${root_dir}/rpm/operance-${version}-1.noarch.rpm"
 public_rpm_path="${output_dir}/operance-${version}-1.noarch.rpm"
+public_setup_path="${output_dir}/setup.sh"
 checksums_path="${output_dir}/SHA256SUMS"
 manifest_path="${output_dir}/release-artifacts-manifest.json"
 
@@ -137,16 +138,17 @@ run_step "${build_display}" bash "${build_args[@]}"
 run_step "rpm -Kv ${rpm_path}" rpm -Kv "${rpm_path}"
 run_step "mkdir -p ${output_dir}" mkdir -p "${output_dir}"
 run_step "cp ${rpm_path} ${public_rpm_path}" cp "${rpm_path}" "${public_rpm_path}"
+run_step "cp scripts/setup.sh ${public_setup_path}" cp "scripts/setup.sh" "${public_setup_path}"
 
-checksum_display="cd ${output_dir} && sha256sum $(basename "${public_rpm_path}") > SHA256SUMS"
+checksum_display="cd ${output_dir} && sha256sum $(basename "${public_rpm_path}") setup.sh > SHA256SUMS"
 echo "+ ${checksum_display}"
 if [[ "${dry_run}" -eq 0 ]]; then
-    (cd "${output_dir}" && sha256sum "$(basename "${public_rpm_path}")" > SHA256SUMS)
+    (cd "${output_dir}" && sha256sum "$(basename "${public_rpm_path}")" setup.sh > SHA256SUMS)
 fi
 
 echo "+ render release artifact manifest -> ${manifest_path}"
 if [[ "${dry_run}" -eq 0 ]]; then
-    python3 - "${manifest_path}" "${public_rpm_path}" "${checksums_path}" "${version}" <<'PY'
+    python3 - "${manifest_path}" "${public_rpm_path}" "${public_setup_path}" "${checksums_path}" "${version}" <<'PY'
 import hashlib
 import json
 import subprocess
@@ -155,8 +157,9 @@ from pathlib import Path
 
 manifest_path = Path(sys.argv[1])
 rpm_path = Path(sys.argv[2])
-checksums_path = Path(sys.argv[3])
-version = sys.argv[4]
+setup_path = Path(sys.argv[3])
+checksums_path = Path(sys.argv[4])
+version = sys.argv[5]
 
 def git_value(*args: str) -> str | None:
     completed = subprocess.run(
@@ -181,6 +184,12 @@ payload = {
             "path": str(checksums_path),
             "type": "checksums",
         },
+        {
+            "path": str(setup_path),
+            "sha256": hashlib.sha256(setup_path.read_bytes()).hexdigest(),
+            "size_bytes": setup_path.stat().st_size,
+            "type": "setup-script",
+        },
     ],
     "git_commit": git_value("rev-parse", "HEAD"),
     "git_commit_short": git_value("rev-parse", "--short", "HEAD"),
@@ -203,6 +212,7 @@ fi
 cat <<EOF
 Release artifacts:
 - ${public_rpm_path}
+- ${public_setup_path}
 - ${checksums_path}
 - ${manifest_path}
 EOF

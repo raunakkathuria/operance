@@ -38,11 +38,11 @@ Windows and macOS provider scaffolds exist for adapter authors, but they are int
 ## Public Beta Quickstart
 
 Use the packaged Fedora RPM when you want the closest outside-developer beta
-experience:
+experience. Download `setup.sh` and the RPM from the same GitHub release, then
+run the stable setup entrypoint:
 
 ```bash
-sudo dnf install -y ./operance-0.1.0-1.noarch.rpm
-systemctl --user enable --now operance-tray.service
+bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm
 operance --version
 operance --installed-smoke
 ```
@@ -79,6 +79,17 @@ readiness**, and **Save support bundle**, so normal beta use does not require
 memorizing CLI diagnostics. **First run setup** includes packaged-install
 readiness when running the RPM, the supported click-to-talk smoke commands,
 optional local AI validation, and what to attach to an issue.
+
+The release artifact set includes `setup.sh` beside the RPM, checksums, and
+manifest. The repo-local copy lives at `scripts/setup.sh`. This stable setup
+surface also prepares the future hosted setup shape:
+
+```bash
+curl -fsSL https://operance.dev/setup.sh | sh
+```
+
+That hosted command is not live yet; use the repo-local script until a public
+URL, release asset policy, and checksum or signing story are published.
 
 Use [docs/release/public-beta.md](docs/release/public-beta.md) for the public
 beta install, local AI planner, release artifact, and feedback path.
@@ -167,6 +178,7 @@ Operance is ready for a **Fedora KDE Wayland developer release** for outside dev
 - Explicit release-channel check: `operance --check-updates`
 - Local AI planner status check: `operance --planner-status`
 - Paste-ready feedback draft: `operance --issue-report`
+- Stable packaged setup entrypoint: `./scripts/setup.sh --package ./operance-0.1.0-1.noarch.rpm`
 - Tray-first onboarding: First run setup, supported commands, local AI setup,
   planner readiness, installed readiness, and support-bundle capture are
   available from the tray menu
@@ -501,12 +513,18 @@ The current Fedora `mvp` package installs `/usr/bin/operance`, the packaged Pyth
 Install a built native package artifact:
 
 ```bash
+./scripts/setup.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --dry-run
 ./scripts/install_package_artifact.sh --package dist/package-artifacts/deb/operance_0.1.0_all.deb --installer apt --dry-run
 ./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --dry-run
 ./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --replace-existing --dry-run
 ./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --replace-existing --reset-user-services --dry-run
 ```
 
+Use `./scripts/setup.sh` for the outside-developer packaged setup path. It
+composes package installation, stale user-service reset, tray startup,
+installed readiness, supported-command discovery, support-bundle capture, and
+the manual tray smoke checklist behind one stable lifecycle command. Keep this
+script name stable across release phases.
 Use `--replace-existing` when testing a rebuilt Fedora RPM with the same package version. The helper removes the installed package when present and then installs the provided artifact, otherwise it keeps the normal first-install path.
 Use `--reset-user-services` when switching from a source-checkout tray service to the packaged tray service. It stops, disables, and removes only user-scoped Operance systemd units before installing, so stale `~/.config/systemd/user` units cannot shadow the packaged units.
 
