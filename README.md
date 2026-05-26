@@ -5,10 +5,13 @@
 
 Turn intent into action.
 
-Operance is a local-first desktop action layer. It lets a developer speak or type
-an intent, turns that intent into typed desktop actions, validates the plan, and
-then executes it through OS-specific adapters. The current public beta is
-Fedora KDE Plasma Wayland first and uses a tray-first click-to-talk workflow.
+Operance is a local-first AI desktop action layer that lets you control your
+computer with natural language. Speak or type what you want, and Operance turns
+that intent into safe, typed desktop actions before anything runs.
+
+The current public beta is Fedora KDE Plasma Wayland first and uses a tray-first
+click-to-talk workflow. It is ready for outside developers and early adopters to
+install, test, report issues, and help extend.
 
 Today, Operance can open apps and websites, focus or quit apps with confirmation,
 list recent files, manage Desktop files or folders with confirmation, list or
@@ -20,10 +23,10 @@ a bounded planner fallback after `operance --planner-readiness` reports it is
 safe to enable. Model output is still constrained to Operance's typed action
 schema and goes through validation, policy, and confirmation gates.
 
-Under the hood, Operance has a shared portable core, per-platform providers and
-adapters, and an MCP-compatible control surface. The current delivery scope
-stays Linux-first while keeping the core portable for later Windows and macOS
-adapters.
+For developers, Operance is also built to be extended. Under the hood, it has a
+shared portable core, per-platform providers and adapters, and an MCP-compatible
+control surface. The current delivery scope stays Linux-first while keeping the
+core portable for later Windows and macOS adapters.
 
 Platform roadmap:
 
@@ -31,15 +34,14 @@ Platform roadmap:
 - Phase 2: Windows
 - Phase 3: macOS
 
-The implementation stays Linux-first today. The portable core remains shared across platforms, including the voice pipeline orchestration, planner, typed action schema, safety model, and MCP server, while platform providers own host-specific readiness, setup workflow, and release-verification rules and OS-specific execution or input translation stays behind per-platform adapters. That keeps the current delivery scope KISS and YAGNI-compliant without closing off the later Windows and macOS paths.
+The implementation stays Linux-first today. The portable core remains shared across platforms, including the voice pipeline orchestration, planner, typed action schema, safety model, and MCP server, while platform providers own host-specific readiness, setup workflow, and release-verification rules and OS-specific execution or input translation stays behind per-platform adapters. That keeps the current delivery scope simple without closing off the later Windows and macOS paths.
 
 Windows and macOS provider scaffolds exist for adapter authors, but they are intentionally unverified and block live desktop commands until native adapters are implemented.
 
 ## Public Beta Quickstart
 
-Use the packaged Fedora RPM when you want the closest outside-developer beta
-experience. Download `setup.sh` and the RPM from the same GitHub release, then
-run the stable setup entrypoint:
+Use the packaged Fedora RPM for the public beta experience. Download `setup.sh`
+and the RPM from the same GitHub release, then run the stable setup entrypoint:
 
 ```bash
 bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm
@@ -81,22 +83,17 @@ readiness when running the RPM, the supported click-to-talk smoke commands,
 optional local AI validation, and what to attach to an issue.
 
 The release artifact set includes `setup.sh` beside the RPM, checksums, and
-manifest. The repo-local copy lives at `scripts/setup.sh`. This stable setup
-surface also prepares the future hosted setup shape:
-
-```bash
-curl -fsSL https://operance.dev/setup.sh | sh
-```
-
-That hosted command is not live yet; use the repo-local script until a public
-URL, release asset policy, and checksum or signing story are published.
+manifest. The repo-local copy lives at `scripts/setup.sh`. A hosted one-line
+installer is a future distribution shape, but it is not live yet; use the
+release asset script until a public URL, release asset policy, and checksum or
+signing story are published.
 
 Use [docs/release/public-beta.md](docs/release/public-beta.md) for the public
 beta install, local AI planner, release artifact, and feedback path.
 
 ## Developer Quickstart
 
-This is the primary supported public path today:
+Use this path when developing Operance itself from a source checkout:
 
 ```bash
 ./scripts/install_linux_dev.sh --ui --voice
@@ -166,10 +163,10 @@ Current assumptions for that path:
 
 ## Current Public Position
 
-Operance is ready for a **Fedora KDE Wayland developer release** for outside developers. It is not yet a broad public desktop release.
+Operance is ready for a **Fedora KDE Wayland public beta** for outside developers and early adopters. It is not yet a broad public desktop release.
 
-- Primary supported path: source checkout with `./scripts/install_linux_dev.sh --ui --voice`, `.venv/bin/python -m operance.cli --doctor`, `./scripts/run_mvp.sh`, and `./scripts/run_checkout_smoke.sh`
-- Secondary supported path: Fedora RPM install of the `mvp` runtime profile, validated through `./scripts/run_fedora_gate.sh --reset-user-services`
+- Recommended public beta path: Fedora RPM install of the `mvp` runtime profile through `setup.sh`
+- Developer/source path: source checkout with `./scripts/install_linux_dev.sh --ui --voice`, `.venv/bin/python -m operance.cli --doctor`, `./scripts/run_mvp.sh`, and `./scripts/run_checkout_smoke.sh`
 - Default interaction: tray plus click-to-talk
 - Wake word and the continuous voice loop remain secondary to click-to-talk for release reliability
 - The supported Fedora package path now vendors the tray UI and STT runtime dependencies needed for the MVP tray plus click-to-talk path
