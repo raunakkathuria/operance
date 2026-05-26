@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Operance — Turn intent into action</title>
+    <meta
+      name="description"
+      content="Operance is a local-first AI desktop action layer for safe natural-language control of your computer."
+    >
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="Operance home">
+        <img src="../assets/icons/operance.svg" alt="" width="36" height="36">
+        <span>Operance</span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="#try">Try beta</a>
+        <a href="#developers">Developers</a>
+        <a href="https://github.com/raunakkathuria/operance" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Local-first AI desktop action layer</p>
+          <h1>Turn intent into safe desktop action.</h1>
+          <p class="lede">
+            Operance lets you speak or type what you want, then routes that
+            request through typed actions, validation, policy, and OS-specific
+            adapters before anything runs.
+          </p>
+          <div class="hero-actions" aria-label="Primary actions">
+            <a class="button primary" href="#try">Install the Fedora beta</a>
+            <a class="button secondary" href="https://github.com/raunakkathuria/operance" target="_blank" rel="noopener noreferrer">View on GitHub</a>
+          </div>
+          <p class="scope-note">
+            Public beta: Fedora KDE Plasma Wayland first. Windows and macOS are
+            architecture targets, not supported runtimes yet.
+          </p>
+        </div>
+
+        <div class="demo-card" id="demo" aria-label="Operance demo">
+          <div class="desktop-bar">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span>Operance tray</span>
+          </div>
+          <div class="demo-stage">
+            <div class="tray-button">
+              <img src="../assets/icons/operance.svg" alt="" width="42" height="42">
+              <span>Click to talk</span>
+            </div>
+            <div class="speech-bubble command">open browser</div>
+            <div class="flow-arrow" aria-hidden="true">-></div>
+            <div class="plan-card">
+              <span class="tag">typed action</span>
+              <code>apps.launch</code>
+              <small>{"app": "browser"}</small>
+            </div>
+            <div class="flow-arrow" aria-hidden="true">-></div>
+            <div class="result-card">
+              <span class="tag success">validated</span>
+              <strong>Default browser opens</strong>
+              <small>No raw shell commands. No model required.</small>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="feature-grid" aria-label="What Operance does">
+        <article>
+          <h2>Use natural language</h2>
+          <p>Open apps and websites, ask desktop-status questions, switch windows, and run safe two-step commands from the tray.</p>
+        </article>
+        <article>
+          <h2>Keep actions bounded</h2>
+          <p>Commands become typed actions that pass validation, policy, confirmation gates, and adapter dispatch.</p>
+        </article>
+        <article>
+          <h2>Extend by platform</h2>
+          <p>The portable core stays shared while providers and adapters own OS-specific readiness and execution.</p>
+        </article>
+      </section>
+
+      <section class="split" id="try">
+        <div>
+          <p class="eyebrow">Try it now</p>
+          <h2>Install the packaged Fedora beta.</h2>
+          <p>
+            Download <code>setup.sh</code> and the Fedora RPM from the same GitHub
+            release, then run the stable setup entrypoint.
+          </p>
+        </div>
+        <pre><code>bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm
+operance --installed-smoke
+operance --supported-commands --supported-commands-available-only</code></pre>
+      </section>
+
+      <section class="commands" aria-label="Commands to try">
+        <h2>Say what you want done.</h2>
+        <div class="command-list">
+          <span>open browser</span>
+          <span>open google.com</span>
+          <span>open firefox</span>
+          <span>open firefox and notify me</span>
+          <span>what time is it</span>
+          <span>wifi status</span>
+          <span>what is the volume</span>
+        </div>
+      </section>
+
+      <section class="docs" id="developers">
+        <div class="section-heading">
+          <p class="eyebrow">Developers</p>
+          <h2>Read the Markdown docs. Build the adapters.</h2>
+          <p>
+            The website links to GitHub-rendered repo docs instead of duplicating
+            developer guidance. Use these Markdown files as the source of truth.
+          </p>
+        </div>
+        <div class="doc-grid">
+          <a href="https://github.com/raunakkathuria/operance/blob/main/README.md" target="_blank" rel="noopener noreferrer">
+            <span>Start here</span>
+            <strong>README.md</strong>
+            <small>Product scope, install path, current status.</small>
+          </a>
+          <a href="https://github.com/raunakkathuria/operance/blob/main/docs/release/public-beta.md" target="_blank" rel="noopener noreferrer">
+            <span>Install beta</span>
+            <strong>docs/release/public-beta.md</strong>
+            <small>Release assets, setup path, feedback loop.</small>
+          </a>
+          <a href="https://github.com/raunakkathuria/operance/blob/main/docs/architecture/overview.md" target="_blank" rel="noopener noreferrer">
+            <span>Architecture</span>
+            <strong>docs/architecture/overview.md</strong>
+            <small>Portable core, providers, adapters, runtime flow.</small>
+          </a>
+          <a href="https://github.com/raunakkathuria/operance/blob/main/docs/architecture/adapter-authoring.md" target="_blank" rel="noopener noreferrer">
+            <span>Port Operance</span>
+            <strong>docs/architecture/adapter-authoring.md</strong>
+            <small>How to add OS support without rewriting core.</small>
+          </a>
+          <a href="https://github.com/raunakkathuria/operance/blob/main/docs/contributing/command-authoring.md" target="_blank" rel="noopener noreferrer">
+            <span>Add commands</span>
+            <strong>docs/contributing/command-authoring.md</strong>
+            <small>Typed actions, validation, adapters, release promotion.</small>
+          </a>
+          <a href="https://github.com/raunakkathuria/operance/blob/main/docs/requirements/linux.md" target="_blank" rel="noopener noreferrer">
+            <span>Linux details</span>
+            <strong>docs/requirements/linux.md</strong>
+            <small>Fedora/KDE setup, packaging, systemd, diagnostics.</small>
+          </a>
+        </div>
+      </section>
+
+      <section class="architecture">
+        <div>
+          <p class="eyebrow">Boundary first</p>
+          <h2>One core. Many operating systems.</h2>
+          <p>
+            Operance keeps intent, planner, policy, validation, daemon, and MCP
+            logic portable. Platform providers decide host readiness. Adapters
+            execute native desktop actions.
+          </p>
+        </div>
+        <div class="layers" aria-label="Architecture layers">
+          <span>Natural language</span>
+          <span>Typed action schema</span>
+          <span>Validation + policy</span>
+          <span>Platform provider</span>
+          <span>OS adapter</span>
+        </div>
+      </section>
+
+      <section class="feedback">
+        <h2>Help make the beta boring and repeatable.</h2>
+        <p>
+          Install it, try the smoke commands, and attach a support bundle when
+          something fails. If you want to contribute, start with platform
+          adapters, onboarding, tests, and verified command coverage.
+        </p>
+        <div class="hero-actions">
+          <a class="button primary" href="https://github.com/raunakkathuria/operance/issues" target="_blank" rel="noopener noreferrer">File an issue</a>
+          <a class="button secondary" href="https://github.com/raunakkathuria/operance/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer">Contribute</a>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>Turn intent into action.</span>
+    </footer>
+  </body>
+</html>

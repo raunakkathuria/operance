@@ -1,0 +1,64 @@
+name: Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/pages.yml
+      - assets/icons/operance.svg
+      - site/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Build static site artifact
+        run: |
+          set -euo pipefail
+          rm -rf dist/pages
+          mkdir -p dist/pages/assets/icons
+          cp site/index.html site/styles.css dist/pages/
+          cp assets/icons/operance.svg dist/pages/assets/icons/operance.svg
+          python3 - <<'PY'
+          from pathlib import Path
+
+          index = Path("dist/pages/index.html")
+          html = index.read_text(encoding="utf-8")
+          html = html.replace("../assets/icons/operance.svg", "assets/icons/operance.svg")
+          index.write_text(html, encoding="utf-8")
+          if "../assets/icons/operance.svg" in html:
+              raise SystemExit("deployment artifact still points outside the Pages root")
+          PY
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/pages
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
