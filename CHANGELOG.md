@@ -5,7 +5,7 @@
 - Added stable `scripts/setup.sh` packaged setup entrypoint for outside developers, composing RPM install, stale user-service reset, tray startup, installed readiness, runnable-command discovery, support-bundle capture, and manual tray smoke guidance behind one lifecycle command; release artifact builds now include this setup script beside the RPM.
 - Tightened first-run onboarding so click-to-talk smoke guidance matches the packaged setup path and local AI is clearly optional and non-mutating.
 - Documented the stable script naming rule: user-facing script filenames should not encode release phases such as alpha or beta.
-- Added a narrow speech-friendly `firefall` alias for Firefox app launch, focus, quit, launch-plus-URL, and launch-plus-notification commands, preventing a common STT misrecognition from falling through to `firefall.desktop`.
+- Added narrow speech-friendly Firefox aliases such as `firefall`, `fire fall`, `fire force`, and `fire fox` for app launch, focus, quit, launch-plus-URL, and launch-plus-notification commands, preventing common STT misrecognitions from falling through to nonexistent desktop entries.
 - Added `operance --issue-report` and bundled `issue-report.md` drafts in support bundles, so outside testers can paste a redacted GitHub issue summary without manually assembling environment, readiness, planner, and warning details.
 - Added a command-failure GitHub issue template and tightened public feedback docs around the supported install, smoke, support-bundle, and issue-report path.
 - Added `--issue-report` checks to the source-checkout and installed smoke scripts so the release-readiness gate verifies the new public feedback surface.

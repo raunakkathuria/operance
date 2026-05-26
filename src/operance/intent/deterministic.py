@@ -38,6 +38,10 @@ def _normalize_spoken_launch_target(value: str) -> str:
 
 _SPOKEN_APP_ALIASES = {
     "firefall": "firefox",
+    "fire fall": "firefox",
+    "fire force": "firefox",
+    "fire fox": "firefox",
+    "fireforth": "firefox",
 }
 
 
