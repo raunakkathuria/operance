@@ -16,16 +16,18 @@ class SiteParser(HTMLParser):
         super().__init__()
         self.ids: set[str] = set()
         self.links: set[str] = set()
+        self.link_attrs: dict[str, dict[str, str]] = {}
         self.images: set[str] = set()
         self.stylesheets: set[str] = set()
         self.text_parts: list[str] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        values = {key: value for key, value in attrs}
+        values = {key: value for key, value in attrs if value is not None}
         if value := values.get("id"):
             self.ids.add(value)
         if tag == "a" and (href := values.get("href")):
             self.links.add(href)
+            self.link_attrs[href] = values
         if tag == "img" and (src := values.get("src")):
             self.images.add(src)
         if tag == "link" and values.get("rel") == "stylesheet" and (href := values.get("href")):
@@ -100,3 +102,15 @@ def test_developer_section_links_to_existing_markdown_docs() -> None:
         assert (REPO_ROOT / repo_path).exists()
 
     assert not any(href.startswith("../") and href.endswith(".md") for href in parser.links)
+
+
+def test_github_links_open_in_new_tabs_safely() -> None:
+    parser = _parse_site()
+
+    github_links = [href for href in parser.links if href.startswith("https://github.com/")]
+    assert github_links
+    for href in github_links:
+        attrs = parser.link_attrs[href]
+        assert attrs["target"] == "_blank"
+        rel_tokens = set(attrs["rel"].split())
+        assert {"noopener", "noreferrer"} <= rel_tokens
