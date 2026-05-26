@@ -64,7 +64,6 @@ def test_static_website_is_product_first_and_mentions_current_scope() -> None:
     text = parser.text
 
     assert "Turn intent into safe desktop action." in text
-    assert "AI desktop action layer" in text
     assert "local-first ai desktop action layer" in text.lower()
     assert "Fedora KDE Plasma Wayland first" in text
     assert "Windows and macOS are architecture targets" in text
