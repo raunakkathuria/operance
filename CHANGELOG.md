@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added a narrow speech-friendly `firefall` alias for Firefox app launch, focus, quit, launch-plus-URL, and launch-plus-notification commands, preventing a common STT misrecognition from falling through to `firefall.desktop`.
 - Added `operance --issue-report` and bundled `issue-report.md` drafts in support bundles, so outside testers can paste a redacted GitHub issue summary without manually assembling environment, readiness, planner, and warning details.
 - Added a command-failure GitHub issue template and tightened public feedback docs around the supported install, smoke, support-bundle, and issue-report path.
 - Added `--issue-report` checks to the source-checkout and installed smoke scripts so the release-readiness gate verifies the new public feedback surface.
