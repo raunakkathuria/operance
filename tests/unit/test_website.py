@@ -76,6 +76,7 @@ def test_static_website_has_demo_and_beta_install_path() -> None:
     text = parser.text
 
     assert {"top", "demo", "try", "developers"} <= parser.ids
+    assert "#demo" not in parser.links
     assert "open browser" in text
     assert "apps.launch" in text
     assert "bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm" in text
