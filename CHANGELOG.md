@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Clarified audio volume responses so `what is the volume` includes the muted state when the active sink is muted instead of reporting only the stored volume level.
 - Tightened the README opening statement and refreshed contributor guidance so the public beta path is clearly the packaged Fedora RPM while source checkout remains the contributor development path.
 - Added a static public website under `site/` with a product-first landing page, an animated command-to-action demo, beta install guidance, developer cards that link to GitHub-rendered canonical Markdown docs, and a GitHub Pages workflow that deploys the static site from `main`.
 - Tightened README positioning so Operance is introduced as a product first, with the packaged Fedora beta path ahead of the source-checkout developer path and the hosted one-line installer kept as future distribution shape only.

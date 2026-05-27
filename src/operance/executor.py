@@ -127,10 +127,15 @@ class ActionExecutor:
 
         if tool == ToolName.AUDIO_GET_VOLUME:
             adapter = self._require_adapter(self.adapters.audio, tool)
+            volume = adapter.get_volume()
+            if adapter.is_muted():
+                message = f"Volume is {volume}%, but audio is muted"
+            else:
+                message = f"Volume is {volume}%"
             return ActionResultItem(
                 tool=tool,
                 status="success",
-                message=f"Volume is {adapter.get_volume()}%",
+                message=message,
             )
 
         if tool == ToolName.AUDIO_MUTE_STATUS:
