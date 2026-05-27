@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Tightened the README opening statement and refreshed contributor guidance so the public beta path is clearly the packaged Fedora RPM while source checkout remains the contributor development path.
 - Added a static public website under `site/` with a product-first landing page, an animated command-to-action demo, beta install guidance, developer cards that link to GitHub-rendered canonical Markdown docs, and a GitHub Pages workflow that deploys the static site from `main`.
 - Tightened README positioning so Operance is introduced as a product first, with the packaged Fedora beta path ahead of the source-checkout developer path and the hosted one-line installer kept as future distribution shape only.
 - Added stable `scripts/setup.sh` packaged setup entrypoint for outside developers, composing RPM install, stale user-service reset, tray startup, installed readiness, runnable-command discovery, support-bundle capture, and manual tray smoke guidance behind one lifecycle command; release artifact builds now include this setup script beside the RPM.

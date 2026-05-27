@@ -5,9 +5,9 @@
 
 Turn intent into action.
 
-Operance is a local-first AI desktop action layer that lets you control your
-computer with natural language. Speak or type what you want, and Operance turns
-that intent into safe, typed desktop actions before anything runs.
+**Operance is a local-first AI desktop action layer that lets you control your
+computer with natural language.** Speak or type what you want, and Operance
+turns that intent into safe, typed desktop actions before anything runs.
 
 The current public beta is Fedora KDE Plasma Wayland first and uses a tray-first
 click-to-talk workflow. It is ready for outside developers and early adopters to

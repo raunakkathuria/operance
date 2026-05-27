@@ -25,15 +25,16 @@ targets today.
 The current public position is:
 
 - Fedora KDE Plasma on Wayland
-- source checkout as the primary supported path
-- installed RPM as the secondary `mvp` runtime path
+- packaged Fedora RPM as the public beta path
+- source checkout as the contributor development path
 - tray plus click-to-talk as the default interaction model
 
-This is still a founder-maintained developer release. Small, focused pull requests are much easier to review and land than large rewrites or broad refactors.
+This is still a founder-maintained public beta. Small, focused pull requests
+are much easier to review and land than large rewrites or broad refactors.
 
 The highest-value contributions right now are:
 
-- packaging or installer work that moves the native Fedora path closer to tray plus click-to-talk out of the box
+- packaging, installer, and first-run work that makes the Fedora RPM path more reliable for outside users
 - Linux runtime fixes that improve the current MVP path instead of widening the command surface for its own sake
 - doctor, setup, support-bundle, and release-gate improvements that make outside-developer support cheaper
 - docs, issue triage, and reproducible bug reports that reduce onboarding friction
