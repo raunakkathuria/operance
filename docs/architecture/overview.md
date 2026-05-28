@@ -15,6 +15,32 @@ The architecture stays cross-platform by keeping the runtime model portable,
 routing host-specific readiness through platform providers, and isolating
 OS-specific execution behind adapters.
 
+### High-level runtime architecture
+
+```mermaid
+flowchart LR
+    User["User intent"]
+    Inputs["Input surfaces<br/>CLI, tray, voice loop, MCP"]
+    Core["Portable core<br/>intent, planner, validation, policy, executor"]
+    Provider["Platform provider<br/>readiness, setup, availability, release verification"]
+    Adapters["Platform adapters<br/>OS-native execution"]
+    Linux["Linux/KDE/Wayland<br/>current verified target"]
+    Future["Windows and macOS<br/>scaffolded future targets"]
+    State["Runtime state<br/>audit, status, support bundle"]
+
+    User --> Inputs
+    Inputs --> Core
+    Core --> Provider
+    Provider --> Adapters
+    Adapters --> Linux
+    Adapters -. later .-> Future
+    Core --> State
+```
+
+The important boundary is that user intent always becomes a typed action plan
+before execution. Platform providers decide what the host can support, and
+adapters translate approved actions into OS-native behavior.
+
 ## 2. Portable core
 
 The portable core lives under `src/operance/`. It should remain platform-neutral
@@ -115,6 +141,39 @@ That split is intentional:
   surfaces
 - future macOS support should add macOS adapters and native accessibility or
   automation surfaces
+
+### Component boundary diagram
+
+```mermaid
+flowchart TB
+    subgraph Core["Portable core"]
+        Models["Typed actions and results"]
+        Intent["Deterministic intent and planner"]
+        Safety["Validator, policy, confirmation"]
+        Runtime["Executor, daemon, audit, MCP, voice orchestration"]
+    end
+
+    subgraph Providers["Platform providers"]
+        LinuxProvider["linux_kde_wayland<br/>verified beta target"]
+        WindowsProvider["windows<br/>unverified scaffold"]
+        MacProvider["macos<br/>unverified scaffold"]
+        Unsupported["unsupported<br/>safe fallback"]
+    end
+
+    subgraph Adapters["Platform adapters"]
+        LinuxAdapter["Linux adapters<br/>KWin, D-Bus, NetworkManager, PipeWire, Wayland tools"]
+        FutureAdapters["Future native adapters<br/>Windows UI Automation, macOS Accessibility"]
+    end
+
+    Core --> Providers
+    LinuxProvider --> LinuxAdapter
+    WindowsProvider -. future .-> FutureAdapters
+    MacProvider -. future .-> FutureAdapters
+    Unsupported -. no live actions .-> Core
+```
+
+Core modules define shared semantics and safety. Providers own host readiness
+and release verification. Adapters own OS-native execution details.
 
 ## 5. Runtime flow
 
