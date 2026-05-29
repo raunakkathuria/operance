@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Operance component boundaries</title>
+  <desc id="desc">The portable core owns shared semantics and safety. Platform providers own host readiness and release verification. Adapters own native desktop execution details.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#f0fdfa"/>
+    </linearGradient>
+    <linearGradient id="core" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#14b8a6"/>
+      <stop offset="1" stop-color="#0f766e"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-12%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="18" stdDeviation="20" flood-color="#0f766e" flood-opacity="0.14"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="10" markerHeight="10" orient="auto">
+      <path d="M2 2 L10 6 L2 10 Z" fill="#0f766e"/>
+    </marker>
+    <style>
+      .label{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#111827}
+      .muted{fill:#4b5563}
+      .title{font-size:30px;font-weight:850}
+      .section{font-size:24px;font-weight:850}
+      .text{font-size:18px}
+      .tiny{font-size:15px}
+      .card{fill:#fff;stroke:#d1d5db;stroke-width:2;filter:url(#shadow)}
+      .core{fill:url(#core);filter:url(#shadow)}
+      .sub{fill:#f9fafb;stroke:#e5e7eb;stroke-width:2}
+      .pill{fill:#ccfbf1;stroke:#5eead4;stroke-width:2}
+      .arrow{stroke:#0f766e;stroke-width:4;fill:none;marker-end:url(#arrow)}
+      .dash{stroke-dasharray:8 8}
+      .white{fill:#fff}
+    </style>
+  </defs>
+
+  <rect width="1280" height="720" rx="36" fill="url(#bg)"/>
+  <text x="64" y="68" class="label title">Component boundaries for portable OS automation</text>
+  <text x="64" y="102" class="label muted text">Contributors add platform behavior at the provider and adapter seams, not by branching the core.</text>
+
+  <rect x="70" y="150" width="350" height="420" rx="34" class="core"/>
+  <text x="245" y="196" text-anchor="middle" class="label white section">Portable core</text>
+  <text x="245" y="226" text-anchor="middle" class="label white tiny">shared across Linux, Windows, and macOS</text>
+  <rect x="108" y="260" width="274" height="48" rx="16" fill="#fff" opacity="0.94"/>
+  <text x="245" y="291" text-anchor="middle" class="label text">Typed actions and results</text>
+  <rect x="108" y="326" width="274" height="48" rx="16" fill="#fff" opacity="0.94"/>
+  <text x="245" y="357" text-anchor="middle" class="label text">Intent and planner contracts</text>
+  <rect x="108" y="392" width="274" height="48" rx="16" fill="#fff" opacity="0.94"/>
+  <text x="245" y="423" text-anchor="middle" class="label text">Validator, policy, confirmation</text>
+  <rect x="108" y="458" width="274" height="62" rx="16" fill="#fff" opacity="0.94"/>
+  <text x="245" y="486" text-anchor="middle" class="label text">Executor, daemon, MCP,</text>
+  <text x="245" y="509" text-anchor="middle" class="label text">voice orchestration</text>
+
+  <rect x="500" y="150" width="300" height="420" rx="34" class="card"/>
+  <text x="650" y="196" text-anchor="middle" class="label section">Platform providers</text>
+  <text x="650" y="226" text-anchor="middle" class="label muted tiny">host readiness and release policy</text>
+  <rect x="540" y="260" width="220" height="54" rx="18" class="pill"/>
+  <text x="650" y="283" text-anchor="middle" class="label text">linux_kde_wayland</text>
+  <text x="650" y="304" text-anchor="middle" class="label muted tiny">verified beta target</text>
+  <rect x="540" y="334" width="220" height="54" rx="18" class="sub"/>
+  <text x="650" y="357" text-anchor="middle" class="label text">windows</text>
+  <text x="650" y="378" text-anchor="middle" class="label muted tiny">unverified scaffold</text>
+  <rect x="540" y="408" width="220" height="54" rx="18" class="sub"/>
+  <text x="650" y="431" text-anchor="middle" class="label text">macos</text>
+  <text x="650" y="452" text-anchor="middle" class="label muted tiny">unverified scaffold</text>
+  <rect x="540" y="482" width="220" height="54" rx="18" class="sub"/>
+  <text x="650" y="505" text-anchor="middle" class="label text">unsupported</text>
+  <text x="650" y="526" text-anchor="middle" class="label muted tiny">safe fallback</text>
+
+  <rect x="880" y="150" width="330" height="420" rx="34" class="card"/>
+  <text x="1045" y="196" text-anchor="middle" class="label section">Platform adapters</text>
+  <text x="1045" y="226" text-anchor="middle" class="label muted tiny">native execution details live here</text>
+  <rect x="920" y="262" width="250" height="90" rx="22" class="pill"/>
+  <text x="1045" y="292" text-anchor="middle" class="label text">Linux adapters</text>
+  <text x="1045" y="318" text-anchor="middle" class="label muted tiny">KWin, D-Bus, NetworkManager,</text>
+  <text x="1045" y="340" text-anchor="middle" class="label muted tiny">PipeWire, Wayland tools</text>
+  <rect x="920" y="404" width="250" height="96" rx="22" class="sub"/>
+  <text x="1045" y="434" text-anchor="middle" class="label text">Future native adapters</text>
+  <text x="1045" y="462" text-anchor="middle" class="label muted tiny">Windows UI Automation</text>
+  <text x="1045" y="484" text-anchor="middle" class="label muted tiny">macOS Accessibility</text>
+
+  <path d="M420 360 H488" class="arrow"/>
+  <path d="M800 360 H868" class="arrow"/>
+  <path d="M760 287 H908" class="arrow"/>
+  <path d="M760 361 C820 382 850 424 908 448" class="arrow dash"/>
+  <path d="M760 435 C818 440 852 455 908 462" class="arrow dash"/>
+
+  <rect x="120" y="620" width="1040" height="58" rx="20" fill="#fff" stroke="#ccfbf1" stroke-width="2"/>
+  <text x="150" y="655" class="label text" font-weight="800">Rule:</text>
+  <text x="206" y="655" class="label muted text">New OS support starts with a provider plus adapters. Core changes are only for new shared semantics.</text>
+</svg>

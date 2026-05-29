@@ -28,6 +28,8 @@ shared portable core, per-platform providers and adapters, and an MCP-compatible
 control surface. The current delivery scope stays Linux-first while keeping the
 core portable for later Windows and macOS adapters.
 
+![Operance high-level runtime architecture](docs/architecture/assets/high-level-runtime.svg)
+
 Platform roadmap:
 
 - Phase 1: Linux/KDE/Wayland
@@ -37,6 +39,8 @@ Platform roadmap:
 The implementation stays Linux-first today. The portable core remains shared across platforms, including the voice pipeline orchestration, planner, typed action schema, safety model, and MCP server, while platform providers own host-specific readiness, setup workflow, and release-verification rules and OS-specific execution or input translation stays behind per-platform adapters. That keeps the current delivery scope simple without closing off the later Windows and macOS paths.
 
 Windows and macOS provider scaffolds exist for adapter authors, but they are intentionally unverified and block live desktop commands until native adapters are implemented.
+
+![Operance component boundaries](docs/architecture/assets/component-boundaries.svg)
 
 ## Public Beta Quickstart
 
