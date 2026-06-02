@@ -19,6 +19,7 @@ class SiteParser(HTMLParser):
         self.link_attrs: dict[str, dict[str, str]] = {}
         self.images: set[str] = set()
         self.stylesheets: set[str] = set()
+        self.icons: set[str] = set()
         self.text_parts: list[str] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
@@ -32,6 +33,8 @@ class SiteParser(HTMLParser):
             self.images.add(src)
         if tag == "link" and values.get("rel") == "stylesheet" and (href := values.get("href")):
             self.stylesheets.add(href)
+        if tag == "link" and values.get("rel") == "icon" and (href := values.get("href")):
+            self.icons.add(href)
 
     def handle_data(self, data: str) -> None:
         if stripped := data.strip():
@@ -53,6 +56,7 @@ def test_static_website_reuses_operance_brand_asset_and_palette() -> None:
     styles = SITE_STYLES.read_text(encoding="utf-8")
 
     assert "../assets/icons/operance.svg" in parser.images
+    assert "/favicon.ico" in parser.icons
     assert "styles.css" in parser.stylesheets
     assert "#14b8a6" in styles
     assert "#0f766e" in styles

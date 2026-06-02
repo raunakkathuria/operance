@@ -26,6 +26,7 @@ def test_site_build_script_writes_self_contained_pages_artifact() -> None:
 
     assert result.returncode == 0
     assert (OUTPUT_DIR / "styles.css").exists()
+    assert (OUTPUT_DIR / "favicon.ico").exists()
     assert (OUTPUT_DIR / "assets" / "icons" / "operance.svg").exists()
     assert "../assets/icons/operance.svg" not in index
     assert "assets/icons/operance.svg" in index

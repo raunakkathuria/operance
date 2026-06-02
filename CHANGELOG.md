@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-- Added `scripts/build_site.sh` so the static website builds a self-contained `dist/pages/` artifact for Cloudflare Pages while keeping shared assets outside `site/`, and removed the duplicate GitHub Pages workflow.
+- Added a generated `favicon.ico` from the Operance icon and included it in the static website artifact.
+- Added `scripts/build_site.sh` plus `wrangler.toml` so the static website builds a self-contained `dist/pages/` artifact for Cloudflare Workers Static Assets while keeping shared assets outside `site/`, and removed the duplicate GitHub Pages workflow.
 - Added GitHub-renderable Mermaid diagrams to the architecture overview, covering the high-level runtime path and the portable-core/provider/adapter boundary.
 - Added beginner-friendly architecture SVGs to the README while keeping the Mermaid diagrams in the detailed architecture overview.
 - Clarified audio volume responses so `what is the volume` includes the muted state when the active sink is muted instead of reporting only the stored volume level.

@@ -31,3 +31,5 @@ __pycache__/
 # Local Codex and agent state
 .codex
 .agents
+
+.wrangler

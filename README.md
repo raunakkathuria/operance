@@ -100,8 +100,9 @@ The repository also includes a static public landing page at
 back to GitHub-rendered canonical Markdown docs for developer details. The
 site build entrypoint is `./scripts/build_site.sh`, which writes a self-contained
 artifact to `dist/pages/` by copying the shared brand icon into the deployment
-root. Use that command as the Cloudflare Pages build command with `dist/pages`
-as the output directory.
+root. The Cloudflare Workers Static Assets deployment is configured in
+`wrangler.toml`: use `./scripts/build_site.sh` as the build command and
+`npx wrangler deploy` as the deploy command.
 
 ## Developer Quickstart
 
