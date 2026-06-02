@@ -98,8 +98,10 @@ beta install, local AI planner, release artifact, and feedback path.
 The repository also includes a static public landing page at
 [site/index.html](site/index.html). It explains Operance for new users and links
 back to GitHub-rendered canonical Markdown docs for developer details. The
-GitHub Pages workflow publishes the static site from `site/` after changes land
-on `main`.
+site build entrypoint is `./scripts/build_site.sh`, which writes a self-contained
+artifact to `dist/pages/` by copying the shared brand icon into the deployment
+root. Use that command as the Cloudflare Pages build command with `dist/pages`
+as the output directory.
 
 ## Developer Quickstart
 
