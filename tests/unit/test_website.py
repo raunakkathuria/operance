@@ -58,20 +58,23 @@ def test_static_website_reuses_operance_brand_asset_and_palette() -> None:
     assert "../assets/icons/operance.svg" in parser.images
     assert "/favicon.ico" in parser.icons
     assert "styles.css" in parser.stylesheets
-    assert "#14b8a6" in styles
-    assert "#0f766e" in styles
-    assert "#111827" in styles
+    assert "fonts.googleapis.com" not in SITE_INDEX.read_text(encoding="utf-8")
+    assert "fonts.googleapis.com" not in styles
+    assert "#00e5b4" in styles
+    assert "#0a0c0f" in styles
+    assert "#ff5f40" in styles
 
 
 def test_static_website_is_product_first_and_mentions_current_scope() -> None:
     parser = _parse_site()
     text = parser.text
 
-    assert "Turn intent into safe desktop action." in text
+    assert "Your Computer Understands You Now." in text
     assert "local-first ai desktop action layer" in text.lower()
     assert "Fedora KDE Plasma Wayland first" in text
     assert "Windows and macOS are architecture targets" in text
-    assert "No raw shell commands. No model required." in text
+    assert "No Raw Shell Access." in text
+    assert "No cloud required for core use." in text
     assert "local-first desktop action runtime" not in text.lower()
 
 
@@ -79,13 +82,52 @@ def test_static_website_has_demo_and_beta_install_path() -> None:
     parser = _parse_site()
     text = parser.text
 
-    assert {"top", "demo", "try", "developers"} <= parser.ids
+    assert {"top", "how", "try", "developers"} <= parser.ids
     assert "#demo" not in parser.links
     assert "open browser" in text
-    assert "apps.launch" in text
+    assert "open google.com" in text
+    assert "open firefox and notify me" not in text
     assert "bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm" in text
     assert "operance --installed-smoke" in text
     assert "operance --supported-commands --supported-commands-available-only" in text
+
+
+def test_static_website_command_examples_match_verified_beta_surface() -> None:
+    parser = _parse_site()
+    text = parser.text
+
+    expected_examples = {
+        "open browser",
+        "open google.com",
+        "open firefox",
+        "what time is it",
+        "wifi status",
+        "what is my battery level",
+        "what is the volume",
+        "set volume to 50 percent",
+        "mute audio",
+        "list windows",
+        "switch to window <title>",
+        "show recent files",
+        "create folder on desktop called <name>",
+        "delete file on desktop called <name>",
+    }
+
+    for example in expected_examples:
+        assert example in text
+
+    assert "destructive actions ask for confirmation" in text
+
+
+def test_static_website_does_not_advertise_unreleased_agent_surface() -> None:
+    parser = _parse_site()
+    text = parser.text
+
+    assert "Works with AI Agents" not in text
+    assert "MCP" not in text
+    assert "Model Context Protocol surface" not in text
+    assert "operance --mcp-stdio" not in text
+    assert "operance --mcp-list-tools" not in text
 
 
 def test_developer_section_links_to_existing_markdown_docs() -> None:

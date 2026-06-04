@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Operance — Turn intent into action</title>
+    <title>Operance — Your Computer Understands You Now</title>
     <meta
       name="description"
-      content="Operance is a local-first AI desktop action layer for safe natural-language control of your computer."
+      content="Operance is a local-first AI desktop action layer. Speak or type what you want, then run safe typed actions on your machine."
     >
     <link rel="icon" href="/favicon.ico" sizes="any" type="image/x-icon">
     <link rel="stylesheet" href="styles.css">
@@ -14,185 +14,467 @@
   <body>
     <header class="site-header">
       <a class="brand" href="#top" aria-label="Operance home">
-        <img src="../assets/icons/operance.svg" alt="" width="36" height="36">
+        <img src="../assets/icons/operance.svg" alt="" width="28" height="28">
         <span>Operance</span>
       </a>
       <nav aria-label="Primary navigation">
         <a href="#try">Try beta</a>
+        <a href="#how">How it works</a>
         <a href="#developers">Developers</a>
         <a href="https://github.com/raunakkathuria/operance" target="_blank" rel="noopener noreferrer">GitHub</a>
       </nav>
     </header>
 
     <main id="top">
-      <section class="hero">
-        <div class="hero-copy">
-          <p class="eyebrow">Local-first AI desktop action layer</p>
-          <h1>Turn intent into safe desktop action.</h1>
-          <p class="lede">
-            Operance lets you speak or type what you want, then routes that
-            request through typed actions, validation, policy, and OS-specific
-            adapters before anything runs.
+      <div class="container">
+        <section class="hero">
+          <div class="badge">Public Beta · v0.1.0</div>
+          <h1><span>Your Computer</span><span class="accent-line">Understands You Now.</span></h1>
+          <p class="tagline">
+            Operance is a local-first AI desktop action layer. Say or type what
+            you want, then route it through typed actions, validation, policy,
+            and OS adapters before anything runs.
           </p>
-          <div class="hero-actions" aria-label="Primary actions">
-            <a class="button primary" href="#try">Install the Fedora beta</a>
-            <a class="button secondary" href="https://github.com/raunakkathuria/operance" target="_blank" rel="noopener noreferrer">View on GitHub</a>
+          <div class="cta-row">
+            <a class="btn-primary" href="#try">Install the Fedora beta</a>
+            <a class="btn-secondary" href="https://github.com/raunakkathuria/operance" target="_blank" rel="noopener noreferrer">View on GitHub</a>
           </div>
           <p class="scope-note">
-            Public beta: Fedora KDE Plasma Wayland first. Windows and macOS are
-            architecture targets, not supported runtimes yet.
+            Fedora KDE Plasma Wayland first · Windows and macOS are architecture targets
           </p>
-        </div>
+        </section>
 
-        <div class="demo-card" id="demo" aria-label="Operance demo">
-          <div class="desktop-bar">
-            <span class="dot"></span>
-            <span class="dot"></span>
-            <span class="dot"></span>
-            <span>Operance tray</span>
-          </div>
-          <div class="demo-stage">
-            <div class="tray-button">
-              <img src="../assets/icons/operance.svg" alt="" width="42" height="42">
-              <span>Click to talk</span>
+        <section class="flow-block" id="how">
+          <div class="section-label">How It Works · One Command, Five Safe Steps</div>
+          <div class="waveform-wrap" aria-label="Voice input visualisation">
+            <div class="waveform-top">
+              <span class="waveform-mic" aria-hidden="true">mic</span>
+              <canvas id="voiceWave" width="820" height="72" aria-hidden="true"></canvas>
             </div>
-            <div class="speech-bubble command">open browser</div>
-            <div class="flow-arrow" aria-hidden="true">-></div>
-            <div class="plan-card">
-              <span class="tag">typed action</span>
-              <code>apps.launch</code>
-              <small>{"app": "browser"}</small>
-            </div>
-            <div class="flow-arrow" aria-hidden="true">-></div>
-            <div class="result-card">
-              <span class="tag success">validated</span>
-              <strong>Default browser opens</strong>
-              <small>No raw shell commands. No model required.</small>
+            <div class="waveform-text-row">
+              <span class="waveform-cmd" id="waveCmd"></span><span class="waveform-cursor" id="waveCursor">|</span><span class="waveform-result" id="waveResult"></span>
             </div>
           </div>
-        </div>
-      </section>
+          <div class="flow-row">
+            <div class="flow-step">
+              <div class="step-tag">1 · Input</div>
+              <div class="step-main">You speak or type</div>
+              <div class="step-sub">tray / CLI / voice loop</div>
+            </div>
+            <div class="flow-step">
+              <div class="step-tag">2 · Match</div>
+              <div class="step-main">Known command matched instantly</div>
+              <div class="step-sub">no AI needed for common phrases</div>
+            </div>
+            <div class="flow-step highlight">
+              <div class="step-tag">3 · Plan</div>
+              <div class="step-main">Local AI can fill the gap</div>
+              <div class="step-sub">optional · bounded typed output</div>
+            </div>
+            <div class="flow-step">
+              <div class="step-tag">4 · Check</div>
+              <div class="step-main">Validated before it runs</div>
+              <div class="step-sub">destructive ops need confirmation</div>
+            </div>
+            <div class="flow-step">
+              <div class="step-tag">5 · Run</div>
+              <div class="step-main">Your OS does the work</div>
+              <div class="step-sub">native adapter dispatch</div>
+            </div>
+          </div>
+        </section>
 
-      <section class="feature-grid" aria-label="What Operance does">
-        <article>
-          <h2>Use natural language</h2>
-          <p>Open apps and websites, ask desktop-status questions, switch windows, and run safe two-step commands from the tray.</p>
-        </article>
-        <article>
-          <h2>Keep actions bounded</h2>
-          <p>Commands become typed actions that pass validation, policy, confirmation gates, and adapter dispatch.</p>
-        </article>
-        <article>
-          <h2>Extend by platform</h2>
-          <p>The portable core stays shared while providers and adapters own OS-specific readiness and execution.</p>
-        </article>
-      </section>
-
-      <section class="split" id="try">
-        <div>
-          <p class="eyebrow">Try it now</p>
-          <h2>Install the packaged Fedora beta.</h2>
+        <section class="intro-block">
+          <div class="section-label">What Is Operance</div>
+          <h2 class="section-h">No Raw Shell Access. No Guessing.</h2>
           <p>
-            Download <code>setup.sh</code> and the Fedora RPM from the same GitHub
-            release, then run the stable setup entrypoint.
+            Every command turns into a typed, checked action instead of an
+            arbitrary shell call. Common phrases are matched deterministically.
+            Optional local model planning is still constrained to Operance's
+            typed action schema, validation, policy, and confirmation gates.
           </p>
-        </div>
-        <pre><code>bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm
+          <p>
+            The current public beta is honest about scope: Fedora KDE Plasma
+            Wayland first, source checkout for contributors, and an RPM runtime
+            path for early testers.
+          </p>
+        </section>
+
+        <section class="features">
+          <div class="section-label">What You Get</div>
+          <h2 class="section-h">Powerful. Private. Safe by Design.</h2>
+          <div class="features-split">
+            <div class="feature-col">
+              <div class="feature-card">
+                <span class="feature-icon" aria-hidden="true">voice</span>
+                <h3>Voice or Text, Your Choice</h3>
+                <p>Click the tray to talk, type a command, or run the local voice loop during development.</p>
+              </div>
+              <div class="feature-card">
+                <span class="feature-icon" aria-hidden="true">ext</span>
+                <h3>Easy to Extend</h3>
+                <p>Add commands or port to a new OS by working through providers and adapters, not by branching the core.</p>
+              </div>
+            </div>
+
+            <div class="privacy-panel">
+              <div class="privacy-panel-header">
+                <span class="privacy-icon" aria-hidden="true">lock</span>
+                <div>
+                  <div class="privacy-title">Local-First by Architecture.</div>
+                  <div class="privacy-sub">Not just a preference.</div>
+                </div>
+              </div>
+              <p class="privacy-body">
+                Operance keeps the core desktop workflow on your machine. The
+                tray and verified commands work without an AI model; optional
+                planner fallback can be enabled only after readiness checks pass.
+              </p>
+              <ul class="privacy-list">
+                <li>
+                  <span class="privacy-check">+</span>
+                  <span><strong>No cloud required for core use.</strong> Verified commands work offline without a model.</span>
+                </li>
+                <li>
+                  <span class="privacy-check">+</span>
+                  <span><strong>No account required.</strong> Install, smoke test, and file issues from a local setup.</span>
+                </li>
+                <li>
+                  <span class="privacy-check">+</span>
+                  <span><strong>No arbitrary shell execution.</strong> Tools must pass typed schema, validation, and policy.</span>
+                </li>
+                <li>
+                  <span class="privacy-check">+</span>
+                  <span><strong>Open source.</strong> Inspect the runtime, adapters, planner, and safety code.</span>
+                </li>
+                <li>
+                  <span class="privacy-check">+</span>
+                  <span><strong>AI is optional.</strong> Local planner fallback is bounded and disabled unless configured.</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="install-block" id="try">
+          <div class="install-copy">
+            <div class="section-label">Try It Now</div>
+            <h2 class="section-h">Install the Packaged Fedora Beta.</h2>
+            <p>
+              Download <code>setup.sh</code> and the RPM from the same GitHub
+              release, then run these commands to install, verify, and list the
+              commands available on your host.
+            </p>
+          </div>
+          <pre><code>bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm
 operance --installed-smoke
 operance --supported-commands --supported-commands-available-only</code></pre>
-      </section>
+        </section>
 
-      <section class="commands" aria-label="Commands to try">
-        <h2>Say what you want done.</h2>
-        <div class="command-list">
-          <span>open browser</span>
-          <span>open google.com</span>
-          <span>open firefox</span>
-          <span>open firefox and notify me</span>
-          <span>what time is it</span>
-          <span>wifi status</span>
-          <span>what is the volume</span>
-        </div>
-      </section>
-
-      <section class="docs" id="developers">
-        <div class="section-heading">
-          <p class="eyebrow">Developers</p>
-          <h2>Read the Markdown docs. Build the adapters.</h2>
-          <p>
-            The website links to GitHub-rendered repo docs instead of duplicating
-            developer guidance. Use these Markdown files as the source of truth.
+        <section class="commands-block">
+          <div class="section-label">Things You Can Say</div>
+          <h2 class="section-h">Just Say What You Mean.</h2>
+          <p class="commands-sub">
+            Current Fedora KDE Wayland beta examples. Availability depends on
+            host readiness; destructive actions ask for confirmation.
           </p>
-        </div>
-        <div class="doc-grid">
-          <a href="https://github.com/raunakkathuria/operance/blob/main/README.md" target="_blank" rel="noopener noreferrer">
-            <span>Start here</span>
-            <strong>README.md</strong>
-            <small>Product scope, install path, current status.</small>
-          </a>
-          <a href="https://github.com/raunakkathuria/operance/blob/main/docs/release/public-beta.md" target="_blank" rel="noopener noreferrer">
-            <span>Install beta</span>
-            <strong>docs/release/public-beta.md</strong>
-            <small>Release assets, setup path, feedback loop.</small>
-          </a>
-          <a href="https://github.com/raunakkathuria/operance/blob/main/docs/architecture/overview.md" target="_blank" rel="noopener noreferrer">
-            <span>Architecture</span>
-            <strong>docs/architecture/overview.md</strong>
-            <small>Portable core, providers, adapters, runtime flow.</small>
-          </a>
-          <a href="https://github.com/raunakkathuria/operance/blob/main/docs/architecture/adapter-authoring.md" target="_blank" rel="noopener noreferrer">
-            <span>Port Operance</span>
-            <strong>docs/architecture/adapter-authoring.md</strong>
-            <small>How to add OS support without rewriting core.</small>
-          </a>
-          <a href="https://github.com/raunakkathuria/operance/blob/main/docs/contributing/command-authoring.md" target="_blank" rel="noopener noreferrer">
-            <span>Add commands</span>
-            <strong>docs/contributing/command-authoring.md</strong>
-            <small>Typed actions, validation, adapters, release promotion.</small>
-          </a>
-          <a href="https://github.com/raunakkathuria/operance/blob/main/docs/requirements/linux.md" target="_blank" rel="noopener noreferrer">
-            <span>Linux details</span>
-            <strong>docs/requirements/linux.md</strong>
-            <small>Fedora/KDE setup, packaging, systemd, diagnostics.</small>
-          </a>
-        </div>
-      </section>
+          <div class="pill-grid">
+            <span class="pill">open browser</span>
+            <span class="pill">open google.com</span>
+            <span class="pill">open firefox</span>
+            <span class="pill">what time is it</span>
+            <span class="pill">wifi status</span>
+            <span class="pill">what is my battery level</span>
+            <span class="pill">what is the volume</span>
+            <span class="pill">set volume to 50 percent</span>
+            <span class="pill">mute audio</span>
+            <span class="pill">list windows</span>
+            <span class="pill">switch to window &lt;title&gt;</span>
+            <span class="pill">show recent files</span>
+            <span class="pill">create folder on desktop called &lt;name&gt;</span>
+            <span class="pill">delete file on desktop called &lt;name&gt;</span>
+          </div>
+        </section>
 
-      <section class="architecture">
-        <div>
-          <p class="eyebrow">Boundary first</p>
-          <h2>One core. Many operating systems.</h2>
-          <p>
-            Operance keeps intent, planner, policy, validation, daemon, and MCP
-            logic portable. Platform providers decide host readiness. Adapters
-            execute native desktop actions.
+        <section class="docs-block" id="developers">
+          <div class="section-label">Developers</div>
+          <h2 class="section-h">Read the Docs. Build What's Missing.</h2>
+          <p class="docs-sub">
+            All guidance lives in the repo as Markdown. Start with the README,
+            then pick the doc that matches what you want to build.
           </p>
-        </div>
-        <div class="layers" aria-label="Architecture layers">
-          <span>Natural language</span>
-          <span>Typed action schema</span>
-          <span>Validation + policy</span>
-          <span>Platform provider</span>
-          <span>OS adapter</span>
-        </div>
-      </section>
+          <div class="doc-grid">
+            <a href="https://github.com/raunakkathuria/operance/blob/main/README.md" target="_blank" rel="noopener noreferrer">
+              <span class="doc-tag">Start here</span>
+              <strong>README.md</strong>
+              <small>Scope, install path, current status.</small>
+            </a>
+            <a href="https://github.com/raunakkathuria/operance/blob/main/docs/release/public-beta.md" target="_blank" rel="noopener noreferrer">
+              <span class="doc-tag">Install</span>
+              <strong>docs/release/public-beta.md</strong>
+              <small>Release assets, setup, feedback loop.</small>
+            </a>
+            <a href="https://github.com/raunakkathuria/operance/blob/main/docs/architecture/overview.md" target="_blank" rel="noopener noreferrer">
+              <span class="doc-tag">Architecture</span>
+              <strong>docs/architecture/overview.md</strong>
+              <small>Core, providers, adapters, runtime flow.</small>
+            </a>
+            <a href="https://github.com/raunakkathuria/operance/blob/main/docs/architecture/adapter-authoring.md" target="_blank" rel="noopener noreferrer">
+              <span class="doc-tag">Port to a new OS</span>
+              <strong>docs/architecture/adapter-authoring.md</strong>
+              <small>Add OS support without rewriting core.</small>
+            </a>
+            <a href="https://github.com/raunakkathuria/operance/blob/main/docs/contributing/command-authoring.md" target="_blank" rel="noopener noreferrer">
+              <span class="doc-tag">Add commands</span>
+              <strong>docs/contributing/command-authoring.md</strong>
+              <small>Typed actions, validation, promotion.</small>
+            </a>
+            <a href="https://github.com/raunakkathuria/operance/blob/main/docs/requirements/linux.md" target="_blank" rel="noopener noreferrer">
+              <span class="doc-tag">Linux setup</span>
+              <strong>docs/requirements/linux.md</strong>
+              <small>Fedora/KDE packaging, systemd, diagnostics.</small>
+            </a>
+          </div>
+        </section>
 
-      <section class="feedback">
-        <h2>Help make the beta boring and repeatable.</h2>
-        <p>
-          Install it, try the smoke commands, and attach a support bundle when
-          something fails. If you want to contribute, start with platform
-          adapters, onboarding, tests, and verified command coverage.
-        </p>
-        <div class="hero-actions">
-          <a class="button primary" href="https://github.com/raunakkathuria/operance/issues" target="_blank" rel="noopener noreferrer">File an issue</a>
-          <a class="button secondary" href="https://github.com/raunakkathuria/operance/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer">Contribute</a>
-        </div>
-      </section>
+        <section class="arch-block">
+          <div class="arch-copy">
+            <div class="section-label">How It's Built</div>
+            <h2 class="section-h">One Engine. Many Operating Systems.</h2>
+            <p>
+              Your words pass through shared safety layers before any native
+              desktop action runs. Intent, planner, policy, validation, daemon,
+              and runtime orchestration stay portable while providers and
+              adapters own host readiness and OS-native execution.
+            </p>
+            <p class="arch-note">
+              Windows and macOS provider scaffolds exist for adapter authors,
+              but the public beta runtime is Linux first.
+            </p>
+          </div>
+          <div class="layers">
+            <div class="layer"><span class="layer-n">1</span><span>You speak or type</span></div>
+            <div class="layer"><span class="layer-n">2</span><span>Command matched to safe action</span></div>
+            <div class="layer"><span class="layer-n">3</span><span>Validated and confirmed if needed</span></div>
+            <div class="layer"><span class="layer-n">4</span><span>Platform provider checks readiness</span></div>
+            <div class="layer"><span class="layer-n">5</span><span>OS adapter runs the action</span></div>
+          </div>
+        </section>
+
+        <section class="safety-block">
+          <div class="section-label">Security by Design</div>
+          <h2 class="section-h">Safe Because of How It's Built.</h2>
+          <p class="safety-intro">
+            Operance does not rely on a model deciding what is safe. Safety is
+            structural: every command has to resolve to an approved typed action
+            before it can reach an adapter.
+          </p>
+          <div class="safety-grid">
+            <div class="safety-card">
+              <span class="safety-x">x</span>
+              <div>
+                <strong>No raw shell commands</strong>
+                <p>The planner cannot invent an arbitrary command. Every action must be in the typed tool catalog.</p>
+              </div>
+            </div>
+            <div class="safety-card">
+              <span class="safety-x">x</span>
+              <div>
+                <strong>No cloud required for core use</strong>
+                <p>Verified tray and command flows work locally without an AI model or hosted account.</p>
+              </div>
+            </div>
+            <div class="safety-card">
+              <span class="safety-x">x</span>
+              <div>
+                <strong>No silent destructive file changes</strong>
+                <p>Move, rename, quit, and delete flows are confirmation-gated where policy requires it.</p>
+              </div>
+            </div>
+            <div class="safety-card">
+              <span class="safety-x">x</span>
+              <div>
+                <strong>No AI required for basic use</strong>
+                <p>Common commands are matched deterministically, so the beta remains useful without planner setup.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="platform-block">
+          <div class="section-label">Where It Runs</div>
+          <h2 class="section-h">Linux Now. More Later.</h2>
+          <div class="platform-row">
+            <div class="platform-item active">+ Linux · Fedora KDE Wayland</div>
+            <div class="platform-item soon">~ Windows · adapter target</div>
+            <div class="platform-item soon">~ macOS · adapter target</div>
+          </div>
+        </section>
+
+        <section class="cta-block">
+          <h2>Ready to Turn Intent into Action?</h2>
+          <p>Public beta · Open source · MIT licensed</p>
+          <div class="cta-row">
+            <a class="btn-primary" href="https://github.com/raunakkathuria/operance" target="_blank" rel="noopener noreferrer">Get started on GitHub</a>
+            <a class="btn-secondary" href="https://github.com/raunakkathuria/operance/issues" target="_blank" rel="noopener noreferrer">File an issue</a>
+            <a class="btn-secondary" href="https://github.com/raunakkathuria/operance/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer">Contribute</a>
+          </div>
+          <p class="mono-small">operance --version · v0.1.0 · MIT License</p>
+        </section>
+      </div>
     </main>
 
     <footer>
       <span>Turn intent into action.</span>
     </footer>
+
+    <script>
+      (function () {
+        window.addEventListener("load", function () {
+          const canvas = document.getElementById("voiceWave");
+          const cmdEl = document.getElementById("waveCmd");
+          const cursorEl = document.getElementById("waveCursor");
+          const resEl = document.getElementById("waveResult");
+          if (!canvas || !cmdEl || !cursorEl || !resEl) {
+            return;
+          }
+
+          const ctx = canvas.getContext("2d");
+          const command = "\"open google.com\"";
+          const result = "+ Default browser opens";
+          const cycle = 13500;
+          const waveEnd = 8500;
+          const typeStart = 800;
+          const typeEnd = 6000;
+          const resultAt = 6600;
+          const holdEnd = 12000;
+          const waves = [
+            { freq: 1.5, amp: 0.70, speed: 2.0, color: "#00e5b4", lw: 2.2, phase: 0.0 },
+            { freq: 2.6, amp: 0.40, speed: 3.0, color: "#00e5b4", lw: 1.2, phase: 1.2 },
+            { freq: 1.0, amp: 0.52, speed: 1.5, color: "#8b6bff", lw: 1.8, phase: 0.7 },
+            { freq: 3.2, amp: 0.25, speed: 3.6, color: "#4f8fff", lw: 1.0, phase: 2.1 },
+            { freq: 0.85, amp: 0.30, speed: 1.2, color: "#ff5f8f", lw: 1.2, phase: 1.8 },
+          ];
+
+          function resize() {
+            const wrap = canvas.parentElement;
+            canvas.width = Math.max(wrap.clientWidth - 56, 100);
+            canvas.height = 72;
+          }
+
+          function clamp(value, min, max) {
+            return Math.min(Math.max(value, min), max);
+          }
+
+          function easeOut(value) {
+            const t = clamp(value, 0, 1);
+            return 1 - Math.pow(1 - t, 3);
+          }
+
+          function easeIn(value) {
+            const t = clamp(value, 0, 1);
+            return Math.pow(t, 2);
+          }
+
+          function drawWave(timeSec, energy) {
+            const width = canvas.width;
+            const height = canvas.height;
+            const centerY = height / 2;
+            ctx.clearRect(0, 0, width, height);
+            if (energy < 0.005) {
+              return;
+            }
+
+            waves.forEach(function (wave) {
+              ctx.beginPath();
+              ctx.strokeStyle = wave.color;
+              ctx.lineWidth = wave.lw;
+              ctx.globalAlpha = clamp(energy * (wave.lw > 1.8 ? 0.92 : 0.68), 0, 1);
+              ctx.shadowColor = wave.color;
+              ctx.shadowBlur = energy * 12;
+
+              for (let x = 0; x <= width; x += 1) {
+                const norm = x / width;
+                const envelope = Math.sin(norm * Math.PI);
+                const y = centerY + Math.sin(norm * Math.PI * 2 * wave.freq + timeSec * wave.speed + wave.phase) * wave.amp * centerY * envelope * energy;
+                if (x === 0) {
+                  ctx.moveTo(x, y);
+                } else {
+                  ctx.lineTo(x, y);
+                }
+              }
+              ctx.stroke();
+            });
+            ctx.globalAlpha = 1;
+            ctx.shadowBlur = 0;
+          }
+
+          let startTs = null;
+          let lastPhase = "";
+
+          function tick(ts) {
+            if (!startTs) {
+              startTs = ts;
+            }
+            const elapsed = (ts - startTs) % cycle;
+            const timeSec = elapsed / 1000;
+            let energy = 0;
+            if (elapsed < waveEnd) {
+              const pct = elapsed / waveEnd;
+              if (pct < 0.08) {
+                energy = easeOut(pct / 0.08);
+              } else if (pct < 0.82) {
+                energy = 0.88 + Math.sin(pct * 18 + timeSec) * 0.12;
+              } else {
+                energy = easeIn(1 - (pct - 0.82) / 0.18);
+              }
+            }
+            drawWave(timeSec, energy);
+
+            if (elapsed < typeStart) {
+              if (lastPhase !== "pre") {
+                cmdEl.textContent = "";
+                cursorEl.style.opacity = "0";
+                resEl.textContent = "";
+                resEl.className = "waveform-result";
+                lastPhase = "pre";
+              }
+            } else if (elapsed < typeEnd) {
+              if (lastPhase !== "typing") {
+                cursorEl.style.opacity = "1";
+                resEl.textContent = "";
+                resEl.className = "waveform-result";
+                lastPhase = "typing";
+              }
+              const pct = (elapsed - typeStart) / (typeEnd - typeStart);
+              cmdEl.textContent = command.slice(0, Math.floor(easeOut(pct) * command.length));
+            } else if (elapsed < resultAt) {
+              cmdEl.textContent = command;
+              cursorEl.style.opacity = "1";
+            } else if (elapsed < holdEnd) {
+              if (lastPhase !== "result") {
+                cmdEl.textContent = command;
+                cursorEl.style.opacity = "0";
+                resEl.textContent = result;
+                resEl.className = "waveform-result show";
+                lastPhase = "result";
+              }
+            } else if (lastPhase !== "reset") {
+              cmdEl.textContent = "";
+              cursorEl.style.opacity = "0";
+              resEl.textContent = "";
+              resEl.className = "waveform-result";
+              lastPhase = "reset";
+            }
+
+            requestAnimationFrame(tick);
+          }
+
+          resize();
+          window.addEventListener("resize", resize);
+          requestAnimationFrame(tick);
+        });
+      })();
+    </script>
   </body>
 </html>
