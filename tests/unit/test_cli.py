@@ -858,6 +858,58 @@ def test_cli_getting_started_includes_packaged_install_readiness(monkeypatch, ca
     assert payload["activation_checklist"][2]["label"] == "Start tray click-to-talk"
 
 
+def test_cli_public_beta_checklist_prints_source_checkout_guidance(monkeypatch, capsys) -> None:
+    monkeypatch.setattr("operance.cli.build_environment_report", _ready_linux_report)
+    monkeypatch.setattr(
+        "operance.project_info._git_output",
+        lambda repo_root, *args: None,
+    )
+    monkeypatch.setattr("operance.project_info._git_dirty", lambda repo_root: False)
+
+    exit_code = main(["--public-beta-checklist"])
+
+    payload = json.loads(capsys.readouterr().out)
+
+    assert exit_code == 0
+    assert payload["status"] == "source_checkout"
+    assert payload["checklist"][0]["command"] == "bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm"
+    assert payload["checklist"][1]["status"] == "not_applicable"
+    assert payload["checklist"][4]["command"] == "python3 -m operance.cli --support-bundle"
+
+
+def test_cli_public_beta_checklist_includes_packaged_readiness(monkeypatch, capsys) -> None:
+    class FakeInstalledSmokeResult:
+        def to_dict(self) -> dict[str, object]:
+            return {"status": "ok", "checks": [], "manual_checks": [], "next_steps": []}
+
+    monkeypatch.setattr("operance.cli.build_environment_report", _ready_linux_report)
+    monkeypatch.setattr(
+        "operance.cli.build_project_identity",
+        lambda: {
+            "install_mode": "packaged",
+            "version": "0.1.0",
+            "package_profile": "mvp",
+        },
+    )
+    monkeypatch.setattr(
+        "operance.cli.build_installed_smoke_result",
+        lambda **kwargs: FakeInstalledSmokeResult(),
+    )
+
+    exit_code = main(["--public-beta-checklist"])
+
+    payload = json.loads(capsys.readouterr().out)
+
+    assert exit_code == 0
+    assert payload["status"] == "ready"
+    assert payload["checklist"][1] == {
+        "command": "operance --installed-smoke",
+        "label": "Verify installed runtime",
+        "status": "ok",
+    }
+    assert payload["checklist"][4]["issue_report_command"] == "operance --issue-report"
+
+
 def test_cli_planner_setup_template_prints_generic_profile(capsys) -> None:
     exit_code = main(["--planner-setup-template"])
 

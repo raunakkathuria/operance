@@ -51,6 +51,7 @@ and the RPM from the same GitHub release, then run the stable setup entrypoint:
 bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm
 operance --version
 operance --installed-smoke
+operance --public-beta-checklist
 ```
 
 Then click the tray icon and say:
@@ -77,6 +78,12 @@ draft. If you only need the draft without creating an archive, run:
 
 ```bash
 operance --issue-report
+```
+
+For one combined install, verify, try, and report checklist, run:
+
+```bash
+operance --public-beta-checklist
 ```
 
 The tray menu also exposes **First run setup**, **Show supported commands**,
@@ -184,6 +191,7 @@ Operance is ready for a **Fedora KDE Wayland public beta** for outside developer
 - Wake word and the continuous voice loop remain secondary to click-to-talk for release reliability
 - The supported Fedora package path now vendors the tray UI and STT runtime dependencies needed for the MVP tray plus click-to-talk path
 - First installed-package diagnostic: `operance --installed-smoke`
+- Public beta install, verify, try, and report checklist: `operance --public-beta-checklist`
 - First-run activation diagnostic: `operance --getting-started`
 - Explicit release-channel check: `operance --check-updates`
 - Local AI planner status check: `operance --planner-status`
@@ -703,7 +711,7 @@ python3 -m operance.cli --tray-run
 
 ## CLI
 
-Most developers only need `--version`, `--about`, `--check-updates`, `--doctor`, `--getting-started`, `--planner-setup-template`, `--planner-status`, `--planner-execute`, `--supported-commands --supported-commands-available-only`, `--transcript`, `--mvp-launch`, `--support-bundle`, and `--issue-report`. In the current developer release, `--supported-commands --supported-commands-available-only` is intentionally conservative: it prints only the commands that are both environment-ready and release-verified for the Fedora KDE Wayland target. The rest of this section is the lower-level CLI reference surface.
+Most developers only need `--version`, `--about`, `--check-updates`, `--doctor`, `--public-beta-checklist`, `--getting-started`, `--planner-setup-template`, `--planner-status`, `--planner-execute`, `--supported-commands --supported-commands-available-only`, `--transcript`, `--mvp-launch`, `--support-bundle`, and `--issue-report`. In the current developer release, `--supported-commands --supported-commands-available-only` is intentionally conservative: it prints only the commands that are both environment-ready and release-verified for the Fedora KDE Wayland target. The rest of this section is the lower-level CLI reference surface.
 
 Print the effective config:
 
@@ -730,6 +738,7 @@ Installed packages are different: the packaged `/usr/bin/operance` entrypoint de
 ```bash
 operance --print-config
 operance --installed-smoke
+operance --public-beta-checklist
 operance --getting-started
 operance --planner-setup-template
 operance --planner-status

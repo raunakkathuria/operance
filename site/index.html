@@ -168,7 +168,23 @@
           </div>
           <pre><code>bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm
 operance --installed-smoke
+operance --public-beta-checklist
 operance --supported-commands --supported-commands-available-only</code></pre>
+        </section>
+
+        <section class="feedback-loop">
+          <div class="section-label">Beta Feedback Loop</div>
+          <h2 class="section-h">Install. Verify. Try. Report.</h2>
+          <p>
+            Public beta testing should produce useful reports, not vague
+            screenshots. Operance includes one checklist for the install path
+            and one redacted issue draft for failures.
+          </p>
+          <div class="feedback-steps">
+            <div><span>1</span><strong>Verify</strong><small><code>operance --public-beta-checklist</code></small></div>
+            <div><span>2</span><strong>Try</strong><small>click-to-talk smoke commands</small></div>
+            <div><span>3</span><strong>Report</strong><small><code>operance --support-bundle</code></small></div>
+          </div>
         </section>
 
         <section class="commands-block">

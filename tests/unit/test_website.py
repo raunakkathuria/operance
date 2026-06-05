@@ -89,7 +89,18 @@ def test_static_website_has_demo_and_beta_install_path() -> None:
     assert "open firefox and notify me" not in text
     assert "bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm" in text
     assert "operance --installed-smoke" in text
+    assert "operance --public-beta-checklist" in text
     assert "operance --supported-commands --supported-commands-available-only" in text
+
+
+def test_static_website_has_beta_feedback_loop() -> None:
+    parser = _parse_site()
+    text = parser.text
+
+    assert "Beta Feedback Loop" in text
+    assert "Install. Verify. Try. Report." in text
+    assert "click-to-talk smoke commands" in text
+    assert "operance --support-bundle" in text
 
 
 def test_static_website_command_examples_match_verified_beta_surface() -> None:

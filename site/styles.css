@@ -259,6 +259,7 @@ h1 {
 .features,
 .commands-block,
 .docs-block,
+.feedback-loop,
 .safety-block,
 .platform-block {
   padding: 0 0 56px;
@@ -384,6 +385,54 @@ h1 {
 .flow-step.highlight {
   background: rgba(0, 229, 180, 0.04);
   border-color: rgba(0, 229, 180, 0.25);
+}
+
+.feedback-loop {
+  animation: fadeUp 0.5s 0.14s ease both;
+}
+
+.feedback-loop p {
+  max-width: 720px;
+  color: var(--subdued);
+  line-height: 1.7;
+}
+
+.feedback-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.feedback-steps div {
+  display: grid;
+  gap: 8px;
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.feedback-steps span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.feedback-steps strong {
+  color: var(--text);
+}
+
+.feedback-steps small {
+  color: var(--subdued);
+  line-height: 1.5;
 }
 
 .step-tag {
@@ -899,6 +948,7 @@ footer {
   .install-block,
   .arch-block,
   .doc-grid,
+  .feedback-steps,
   .safety-grid {
     grid-template-columns: 1fr;
   }
@@ -964,6 +1014,7 @@ footer {
 
   .waveform-wrap,
   .install-block,
+  .feedback-steps div,
   .privacy-panel,
   .feature-card,
   .safety-card,

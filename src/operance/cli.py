@@ -41,6 +41,7 @@ from .planner import (
     run_planner_fixture,
 )
 from .project_info import build_project_identity
+from .public_beta import build_public_beta_checklist
 from .release_channel import build_release_update_status
 from .replay import run_replay_fixture
 from .schemas import build_action_plan_schema, build_action_result_schema
@@ -87,6 +88,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="store_true", help="Print the current Operance version and build identity")
     parser.add_argument("--about", action="store_true", help="Print detailed Operance runtime identity as JSON")
     parser.add_argument("--check-updates", action="store_true", help="Check the configured Operance release channel")
+    parser.add_argument("--public-beta-checklist", action="store_true", help="Print the public beta install, verify, try, and report checklist")
     parser.add_argument(
         "--getting-started",
         action="store_true",
@@ -384,6 +386,30 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
 
     daemon = OperanceDaemon.build_default(env)
+
+    if args.public_beta_checklist:
+        environment_report = build_environment_report()
+        identity = build_project_identity()
+        installed_readiness = (
+            build_installed_smoke_result(env=env, report=environment_report).to_dict()
+            if identity.get("install_mode") == "packaged"
+            else None
+        )
+        print(
+            json.dumps(
+                build_public_beta_checklist(
+                    identity=identity,
+                    command_catalog=build_supported_command_catalog(
+                        environment_report,
+                        available_only=True,
+                    ),
+                    release_status=build_release_update_status(identity=identity, check_remote=False),
+                    installed_readiness=installed_readiness,
+                ),
+                sort_keys=True,
+            )
+        )
+        return 0
 
     if args.print_config:
         print(json.dumps(daemon.config.to_dict(), indent=2, sort_keys=True))
