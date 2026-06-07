@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Added safe JSON desktop skill packs with `operance --skills`, `operance --skill-validate`, built-in project/developer examples, `OPERANCE_SKILL_PACKS` loading, supported-command discovery, and deterministic typed-action execution through the existing validator, policy, confirmation, and adapter path.
+- Added safe JSON desktop skill packs with `operance --skills`, `operance --skill-validate`, built-in project/developer examples, safe target resolution for apps, URLs, and Desktop entries, `OPERANCE_SKILL_PACKS` loading, supported-command discovery, and deterministic typed-action execution through the existing validator, policy, confirmation, and adapter path.
 - Added tray-managed always-on listening controls for the existing voice-loop service and short spoken-response text metadata for manual voice sessions.
 - Simplified the default tray menu for beta users by keeping issue reporting, setup/status, supported commands, recent interaction details, update checks, and context-only confirmation/undo actions while leaving raw diagnostics in CLI surfaces.
 - Shortened tray notification durations and added a small no-transcript retry guard so repeated click-to-talk clicks do not stack stale popups.

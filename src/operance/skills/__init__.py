@@ -8,6 +8,7 @@ from pathlib import Path
 import re
 from typing import Iterable, Mapping
 
+from ..launch_targets import normalize_explicit_url_target
 from ..models.actions import ActionPlan, PlanSource, ToolName, TypedAction
 from ..registry import build_default_action_registry
 from ..validator import PlanValidator
@@ -224,11 +225,15 @@ def _load_typed_actions(
         except ValueError:
             errors.append(f"unknown tool: {tool_value}")
             continue
-        args = action_payload.get("args", {})
-        if not isinstance(args, dict):
+        args_value = action_payload.get("args", {})
+        if not isinstance(args_value, dict):
             errors.append(f"{command_id}: actions[{index}].args must be an object")
             continue
-        actions.append(TypedAction(tool=tool, args=dict(args)))
+        target_args = _resolve_target_args(tool, action_payload, command_id, index, errors)
+        if target_args is None:
+            continue
+        args = {**target_args, **dict(args_value)}
+        actions.append(TypedAction(tool=tool, args=args))
 
     if not actions:
         return []
@@ -244,6 +249,68 @@ def _load_typed_actions(
         errors.extend(validation.errors)
         return []
     return list(validation.normalized_plan.actions)
+
+
+def _resolve_target_args(
+    tool: ToolName,
+    action_payload: Mapping[str, object],
+    command_id: str,
+    index: int,
+    errors: list[str],
+) -> dict[str, object] | None:
+    if "target" not in action_payload:
+        return {}
+    target = action_payload.get("target")
+    if not isinstance(target, Mapping):
+        errors.append(f"{command_id}: actions[{index}].target must be an object")
+        return None
+    kind = target.get("kind")
+    if not isinstance(kind, str) or not kind:
+        errors.append(f"{command_id}: actions[{index}].target.kind must be a non-empty string")
+        return None
+
+    if kind == "app":
+        name = target.get("name")
+        if not isinstance(name, str) or not name.strip():
+            errors.append(f"{command_id}: actions[{index}].target.name must be a non-empty string")
+            return None
+        if tool not in {ToolName.APPS_LAUNCH, ToolName.APPS_FOCUS, ToolName.APPS_QUIT}:
+            errors.append(f"{command_id}: app target is only valid for app tools")
+            return None
+        return {"app": name.strip()}
+
+    if kind == "url":
+        value = target.get("value")
+        if not isinstance(value, str) or not value.strip():
+            errors.append(f"{command_id}: actions[{index}].target.value must be a non-empty string")
+            return None
+        if tool != ToolName.APPS_LAUNCH:
+            errors.append(f"{command_id}: url target is only valid for apps.launch")
+            return None
+        return {"app": normalize_explicit_url_target(value.strip())}
+
+    if kind == "desktop_file":
+        name = target.get("name")
+        if not isinstance(name, str) or not name.strip():
+            errors.append(f"{command_id}: actions[{index}].target.name must be a non-empty string")
+            return None
+        if tool not in {ToolName.FILES_OPEN, ToolName.FILES_DELETE_FILE}:
+            errors.append(f"{command_id}: desktop_file target is only valid for file open/delete tools")
+            return None
+        return {"location": "desktop", "name": name.strip()}
+
+    if kind == "desktop_folder":
+        name = target.get("name")
+        if not isinstance(name, str) or not name.strip():
+            errors.append(f"{command_id}: actions[{index}].target.name must be a non-empty string")
+            return None
+        if tool not in {ToolName.FILES_OPEN, ToolName.FILES_DELETE_FOLDER}:
+            errors.append(f"{command_id}: desktop_folder target is only valid for folder open/delete tools")
+            return None
+        return {"location": "desktop", "name": name.strip()}
+
+    errors.append(f"{command_id}: unsupported target kind: {kind}")
+    return None
 
 
 def _required_string(

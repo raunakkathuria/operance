@@ -72,6 +72,62 @@ def test_skill_pack_normalizes_safety_through_registry() -> None:
     assert action.requires_confirmation is True
 
 
+def test_skill_pack_can_resolve_safe_url_target() -> None:
+    pack = load_skill_pack_from_mapping(
+        {
+            "skill_id": "example.url",
+            "name": "URL example",
+            "description": "URL target resolver example.",
+            "commands": [
+                {
+                    "id": "open_homepage",
+                    "phrases": ["open homepage"],
+                    "actions": [{"tool": "apps.launch", "target": {"kind": "url", "value": "example.com/docs"}}],
+                }
+            ],
+        }
+    )
+
+    assert pack.commands[0].actions[0].args == {"app": "https://example.com/docs"}
+
+
+def test_skill_pack_can_resolve_desktop_file_target() -> None:
+    pack = load_skill_pack_from_mapping(
+        {
+            "skill_id": "example.file",
+            "name": "File example",
+            "description": "Desktop file target resolver example.",
+            "commands": [
+                {
+                    "id": "open_notes",
+                    "phrases": ["open notes"],
+                    "actions": [{"tool": "files.open", "target": {"kind": "desktop_file", "name": "notes.txt"}}],
+                }
+            ],
+        }
+    )
+
+    assert pack.commands[0].actions[0].args == {"location": "desktop", "name": "notes.txt"}
+
+
+def test_skill_pack_rejects_url_target_for_non_launch_tool() -> None:
+    with pytest.raises(SkillValidationError, match="url target is only valid for apps.launch"):
+        load_skill_pack_from_mapping(
+            {
+                "skill_id": "example.bad_target",
+                "name": "Bad target",
+                "description": "Invalid target resolver example.",
+                "commands": [
+                    {
+                        "id": "bad_focus",
+                        "phrases": ["bad focus"],
+                        "actions": [{"tool": "apps.focus", "target": {"kind": "url", "value": "example.com"}}],
+                    }
+                ],
+            }
+        )
+
+
 def test_deterministic_matcher_can_match_builtin_skill_phrase() -> None:
     matcher = DeterministicIntentMatcher(skill_library=build_default_skill_library())
 

@@ -11,8 +11,9 @@
       "actions": [
         {
           "tool": "apps.launch",
-          "args": {
-            "app": "https://github.com/raunakkathuria/operance"
+          "target": {
+            "kind": "url",
+            "value": "github.com/raunakkathuria/operance"
           }
         }
       ]

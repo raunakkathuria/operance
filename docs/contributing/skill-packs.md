@@ -37,8 +37,9 @@ contributor examples without creating a second unsafe automation runtime.
       "actions": [
         {
           "tool": "apps.launch",
-          "args": {
-            "app": "https://github.com/raunakkathuria/operance"
+          "target": {
+            "kind": "url",
+            "value": "github.com/raunakkathuria/operance"
           }
         }
       ]
@@ -96,6 +97,32 @@ Skill actions are validated against `src/operance/registry.py`. That means:
 
 Skill packs do not bypass adapter availability. If a tool is blocked on the
 current OS, a skill that emits that tool is still blocked at runtime.
+
+## Safe Targets
+
+Prefer `target` when a command points at a common user-facing thing. Operance
+resolves the target into registered action args before validation.
+
+Supported target kinds:
+
+- `app`: valid for `apps.launch`, `apps.focus`, and `apps.quit`
+- `url`: valid for `apps.launch`; hostnames are normalized to `https://...`
+- `desktop_file`: valid for `files.open` and `files.delete_file`
+- `desktop_folder`: valid for `files.open` and `files.delete_folder`
+
+Examples:
+
+```json
+{"tool": "apps.launch", "target": {"kind": "app", "name": "firefox"}}
+```
+
+```json
+{"tool": "apps.launch", "target": {"kind": "url", "value": "example.com/docs"}}
+```
+
+```json
+{"tool": "files.open", "target": {"kind": "desktop_file", "name": "notes.txt"}}
+```
 
 ## When To Use Skills
 
