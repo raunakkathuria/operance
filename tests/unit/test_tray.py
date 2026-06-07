@@ -514,6 +514,52 @@ def test_click_to_talk_launch_gate_rejects_duplicate_start_until_finished() -> N
     assert gate.begin() is True
 
 
+def test_click_to_talk_launch_gate_cools_down_after_no_transcript() -> None:
+    from operance.ui.tray import _ClickToTalkLaunchGate
+
+    current_time = 10.0
+    gate = _ClickToTalkLaunchGate(now=lambda: current_time)
+
+    assert gate.begin() is True
+    gate.end(cooldown_seconds=2.0)
+
+    assert gate.begin() is False
+
+    current_time = 12.1
+
+    assert gate.begin() is True
+
+
+def test_show_tray_message_passes_timeout_when_supported() -> None:
+    from operance.ui.tray import _show_tray_message
+
+    calls: list[tuple[object, ...]] = []
+
+    class FakeTray:
+        def showMessage(self, *args):
+            calls.append(args)
+
+    _show_tray_message(FakeTray(), "Title", "Body", "info", timeout_ms=1234)
+
+    assert calls == [("Title", "Body", "info", 1234)]
+
+
+def test_show_tray_message_falls_back_without_timeout() -> None:
+    from operance.ui.tray import _show_tray_message
+
+    calls: list[tuple[object, ...]] = []
+
+    class FakeTray:
+        def showMessage(self, *args):
+            if len(args) == 4:
+                raise TypeError("unsupported overload")
+            calls.append(args)
+
+    _show_tray_message(FakeTray(), "Title", "Body", "info", timeout_ms=1234)
+
+    assert calls == [("Title", "Body", "info")]
+
+
 def test_run_tray_app_menu_keeps_end_user_facing_actions() -> None:
     import inspect
 

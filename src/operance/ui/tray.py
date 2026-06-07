@@ -6,6 +6,7 @@ import fcntl
 from datetime import datetime, timezone
 from dataclasses import dataclass, field
 import json
+from time import monotonic
 from pathlib import Path
 from queue import Empty, SimpleQueue
 import subprocess
@@ -51,6 +52,10 @@ from ..voice.runtime import (
     VoiceLoopRuntimeStatusSnapshot,
     build_voice_loop_runtime_status_snapshot,
 )
+
+_TRAY_NOTIFICATION_DEFAULT_MS = 3000
+_TRAY_NOTIFICATION_SHORT_MS = 1600
+_CLICK_TO_TALK_NO_TRANSCRIPT_RETRY_COOLDOWN_SECONDS = 2.0
 
 
 @dataclass(slots=True, frozen=True)
@@ -191,19 +196,26 @@ class TraySnapshot:
 
 @dataclass(slots=True)
 class _ClickToTalkLaunchGate:
+    now: Callable[[], float] = monotonic
     _active: bool = field(default=False, init=False, repr=False)
+    _cooldown_until: float = field(default=0.0, init=False, repr=False)
     _lock: Lock = field(default_factory=Lock, init=False, repr=False)
 
     def begin(self) -> bool:
         with self._lock:
+            current_time = self.now()
             if self._active:
+                return False
+            if current_time < self._cooldown_until:
                 return False
             self._active = True
             return True
 
-    def end(self) -> None:
+    def end(self, *, cooldown_seconds: float = 0.0) -> None:
         with self._lock:
             self._active = False
+            if cooldown_seconds > 0:
+                self._cooldown_until = self.now() + cooldown_seconds
 
 
 @dataclass(slots=True)
@@ -922,7 +934,8 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
         tray.setIcon(_build_tray_icon(app, QStyle, snapshot.tray_state, QIcon))
         notification = select_tray_notification(last_snapshot, snapshot)
         if notification is not None:
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 notification.title,
                 notification.message,
                 _resolve_notification_icon(QSystemTrayIcon, notification.level),
@@ -941,7 +954,12 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
         refresh()
         message = snapshot.last_command_preview
         if message and snapshot.notification is None:
-            tray.showMessage("Operance", message)
+            _show_tray_message(
+                tray,
+                "Operance",
+                message,
+                _resolve_notification_icon(QSystemTrayIcon, "info"),
+            )
 
     def confirm_pending() -> None:
         snapshot = controller.snapshot()
@@ -960,14 +978,16 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
             result = controller.restart_voice_loop_service()
         except ValueError as exc:
             refresh()
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 "Voice loop needs attention",
                 str(exc),
                 _resolve_notification_icon(QSystemTrayIcon, "warning"),
             )
             return
         refresh()
-        tray.showMessage(
+        _show_tray_message(
+            tray,
             "Operance" if result.status == "success" else "Voice loop restart failed",
             _setup_result_message(result),
             _resolve_notification_icon(
@@ -988,7 +1008,8 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
             failure_title = "Could not start always-on listening"
         else:
             refresh()
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 "Always-on listening unavailable",
                 "Voice-loop service is not ready yet.",
                 _resolve_notification_icon(QSystemTrayIcon, "warning"),
@@ -998,14 +1019,16 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
             result = action()
         except ValueError as exc:
             refresh()
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 "Always-on listening unavailable",
                 str(exc),
                 _resolve_notification_icon(QSystemTrayIcon, "warning"),
             )
             return
         refresh()
-        tray.showMessage(
+        _show_tray_message(
+            tray,
             success_title if result.status == "success" else failure_title,
             _setup_result_message(result),
             _resolve_notification_icon(
@@ -1015,15 +1038,18 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
         )
 
     def click_to_talk_worker() -> None:
+        cooldown_seconds = 0.0
         try:
             result = controller.start_click_to_talk()
         except Exception as exc:
             click_to_talk_results.put(("error", _format_click_to_talk_error(exc)))
             return
         else:
+            if _click_to_talk_response_status(result) == "no_transcript":
+                cooldown_seconds = _CLICK_TO_TALK_NO_TRANSCRIPT_RETRY_COOLDOWN_SECONDS
             click_to_talk_results.put(("result", result))
         finally:
-            click_to_talk_launch_gate.end()
+            click_to_talk_launch_gate.end(cooldown_seconds=cooldown_seconds)
 
     def start_click_to_talk() -> None:
         if not click_to_talk_launch_gate.begin():
@@ -1037,17 +1063,20 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
             raise
         refresh()
         notification = build_click_to_talk_started_notification()
-        tray.showMessage(
+        _show_tray_message(
+            tray,
             notification.title,
             notification.message,
             _resolve_notification_icon(QSystemTrayIcon, notification.level),
+            timeout_ms=_TRAY_NOTIFICATION_SHORT_MS,
         )
 
     def show_supported_commands() -> None:
         try:
             help_text = build_supported_command_help_text(build_supported_command_catalog())
         except Exception as exc:
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 "Supported commands unavailable",
                 str(exc),
                 _resolve_notification_icon(QSystemTrayIcon, "warning"),
@@ -1081,7 +1110,8 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
         try:
             status = controller.release_update_status()
         except Exception as exc:
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 "Update check unavailable",
                 str(exc),
                 _resolve_notification_icon(QSystemTrayIcon, "warning"),
@@ -1099,7 +1129,8 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
         try:
             report = controller.getting_started_report()
         except Exception as exc:
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 "Getting started unavailable",
                 str(exc),
                 _resolve_notification_icon(QSystemTrayIcon, "warning"),
@@ -1117,7 +1148,8 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
         try:
             report = controller.planner_setup_template()
         except Exception as exc:
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 "Local AI setup unavailable",
                 str(exc),
                 _resolve_notification_icon(QSystemTrayIcon, "warning"),
@@ -1135,7 +1167,8 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
         try:
             report = controller.installed_readiness_report()
         except Exception as exc:
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 "Installed readiness unavailable",
                 str(exc),
                 _resolve_notification_icon(QSystemTrayIcon, "warning"),
@@ -1153,7 +1186,8 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
         try:
             report = controller.planner_readiness_report()
         except Exception as exc:
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 "Planner readiness unavailable",
                 str(exc),
                 _resolve_notification_icon(QSystemTrayIcon, "warning"),
@@ -1176,7 +1210,8 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
                 )
             )
         except Exception as exc:
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 "Support snapshot unavailable",
                 str(exc),
                 _resolve_notification_icon(QSystemTrayIcon, "warning"),
@@ -1203,13 +1238,15 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
                 env=env,
             )
         except Exception as exc:
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 "Support snapshot save failed",
                 str(exc),
                 _resolve_notification_icon(QSystemTrayIcon, "error"),
             )
             return
-        tray.showMessage(
+        _show_tray_message(
+            tray,
             "Support snapshot saved",
             str(artifact_path),
             _resolve_notification_icon(QSystemTrayIcon, "info"),
@@ -1222,13 +1259,15 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
                 env=env,
             )
         except Exception as exc:
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 "Support bundle save failed",
                 str(exc),
                 _resolve_notification_icon(QSystemTrayIcon, "error"),
             )
             return
-        tray.showMessage(
+        _show_tray_message(
+            tray,
             "Issue report saved",
             f"Attach this file to a GitHub issue if something fails: {artifact_path}",
             _resolve_notification_icon(QSystemTrayIcon, "info"),
@@ -1237,7 +1276,8 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     def show_last_interaction() -> None:
         report = controller.snapshot().last_interaction
         if report is None:
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 "No recent interaction",
                 "Use click-to-talk or a tray action first.",
                 _resolve_notification_icon(QSystemTrayIcon, "info"),
@@ -1282,7 +1322,8 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     tray.show()
     startup_notification = build_startup_notification(initial_snapshot)
     if startup_notification is not None:
-        tray.showMessage(
+        _show_tray_message(
+            tray,
             startup_notification.title,
             startup_notification.message,
             _resolve_notification_icon(QSystemTrayIcon, startup_notification.level),
@@ -1298,7 +1339,8 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
         except Exception:
             installed_notification = None
         if installed_notification is not None:
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 installed_notification.title,
                 installed_notification.message,
                 _resolve_notification_icon(QSystemTrayIcon, installed_notification.level),
@@ -1751,6 +1793,29 @@ def _setup_result_message(result: SetupRunResult) -> str:
     return f"{result.label} failed."
 
 
+def _show_tray_message(
+    tray: object,
+    title: str,
+    message: str,
+    icon: object,
+    *,
+    timeout_ms: int = _TRAY_NOTIFICATION_DEFAULT_MS,
+) -> None:
+    show_message = getattr(tray, "showMessage")
+    try:
+        show_message(title, message, icon, timeout_ms)
+    except TypeError:
+        show_message(title, message, icon)
+
+
+def _click_to_talk_response_status(result: dict[str, object]) -> str | None:
+    response = result.get("response")
+    if not isinstance(response, dict):
+        return None
+    status = response.get("status")
+    return status if isinstance(status, str) else None
+
+
 def _drain_click_to_talk_results(
     tray,
     qsystemtrayicon,
@@ -1764,7 +1829,8 @@ def _drain_click_to_talk_results(
             return
 
         if kind == "error":
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 "Click-to-talk failed",
                 str(payload),
                 _resolve_notification_icon(qsystemtrayicon, "error"),
@@ -1781,10 +1847,16 @@ def _drain_click_to_talk_results(
             continue
         status = response.get("status")
         if snapshot.notification is None or status == "no_transcript":
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 "Operance",
                 _format_click_to_talk_notification_message(report),
                 _resolve_notification_icon(qsystemtrayicon, _result_level(str(status))),
+                timeout_ms=(
+                    _TRAY_NOTIFICATION_SHORT_MS
+                    if status == "no_transcript"
+                    else _TRAY_NOTIFICATION_DEFAULT_MS
+                ),
             )
 
 
