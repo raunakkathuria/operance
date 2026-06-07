@@ -72,17 +72,28 @@ The adapter defines **how** a tool is executed on that OS.
 
 Start in this order:
 
-1. add a provider module in `src/operance/platforms/`
-2. add adapter implementations for the existing protocols you can support
-3. register the provider in `src/operance/platforms/__init__.py`
-4. add or reuse adapter contracts in `src/operance/adapters/conformance.py`
-5. add provider tests
-6. add adapter tests
-7. run `.venv/bin/python -m operance.cli --adapter-conformance`
-8. only then widen the verified command subset for that platform
+1. run the executable examples in `examples/adapter_sdk/`
+2. add a provider module in `src/operance/platforms/`
+3. add adapter implementations for the existing protocols you can support
+4. register the provider in `src/operance/platforms/__init__.py`
+5. add or reuse adapter contracts in `src/operance/adapters/conformance.py`
+6. add provider tests
+7. add adapter tests
+8. run `.venv/bin/python -m operance.cli --adapter-conformance`
+9. only then widen the verified command subset for that platform
 
 Do not start by editing the core command model unless the new OS truly needs a
 new tool, not just a new implementation.
+
+Run the minimal adapter example before starting a real port:
+
+```bash
+python3 -m examples.adapter_sdk.minimal_adapters
+```
+
+The examples show the intended shape for adapter methods, conformance checks,
+typed-plan execution, and provider-owned blockers without adding fake live OS
+support.
 
 ## 4. Adapter SDK contract
 
@@ -92,6 +103,8 @@ The current in-repo adapter SDK is intentionally small:
   surface.
 - `src/operance/adapters/conformance.py` maps every registered `ToolName` to
   the adapter field and method that must exist.
+- `examples/adapter_sdk/` contains executable minimal adapters and a provider
+  scaffold that are covered by tests.
 - `python3 -m operance.cli --adapter-conformance` validates the active adapter
   set against that contract and returns a JSON report.
 - `scripts/run_release_readiness_gate.sh` runs the conformance check after the

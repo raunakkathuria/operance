@@ -149,6 +149,7 @@ def test_developer_section_links_to_existing_markdown_docs() -> None:
         f"{GITHUB_DOC_BASE}docs/release/public-beta.md",
         f"{GITHUB_DOC_BASE}docs/architecture/overview.md",
         f"{GITHUB_DOC_BASE}docs/architecture/adapter-authoring.md",
+        f"{GITHUB_DOC_BASE}examples/adapter_sdk/README.md",
         f"{GITHUB_DOC_BASE}docs/contributing/command-authoring.md",
         f"{GITHUB_DOC_BASE}docs/requirements/linux.md",
         f"{GITHUB_DOC_BASE}CONTRIBUTING.md",

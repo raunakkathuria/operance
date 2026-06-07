@@ -278,6 +278,8 @@ The repo now also includes a baseline public-project trust surface:
   portable-core versus platform-adapter boundary
 - [docs/architecture/adapter-authoring.md](docs/architecture/adapter-authoring.md)
   for the current provider, adapter, and conformance contract
+- [examples/adapter_sdk/README.md](examples/adapter_sdk/README.md) for
+  executable minimal adapter and provider examples
 - [docs/contributing/command-authoring.md](docs/contributing/command-authoring.md)
   for adding a typed command without leaking platform details into core
 - [docs/release/fedora-checklist.md](docs/release/fedora-checklist.md)
