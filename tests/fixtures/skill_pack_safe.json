@@ -1,0 +1,21 @@
+{
+  "skill_id": "fixture.safe",
+  "name": "Safe fixture skill pack",
+  "description": "Release-gate fixture for typed skill-pack validation.",
+  "platforms": ["linux", "windows", "macos"],
+  "commands": [
+    {
+      "id": "open_fixture_docs",
+      "description": "Open a harmless documentation URL.",
+      "phrases": ["open fixture docs"],
+      "actions": [
+        {
+          "tool": "apps.launch",
+          "args": {
+            "app": "https://github.com/raunakkathuria/operance"
+          }
+        }
+      ]
+    }
+  ]
+}

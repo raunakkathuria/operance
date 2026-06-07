@@ -98,6 +98,7 @@ For the shortest current source-checkout path on the target Linux stack:
 .venv/bin/python -m operance.cli --planner-setup-template
 .venv/bin/python -m operance.cli --planner-status
 .venv/bin/python -m operance.cli --planner-execute "let me know when this is done"
+.venv/bin/python -m operance.cli --skills
 ./scripts/run_mvp.sh
 ./scripts/run_checkout_smoke.sh
 ./scripts/run_fedora_gate.sh --reset-user-services --dry-run
@@ -123,9 +124,16 @@ Use developer-mode mocks first when you only want to validate parsing and respon
 
 ```bash
 .venv/bin/python -m operance.cli --supported-commands --supported-commands-available-only
+.venv/bin/python -m operance.cli --skills
 .venv/bin/python -m operance.cli --transcript "wifi status"
 .venv/bin/python -m operance.cli --transcript "what is the volume"
 ```
+
+Safe JSON desktop skill packs can add exact phrase shortcuts for existing typed
+actions without changing Linux adapters or portable core modules. Load them with
+`OPERANCE_SKILL_PACKS=/path/to/pack.json` and validate them with
+`.venv/bin/python -m operance.cli --skill-validate /path/to/pack.json`.
+Skill packs cannot run raw shell or platform-native scripts.
 
 Use the live Linux adapters when you want real desktop effects on the current machine. These runs should return `"simulated": false`:
 

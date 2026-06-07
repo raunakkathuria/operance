@@ -16,6 +16,8 @@ install, test, report issues, and help extend.
 Today, Operance can open apps and websites, focus or quit apps with confirmation,
 list recent files, manage Desktop files or folders with confirmation, list or
 switch windows, answer desktop-status questions, and control basic audio state.
+It also supports safe JSON desktop skill packs for adding exact phrase shortcuts
+that emit existing typed actions without changing the portable core.
 
 The tray and verified commands work without an AI model. A local
 OpenAI-compatible model, such as an Ollama-served Qwen model, can be enabled as
@@ -122,6 +124,7 @@ Use this path when developing Operance itself from a source checkout:
 .venv/bin/python -m operance.cli --doctor
 .venv/bin/python -m operance.cli --getting-started
 .venv/bin/python -m operance.cli --supported-commands --supported-commands-available-only
+.venv/bin/python -m operance.cli --skills
 ./scripts/run_mvp.sh
 ./scripts/run_checkout_smoke.sh
 ```
@@ -219,12 +222,13 @@ Anyone can contribute right now through one of these paths:
 
 - test Operance on Fedora KDE Wayland and file reproducible issues with a support bundle
 - improve onboarding, troubleshooting, and public handoff docs
+- add safe JSON phrase shortcuts through desktop skill packs
 - add tests and bug fixes that make tray plus click-to-talk more reliable
 - harden packaging, setup, doctor, and release-gate workflows
 
 This is still a founder-maintained developer release. Small, focused fixes and high-quality issue reports are more useful than broad rewrites.
 
-Start with [CONTRIBUTING.md](CONTRIBUTING.md). If you want to add a desktop command, read [docs/contributing/command-authoring.md](docs/contributing/command-authoring.md) before changing core modules. If you are reporting a problem instead of sending a patch, attach the output artifact from `.venv/bin/python -m operance.cli --support-bundle` whenever possible and paste the bundled `issue-report.md` draft into the issue body.
+Start with [CONTRIBUTING.md](CONTRIBUTING.md). If you want to add a safe phrase shortcut for existing behavior, read [docs/contributing/skill-packs.md](docs/contributing/skill-packs.md). If you want to add a new desktop command, read [docs/contributing/command-authoring.md](docs/contributing/command-authoring.md) before changing core modules. If you are reporting a problem instead of sending a patch, attach the output artifact from `.venv/bin/python -m operance.cli --support-bundle` whenever possible and paste the bundled `issue-report.md` draft into the issue body.
 
 This repository already contains the Phase 0A foundation plus the later planner, MCP, Linux-adapter, tray, voice, and release-tooling slices needed for the current developer release. Keep `README.md` for the public stop line and use [CHANGELOG.md](CHANGELOG.md) when you need the feature-by-feature implementation history.
 
@@ -710,7 +714,7 @@ python3 -m operance.cli --tray-run
 
 ## CLI
 
-Most developers only need `--version`, `--about`, `--check-updates`, `--doctor`, `--public-beta-checklist`, `--getting-started`, `--planner-setup-template`, `--planner-status`, `--planner-execute`, `--supported-commands --supported-commands-available-only`, `--transcript`, `--mvp-launch`, `--support-bundle`, and `--issue-report`. In the current developer release, `--supported-commands --supported-commands-available-only` is intentionally conservative: it prints only the commands that are both environment-ready and release-verified for the Fedora KDE Wayland target. The rest of this section is the lower-level CLI reference surface.
+Most developers only need `--version`, `--about`, `--check-updates`, `--doctor`, `--public-beta-checklist`, `--getting-started`, `--planner-setup-template`, `--planner-status`, `--planner-execute`, `--supported-commands --supported-commands-available-only`, `--skills`, `--skill-validate`, `--transcript`, `--mvp-launch`, `--support-bundle`, and `--issue-report`. In the current developer release, `--supported-commands --supported-commands-available-only` is intentionally conservative: it prints only the commands that are both environment-ready and release-verified for the Fedora KDE Wayland target. The rest of this section is the lower-level CLI reference surface.
 
 Print the effective config:
 

@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from ..key_presses import normalize_supported_key
 from ..launch_targets import is_url_like_target, normalize_explicit_url_target
 from ..models.actions import ActionPlan, PlanSource, RiskTier, ToolName, TypedAction
 from ..registry import derive_action_safety_metadata
+from ..skills import SkillLibrary, action_plan_from_skill_command, build_default_skill_library
 from .speech_recovery import recover_spoken_app_target
 
 
@@ -76,9 +77,15 @@ def _normalize_chain_url_target(verb: str, target: str) -> str | None:
 class DeterministicIntentMatcher:
     """Map known transcript strings to a single typed action plan."""
 
+    skill_library: SkillLibrary = field(default_factory=build_default_skill_library)
+
     def match(self, text: str) -> ActionPlan | None:
         normalized = _normalize_text(text)
         explicit_url_text = _normalize_explicit_url_text(text)
+
+        skill_command = self.skill_library.match(text)
+        if skill_command is not None:
+            return action_plan_from_skill_command(skill_command, text)
 
         two_step_launch_plan = self._two_step_launch_plan(text, normalized)
         if two_step_launch_plan is not None:
