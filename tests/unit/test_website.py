@@ -100,6 +100,7 @@ def test_static_website_has_beta_feedback_loop() -> None:
     assert "Beta Feedback Loop" in text
     assert "Install. Verify. Try. Report." in text
     assert "click-to-talk smoke commands" in text
+    assert "start optional always-on listening" in text
     assert "operance --support-bundle" in text
 
 

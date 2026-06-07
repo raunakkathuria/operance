@@ -100,7 +100,10 @@ def test_build_tray_snapshot_reports_idle_state() -> None:
     assert payload["can_cancel"] is False
     assert payload["can_undo"] is False
     assert payload["can_reset_planner"] is False
+    assert payload["can_start_voice_loop_service"] is False
+    assert payload["can_stop_voice_loop_service"] is False
     assert payload["can_restart_voice_loop_service"] is False
+    assert payload["voice_loop_control_label"] == "Start always-on listening"
     assert payload["tooltip"] == "Operance: Idle | Left-click to talk"
 
 
@@ -193,7 +196,10 @@ def test_build_tray_snapshot_includes_voice_loop_runtime_projection() -> None:
     assert payload["voice_loop_last_response"] == "Volume is 30%"
     assert payload["last_command_transcript"] is None
     assert payload["last_command_preview"] is None
+    assert payload["can_start_voice_loop_service"] is False
+    assert payload["can_stop_voice_loop_service"] is True
     assert payload["can_restart_voice_loop_service"] is False
+    assert payload["voice_loop_control_label"] == "Stop always-on listening"
     assert payload["tooltip"] == "Operance: Idle | Left-click to talk"
 
 
@@ -241,9 +247,34 @@ def test_build_tray_snapshot_treats_missing_voice_loop_status_as_click_to_talk_o
     payload = snapshot.to_dict()
 
     assert payload["notification"] is None
+    assert payload["can_start_voice_loop_service"] is True
+    assert payload["can_stop_voice_loop_service"] is False
     assert payload["can_restart_voice_loop_service"] is False
     assert payload["can_start_click_to_talk"] is True
     assert payload["tooltip"] == "Operance: Idle | Left-click to talk"
+
+
+def test_build_tray_snapshot_can_start_stopped_voice_loop_without_restart() -> None:
+    from operance.ui import build_tray_snapshot
+
+    snapshot = build_tray_snapshot(
+        _status_snapshot(),
+        voice_loop_status=_voice_loop_status_snapshot(
+            status="ok",
+            message="Voice-loop is not running; showing the last recorded status.",
+            loop_state="stopped",
+            heartbeat_fresh=False,
+            stopped_reason="interrupted",
+        ),
+    )
+
+    payload = snapshot.to_dict()
+
+    assert payload["voice_loop_activity"] == "Stopped"
+    assert payload["can_start_voice_loop_service"] is True
+    assert payload["can_stop_voice_loop_service"] is False
+    assert payload["can_restart_voice_loop_service"] is False
+    assert payload["voice_loop_control_label"] == "Start always-on listening"
 
 
 def test_build_tray_startup_notification_prefers_click_to_talk_hint() -> None:
@@ -440,6 +471,12 @@ def test_build_click_to_talk_started_notification() -> None:
         "message": "Speak a command now. Operance will stop listening automatically.",
         "title": "Listening",
     }
+
+
+def test_build_spoken_response_text_is_exported_from_ui() -> None:
+    from operance.ui import build_spoken_response_text
+
+    assert build_spoken_response_text({"status": "success", "text": "Opened browser"}) == "Opened browser"
 
 
 def test_acquire_tray_instance_lock_rejects_duplicate_process(tmp_path: Path) -> None:
@@ -815,6 +852,74 @@ def test_tray_controller_can_restart_voice_loop_service(monkeypatch, tmp_path: P
 
     assert result.status == "success"
     assert result.command == "./scripts/control_systemd_user_services.sh restart --voice-loop"
+
+
+def test_tray_controller_can_start_voice_loop_service(monkeypatch, tmp_path: Path) -> None:
+    from operance.daemon import OperanceDaemon
+    from operance.ui import TrayController
+
+    daemon = OperanceDaemon.build_default(
+        {
+            "OPERANCE_DATA_DIR": str(tmp_path / "data"),
+            "OPERANCE_DESKTOP_DIR": str(tmp_path / "Desktop"),
+        }
+    )
+    commands: list[list[str]] = []
+
+    def fake_run(command, *, capture_output, check, text):
+        commands.append(command)
+        return type(
+            "Completed",
+            (),
+            {
+                "returncode": 0,
+                "stdout": "+ systemctl --user enable --now operance-voice-loop.service",
+                "stderr": "",
+            },
+        )()
+
+    monkeypatch.setattr("operance.ui.tray.subprocess.run", fake_run)
+
+    controller = TrayController(daemon)
+    result = controller.start_voice_loop_service()
+
+    assert result.status == "success"
+    assert result.command == "systemctl --user enable --now operance-voice-loop.service"
+    assert commands == [["systemctl", "--user", "enable", "--now", "operance-voice-loop.service"]]
+
+
+def test_tray_controller_can_stop_voice_loop_service(monkeypatch, tmp_path: Path) -> None:
+    from operance.daemon import OperanceDaemon
+    from operance.ui import TrayController
+
+    daemon = OperanceDaemon.build_default(
+        {
+            "OPERANCE_DATA_DIR": str(tmp_path / "data"),
+            "OPERANCE_DESKTOP_DIR": str(tmp_path / "Desktop"),
+        }
+    )
+    commands: list[list[str]] = []
+
+    def fake_run(command, *, capture_output, check, text):
+        commands.append(command)
+        return type(
+            "Completed",
+            (),
+            {
+                "returncode": 0,
+                "stdout": "+ systemctl --user stop operance-voice-loop.service",
+                "stderr": "",
+            },
+        )()
+
+    monkeypatch.setattr("operance.ui.tray.subprocess.run", fake_run)
+
+    controller = TrayController(daemon)
+    result = controller.stop_voice_loop_service()
+
+    assert result.status == "success"
+    assert result.command == "systemctl --user stop operance-voice-loop.service"
+    assert commands == [["systemctl", "--user", "stop", "operance-voice-loop.service"]]
 
 
 def test_tray_controller_can_build_planner_readiness_report(monkeypatch, tmp_path: Path) -> None:
@@ -1371,6 +1476,7 @@ def test_tray_controller_can_run_click_to_talk_command(tmp_path: Path) -> None:
             "Heard: open firefox",
             "Result: success",
             "Mode: simulated",
+            "Spoken: Launched firefox",
             "Processed frames: 2",
             "Stopped: final_transcript",
             "Final state: IDLE",
@@ -1430,6 +1536,7 @@ def test_tray_controller_surfaces_no_transcript_click_to_talk_attempt(tmp_path: 
             "Heard: No final transcript",
             "Result: no_transcript",
             "Mode: simulated",
+            "Spoken: Sorry, I did not hear that.",
             "Processed frames: 2",
             "Stopped: frame_limit",
             "Final state: IDLE",

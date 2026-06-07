@@ -1,5 +1,6 @@
 """Optional tray UI surfaces."""
 
+from ..spoken_response import build_spoken_response_text
 from .setup import (
     SetupAction,
     SetupController,
@@ -43,6 +44,7 @@ __all__ = [
     "TraySnapshot",
     "build_installed_readiness_notification",
     "build_installed_readiness_report",
+    "build_spoken_response_text",
     "build_tray_snapshot",
     "run_tray_app",
     "select_tray_notification",

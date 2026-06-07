@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 import json
 from pathlib import Path
 from queue import Empty, SimpleQueue
+import subprocess
 from threading import Lock, Thread
 from typing import Any, Callable, Mapping, TextIO
 
@@ -35,6 +36,7 @@ from ..project_info import build_project_identity, project_version
 from ..release_channel import build_release_update_status
 from ..status import StatusSnapshot
 from ..stt import SpeechTranscriber, build_default_speech_transcriber
+from ..spoken_response import build_spoken_response_text
 from ..support_bundle import write_support_bundle_artifact
 from ..support_snapshot import build_support_snapshot, build_support_snapshot_help_text
 from ..supported_commands import (
@@ -141,7 +143,10 @@ class TraySnapshot:
     can_cancel: bool
     can_undo: bool
     can_reset_planner: bool
+    can_start_voice_loop_service: bool
+    can_stop_voice_loop_service: bool
     can_restart_voice_loop_service: bool
+    voice_loop_control_label: str
     undo_label: str | None
     tooltip: str
 
@@ -175,7 +180,10 @@ class TraySnapshot:
             "can_cancel": self.can_cancel,
             "can_undo": self.can_undo,
             "can_reset_planner": self.can_reset_planner,
+            "can_start_voice_loop_service": self.can_start_voice_loop_service,
+            "can_stop_voice_loop_service": self.can_stop_voice_loop_service,
             "can_restart_voice_loop_service": self.can_restart_voice_loop_service,
+            "voice_loop_control_label": self.voice_loop_control_label,
             "undo_label": self.undo_label,
             "tooltip": self.tooltip,
         }
@@ -247,6 +255,12 @@ class TrayController:
 
     def restart_voice_loop_service(self) -> SetupRunResult:
         return run_setup_action("restart_voice_loop_service")
+
+    def start_voice_loop_service(self) -> SetupRunResult:
+        return _run_voice_loop_service_control("enable")
+
+    def stop_voice_loop_service(self) -> SetupRunResult:
+        return _run_voice_loop_service_control("stop")
 
     def installed_readiness_report(self) -> TrayInstalledReadinessReport:
         return build_installed_readiness_report(build_installed_smoke_result(env=self.env))
@@ -478,7 +492,10 @@ def build_tray_snapshot(
         can_reset_planner=(
             status.planner_consecutive_failures > 0 or status.last_planner_error is not None
         ),
+        can_start_voice_loop_service=_can_start_voice_loop_service(voice_loop_status),
+        can_stop_voice_loop_service=_can_stop_voice_loop_service(voice_loop_status),
         can_restart_voice_loop_service=_can_restart_voice_loop_service(voice_loop_status),
+        voice_loop_control_label=_voice_loop_control_label(voice_loop_status),
         undo_label=status.last_undo_tool,
         tooltip=" | ".join(tooltip_parts),
     )
@@ -817,6 +834,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     save_support_snapshot_action = QAction("Save support snapshot", menu)
     save_support_bundle_action = QAction("Save support bundle", menu)
     last_interaction_action = QAction("Show last interaction", menu)
+    voice_loop_control_action = QAction("Start always-on listening", menu)
     voice_loop_action = QAction("", menu)
     voice_loop_action.setEnabled(False)
     transcript_action = QAction("", menu)
@@ -845,6 +863,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     menu.addAction(save_support_snapshot_action)
     menu.addAction(save_support_bundle_action)
     menu.addAction(last_interaction_action)
+    menu.addAction(voice_loop_control_action)
     menu.addAction(voice_loop_action)
     menu.addAction(transcript_action)
     menu.addAction(preview_action)
@@ -868,6 +887,10 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
         click_to_talk_action.setText(snapshot.click_to_talk_label)
         click_to_talk_action.setEnabled(snapshot.can_start_click_to_talk)
         last_interaction_action.setEnabled(snapshot.last_interaction is not None)
+        voice_loop_control_action.setText(snapshot.voice_loop_control_label)
+        voice_loop_control_action.setEnabled(
+            snapshot.can_start_voice_loop_service or snapshot.can_stop_voice_loop_service
+        )
         voice_loop_action.setText(
             f"Voice loop: {snapshot.voice_loop_activity or snapshot.voice_loop_message or 'No runtime status'}"
         )
@@ -939,6 +962,44 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
         refresh()
         tray.showMessage(
             "Operance" if result.status == "success" else "Voice loop restart failed",
+            _setup_result_message(result),
+            _resolve_notification_icon(
+                QSystemTrayIcon,
+                "info" if result.status == "success" else "error",
+            ),
+        )
+
+    def control_voice_loop_service() -> None:
+        snapshot = controller.snapshot()
+        if snapshot.can_stop_voice_loop_service:
+            action = controller.stop_voice_loop_service
+            success_title = "Always-on listening stopped"
+            failure_title = "Could not stop always-on listening"
+        elif snapshot.can_start_voice_loop_service:
+            action = controller.start_voice_loop_service
+            success_title = "Always-on listening started"
+            failure_title = "Could not start always-on listening"
+        else:
+            refresh()
+            tray.showMessage(
+                "Always-on listening unavailable",
+                "Voice-loop service is not ready yet.",
+                _resolve_notification_icon(QSystemTrayIcon, "warning"),
+            )
+            return
+        try:
+            result = action()
+        except ValueError as exc:
+            refresh()
+            tray.showMessage(
+                "Always-on listening unavailable",
+                str(exc),
+                _resolve_notification_icon(QSystemTrayIcon, "warning"),
+            )
+            return
+        refresh()
+        tray.showMessage(
+            success_title if result.status == "success" else failure_title,
             _setup_result_message(result),
             _resolve_notification_icon(
                 QSystemTrayIcon,
@@ -1196,6 +1257,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     save_support_snapshot_action.triggered.connect(save_support_snapshot)
     save_support_bundle_action.triggered.connect(save_support_bundle)
     last_interaction_action.triggered.connect(show_last_interaction)
+    voice_loop_control_action.triggered.connect(control_voice_loop_service)
     confirm_action.triggered.connect(confirm_pending)
     cancel_action.triggered.connect(lambda: run_action(controller.cancel_pending))
     undo_action.triggered.connect(lambda: run_action(controller.undo_last_action))
@@ -1355,6 +1417,12 @@ def _build_click_to_talk_interaction_report(
 
     if response.get("simulated") is True:
         details.append("Mode: simulated")
+
+    spoken_response = result.get("spoken_response")
+    if isinstance(spoken_response, dict):
+        spoken_text = spoken_response.get("text")
+        if isinstance(spoken_text, str) and spoken_text:
+            details.append(f"Spoken: {spoken_text}")
 
     processed_frames = result.get("processed_frames")
     if isinstance(processed_frames, int) and processed_frames >= 0:
@@ -1556,7 +1624,70 @@ def _can_restart_voice_loop_service(
 ) -> bool:
     if voice_loop_status is None or voice_loop_status.loop_state == "missing":
         return False
+    if voice_loop_status.loop_state == "stopped":
+        return False
     return not voice_loop_status.heartbeat_fresh
+
+
+def _can_start_voice_loop_service(
+    voice_loop_status: VoiceLoopRuntimeStatusSnapshot | None,
+) -> bool:
+    if voice_loop_status is None:
+        return False
+    if voice_loop_status.loop_state in {"missing", "stopped", "invalid"}:
+        return True
+    return not voice_loop_status.heartbeat_fresh
+
+
+def _can_stop_voice_loop_service(
+    voice_loop_status: VoiceLoopRuntimeStatusSnapshot | None,
+) -> bool:
+    if voice_loop_status is None:
+        return False
+    if voice_loop_status.loop_state in {"missing", "stopped", "invalid"}:
+        return False
+    return voice_loop_status.heartbeat_fresh
+
+
+def _voice_loop_control_label(
+    voice_loop_status: VoiceLoopRuntimeStatusSnapshot | None,
+) -> str:
+    if _can_stop_voice_loop_service(voice_loop_status):
+        return "Stop always-on listening"
+    return "Start always-on listening"
+
+
+def _run_voice_loop_service_control(action: str) -> SetupRunResult:
+    systemctl_args = ["systemctl", "--user", action]
+    command_parts = ["systemctl", "--user", action]
+    if action in {"enable", "disable"}:
+        systemctl_args.append("--now")
+        command_parts.append("--now")
+    systemctl_args.append("operance-voice-loop.service")
+    command_parts.append("operance-voice-loop.service")
+    command = " ".join(command_parts)
+    completed = subprocess.run(
+        systemctl_args,
+        capture_output=True,
+        check=False,
+        text=True,
+    )
+    action_id = {
+        "enable": "enable_voice_loop_service",
+        "start": "start_voice_loop_service",
+        "stop": "stop_voice_loop_service",
+        "disable": "disable_voice_loop_service",
+    }.get(action, f"{action}_voice_loop_service")
+    return SetupRunResult(
+        action_id=action_id,
+        label=f"{action.capitalize()} voice-loop user service",
+        command=command,
+        status="success" if completed.returncode == 0 else "failed",
+        returncode=completed.returncode,
+        stdout=completed.stdout,
+        stderr=completed.stderr,
+        dry_run=False,
+    )
 
 
 def _voice_loop_needs_attention(
@@ -1571,7 +1702,14 @@ def _voice_loop_needs_attention(
 
 def _setup_result_message(result: SetupRunResult) -> str:
     if result.status == "success":
-        return "Restarted voice-loop user service."
+        action_id = result.action_id
+        if action_id in {"enable_voice_loop_service", "start_voice_loop_service"}:
+            return "Started always-on listening."
+        if action_id == "stop_voice_loop_service":
+            return "Stopped always-on listening."
+        if action_id == "restart_voice_loop_service":
+            return "Restarted voice-loop user service."
+        return f"{result.label} completed."
     stderr = (result.stderr or "").strip()
     if stderr:
         return stderr

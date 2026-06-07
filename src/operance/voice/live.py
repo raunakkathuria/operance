@@ -9,6 +9,7 @@ from ..audio.capture import AudioCaptureSource
 from ..audio.playback import AudioPlaybackSink
 from ..daemon import OperanceDaemon
 from ..models.events import ResponseEvent, RuntimeState
+from ..spoken_response import build_spoken_response_text
 from ..stt import SpeechTranscriber
 from ..tts import SpeechSynthesizer
 from ..wakeword import WakeWordDetector
@@ -123,10 +124,19 @@ def run_manual_voice_session(
         if started_daemon:
             daemon.stop()
 
+    spoken_response_text = build_spoken_response_text(response)
     return {
         "processed_frames": processed_frames,
         "transcripts": transcripts,
         "response": response,
+        "spoken_response": (
+            None
+            if spoken_response_text is None
+            else {
+                "status": "ready",
+                "text": spoken_response_text,
+            }
+        ),
         "completed_commands": len(daemon.metrics.completed_commands),
         "final_state": daemon.state_machine.current_state.value,
         "stopped_reason": stopped_reason,

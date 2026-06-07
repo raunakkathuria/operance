@@ -288,6 +288,10 @@ def test_manual_voice_session_runs_final_transcript_against_existing_daemon(tmp_
         "status": "success",
         "text": "Launched firefox",
     }
+    assert result["spoken_response"] == {
+        "status": "ready",
+        "text": "Launched firefox",
+    }
     assert result["completed_commands"] == 1
     assert result["final_state"] == RuntimeState.IDLE.value
     assert transcriber.closed is True
@@ -343,6 +347,10 @@ def test_manual_voice_session_can_confirm_pending_command_without_wake(tmp_path:
         "status": "success",
         "text": "Closed window Firefox",
     }
+    assert result["spoken_response"] == {
+        "status": "ready",
+        "text": "Closed window Firefox",
+    }
     assert result["completed_commands"] == 2
     assert result["final_state"] == RuntimeState.IDLE.value
 
@@ -387,6 +395,10 @@ def test_manual_voice_session_returns_no_transcript_and_restores_idle(tmp_path: 
         "simulated": True,
         "status": "no_transcript",
         "text": "I did not catch a command.",
+    }
+    assert result["spoken_response"] == {
+        "status": "ready",
+        "text": "Sorry, I did not hear that.",
     }
     assert result["completed_commands"] == 0
     assert result["final_state"] == RuntimeState.IDLE.value

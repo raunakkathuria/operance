@@ -188,7 +188,7 @@ Operance is ready for a **Fedora KDE Wayland public beta** for outside developer
 - Recommended public beta path: Fedora RPM install of the `mvp` runtime profile through `setup.sh`
 - Developer/source path: source checkout with `./scripts/install_linux_dev.sh --ui --voice`, `.venv/bin/python -m operance.cli --doctor`, `./scripts/run_mvp.sh`, and `./scripts/run_checkout_smoke.sh`
 - Default interaction: tray plus click-to-talk
-- Wake word and the continuous voice loop remain secondary to click-to-talk for release reliability
+- Optional always-on listening: the tray can start or stop the voice-loop service when the voice runtime is configured
 - The supported Fedora package path now vendors the tray UI and STT runtime dependencies needed for the MVP tray plus click-to-talk path
 - First installed-package diagnostic: `operance --installed-smoke`
 - Public beta install, verify, try, and report checklist: `operance --public-beta-checklist`
@@ -202,7 +202,7 @@ Operance is ready for a **Fedora KDE Wayland public beta** for outside developer
   available from the tray menu
 - Public beta distribution guide: [docs/release/public-beta.md](docs/release/public-beta.md)
 - Packaged release-candidate evidence gate: `./scripts/run_package_evidence_gate.sh`
-- Wake-word and TTS assets or backends remain optional and are not part of the packaged support contract
+- Wake-word and TTS assets remain optional and are not part of the packaged support contract; spoken response text is available even when TTS audio is not configured
 - Windows and macOS are architecture targets only; their current providers are scaffolds, not supported runtimes
 
 Not yet claimed:
@@ -237,7 +237,7 @@ What works now:
 
 - Core runtime: typed action models, deterministic intent matching, validator and policy enforcement, local audit logging, bounded local planner fallback, and MCP-compatible control surfaces.
 - Verified command subset on Fedora KDE Wayland: `open browser`, `open google.com`, `open <app name>` for installed desktop apps, safe two-step launch phrases such as `open firefox and load localhost:3000` or `open firefox and notify me`, `focus <app name>`, confirmation-gated `quit <app name>`, `show recent files`, `create folder on desktop called <name>`, confirmation-gated desktop file or folder delete, rename, and move commands, `list windows`, `switch to window <title>`, `show a notification saying <message>`, `what time is it`, `what is my battery level`, `wifi status`, `what is the volume`, `is audio muted`, `set volume to 50 percent`, `mute audio`, and `unmute audio`.
-- Voice and tray MVP: tray app, bounded click-to-talk, confirmation flows, last-interaction reporting, optional wake-word, STT, and TTS probe paths, plus repo-local background voice-loop support.
+- Voice and tray MVP: tray app, bounded click-to-talk, tray-managed always-on voice-loop controls, confirmation flows, last-interaction reporting, optional wake-word, STT, spoken response text, and TTS probe paths, plus repo-local background voice-loop support.
 - Diagnostics and support: version/about provenance, explicit release-channel checks, doctor, setup actions, installed readiness checks, runnable-command catalog, runtime status resources, support snapshot, support bundle, audit inspection, and source-checkout smoke scripts.
 - Packaging and release gates: reproducible Linux bootstrap, source-checkout install or uninstall helpers, repo-local systemd helpers, Debian or RPM scaffolds, installed-package smoke, package evidence capture, and the Fedora gate.
 
@@ -607,9 +607,7 @@ Wayland session:
 ./scripts/run_installed_desktop_smoke.sh
 ```
 
-The packaged tray is click-to-talk first. A missing continuous voice-loop runtime
-status file is expected unless the background wake-word loop has been started
-separately, and it should not block click-to-talk result notifications.
+The packaged tray is click-to-talk first, with optional always-on listening controls for the voice-loop service. A missing continuous voice-loop runtime status file is expected unless the background wake-word loop has been started separately, and it should not block click-to-talk result notifications. Spoken response text is recorded in the last-interaction report; audio playback still requires configured TTS assets.
 
 Remove an installed native package:
 
