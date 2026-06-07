@@ -6,8 +6,10 @@ import ast
 from dataclasses import dataclass
 from datetime import datetime
 import json
+import os
 from pathlib import Path
 import re
+import shlex
 import shutil
 import subprocess
 import tempfile
@@ -131,19 +133,155 @@ def _process_name_candidates_for_launch(app: str, command: list[str]) -> list[st
     return candidates
 
 
+def _normalize_app_lookup_text(value: str) -> str:
+    normalized = value.casefold().strip()
+    normalized = re.sub(r"[^a-z0-9+._-]+", " ", normalized)
+    return re.sub(r"\s+", " ", normalized).strip()
+
+
+def _desktop_entry_id(path: Path, root: Path) -> str:
+    try:
+        relative = path.relative_to(root)
+    except ValueError:
+        return path.name
+    return "-".join(relative.parts)
+
+
+def _default_desktop_entry_dirs() -> tuple[Path, ...]:
+    dirs: list[Path] = []
+    data_home = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share"))
+    dirs.append(data_home / "applications")
+    for raw_dir in os.environ.get("XDG_DATA_DIRS", "/usr/local/share:/usr/share").split(":"):
+        if raw_dir:
+            dirs.append(Path(raw_dir) / "applications")
+    unique_dirs: list[Path] = []
+    for directory in dirs:
+        if directory not in unique_dirs:
+            unique_dirs.append(directory)
+    return tuple(unique_dirs)
+
+
+@dataclass(slots=True, frozen=True)
+class _DesktopEntry:
+    desktop_id: str
+    name: str
+    process_candidates: tuple[str, ...]
+    lookup_terms: tuple[str, ...]
+
+
+@dataclass(slots=True, frozen=True)
+class _LaunchCommand:
+    command: list[str]
+    command_label: str
+    display_name: str
+    process_candidates: tuple[str, ...] = ()
+
+
+def _parse_desktop_entry(path: Path, root: Path) -> _DesktopEntry | None:
+    values: dict[str, str] = {}
+    in_desktop_entry = False
+    try:
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return None
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped or stripped.startswith(("#", ";")):
+            continue
+        if stripped.startswith("[") and stripped.endswith("]"):
+            in_desktop_entry = stripped == "[Desktop Entry]"
+            continue
+        if not in_desktop_entry or "=" not in stripped:
+            continue
+        key, value = stripped.split("=", 1)
+        values.setdefault(key.strip(), value.strip())
+
+    if values.get("Type", "Application") != "Application":
+        return None
+    if values.get("Hidden", "").casefold() == "true" or values.get("NoDisplay", "").casefold() == "true":
+        return None
+
+    name = values.get("Name", "").strip()
+    if not name:
+        return None
+
+    desktop_id = _desktop_entry_id(path, root)
+    process_candidates = _desktop_entry_process_candidates(values.get("Exec", ""))
+    lookup_terms = _desktop_entry_lookup_terms(
+        desktop_id=desktop_id,
+        name=name,
+        generic_name=values.get("GenericName", ""),
+        keywords=values.get("Keywords", ""),
+        exec_value=values.get("Exec", ""),
+    )
+    return _DesktopEntry(
+        desktop_id=desktop_id,
+        name=name,
+        process_candidates=process_candidates,
+        lookup_terms=lookup_terms,
+    )
+
+
+def _desktop_entry_process_candidates(exec_value: str) -> tuple[str, ...]:
+    executable = _desktop_entry_exec_basename(exec_value)
+    return (executable,) if executable else ()
+
+
+def _desktop_entry_lookup_terms(
+    *,
+    desktop_id: str,
+    name: str,
+    generic_name: str,
+    keywords: str,
+    exec_value: str,
+) -> tuple[str, ...]:
+    raw_terms = [
+        name,
+        generic_name,
+        desktop_id,
+        _strip_desktop_suffix(desktop_id),
+        Path(_strip_desktop_suffix(desktop_id)).name,
+        _desktop_entry_exec_basename(exec_value),
+    ]
+    raw_terms.extend(keywords.split(";"))
+    raw_terms.extend(name.split())
+
+    terms: list[str] = []
+    for raw_term in raw_terms:
+        normalized = _normalize_app_lookup_text(raw_term)
+        if normalized and normalized not in terms:
+            terms.append(normalized)
+    return tuple(terms)
+
+
+def _desktop_entry_exec_basename(exec_value: str) -> str:
+    if not exec_value.strip():
+        return ""
+    try:
+        parts = shlex.split(exec_value)
+    except ValueError:
+        parts = exec_value.split()
+    if not parts:
+        return ""
+    executable = parts[0]
+    return Path(executable).name
+
+
 @dataclass(slots=True)
 class LinuxAppsAdapter:
     run_command: RunCommand = _default_run_command
     spawn_command: SpawnCommand = _default_spawn_command
     resolve_executable: ResolveExecutable = _default_resolve_executable
+    desktop_entry_dirs: tuple[Path, ...] | None = None
 
     def launch(self, app: str) -> str:
-        self._run_launch_command(app)
+        launch_command = self._run_launch_command(app)
         if _is_default_browser_target(app):
             return "Opened default browser"
         if is_url_like_target(app):
             return f"Opened {normalize_launch_target(app)}"
-        return f"Launched {app}"
+        return f"Launched {launch_command.display_name}"
 
     def focus(self, app: str) -> str:
         if self.resolve_executable("gdbus") is not None and self._focus_via_kwin(app):
@@ -221,27 +359,28 @@ class LinuxAppsAdapter:
             after = None
         return _window_info_matches_app(after, app)
 
-    def _run_launch_command(self, app: str) -> None:
-        command, command_label = self._resolve_launch_command(app)
-        if command_label == "spawn":
-            self.spawn_command(command)
+    def _run_launch_command(self, app: str) -> _LaunchCommand:
+        launch_command = self._resolve_launch_command(app)
+        if launch_command.command_label == "spawn":
+            self.spawn_command(launch_command.command)
             if not is_url_like_target(app):
-                self._require_launched_app_observable(app, command)
-            return
-        _require_success(self.run_command(command), command_label=command_label)
+                self._require_launched_app_observable(app, launch_command)
+            return launch_command
+        _require_success(self.run_command(launch_command.command), command_label=launch_command.command_label)
         if not is_url_like_target(app) and not _is_default_browser_target(app):
-            self._require_launched_app_observable(app, command)
+            self._require_launched_app_observable(app, launch_command)
+        return launch_command
 
-    def _resolve_launch_command(self, app: str) -> tuple[list[str], str]:
+    def _resolve_launch_command(self, app: str) -> _LaunchCommand:
         resolved = self.resolve_executable(app)
         if resolved is not None:
-            return [resolved], "spawn"
+            return _LaunchCommand([resolved], "spawn", app)
 
         if app == "terminal":
             for candidate in ("konsole", "kgx", "gnome-terminal", "ptyxis", "xterm"):
                 resolved_terminal = self.resolve_executable(candidate)
                 if resolved_terminal is not None:
-                    return [resolved_terminal], "spawn"
+                    return _LaunchCommand([resolved_terminal], "spawn", app)
 
         if _is_default_browser_target(app):
             gtk_launch = self.resolve_executable("gtk-launch")
@@ -249,26 +388,58 @@ class LinuxAppsAdapter:
             if gtk_launch is not None and xdg_settings is not None:
                 default_browser = self._default_browser_desktop_entry(xdg_settings)
                 if default_browser is not None:
-                    return [gtk_launch, default_browser], "gtk-launch"
+                    return _LaunchCommand([gtk_launch, default_browser], "gtk-launch", app)
 
             xdg_open = self.resolve_executable("xdg-open")
             if xdg_open is not None:
-                return [xdg_open, "https://www.google.com"], "xdg-open"
+                return _LaunchCommand([xdg_open, "https://www.google.com"], "xdg-open", app)
 
         if is_url_like_target(app):
             xdg_open = self.resolve_executable("xdg-open")
             if xdg_open is not None:
-                return [xdg_open, normalize_launch_target(app)], "xdg-open"
+                return _LaunchCommand([xdg_open, normalize_launch_target(app)], "xdg-open", app)
 
         gtk_launch = self.resolve_executable("gtk-launch")
         if gtk_launch is not None:
-            return [gtk_launch, f"{_strip_desktop_suffix(app)}.desktop"], "gtk-launch"
+            desktop_entry = self._resolve_desktop_entry(app)
+            if desktop_entry is not None:
+                return _LaunchCommand(
+                    [gtk_launch, desktop_entry.desktop_id],
+                    "gtk-launch",
+                    desktop_entry.name,
+                    process_candidates=desktop_entry.process_candidates,
+                )
+            return _LaunchCommand([gtk_launch, f"{_strip_desktop_suffix(app)}.desktop"], "gtk-launch", app)
 
         xdg_open = self.resolve_executable("xdg-open")
         if xdg_open is not None:
-            return [xdg_open, normalize_launch_target(app)], "xdg-open"
+            return _LaunchCommand([xdg_open, normalize_launch_target(app)], "xdg-open", app)
 
         raise ValueError(f"unable to resolve application launcher for {app}")
+
+    def _desktop_entry_search_dirs(self) -> tuple[Path, ...]:
+        return self.desktop_entry_dirs if self.desktop_entry_dirs is not None else _default_desktop_entry_dirs()
+
+    def _resolve_desktop_entry(self, app: str) -> _DesktopEntry | None:
+        target = _normalize_app_lookup_text(_strip_desktop_suffix(app))
+        if not target:
+            return None
+        matches: list[_DesktopEntry] = []
+        for root in self._desktop_entry_search_dirs():
+            if not root.is_dir():
+                continue
+            for path in sorted(root.rglob("*.desktop")):
+                entry = _parse_desktop_entry(path, root)
+                if entry is None:
+                    continue
+                if target in entry.lookup_terms:
+                    matches.append(entry)
+        if not matches:
+            return None
+        if len(matches) > 1:
+            names = ", ".join(entry.name for entry in matches[:3])
+            raise ValueError(f"ambiguous application target {app}: {names}")
+        return matches[0]
 
     def _default_browser_desktop_entry(self, xdg_settings: str) -> str | None:
         result = self.run_command([xdg_settings, "get", "default-web-browser"])
@@ -279,12 +450,15 @@ class LinuxAppsAdapter:
             return None
         return desktop_entry
 
-    def _require_launched_app_observable(self, app: str, command: list[str]) -> None:
+    def _require_launched_app_observable(self, app: str, launch_command: _LaunchCommand) -> None:
         pgrep = self.resolve_executable("pgrep")
         if pgrep is None:
             return
 
-        candidates = _process_name_candidates_for_launch(app, command)
+        candidates = list(launch_command.process_candidates)
+        for candidate in _process_name_candidates_for_launch(app, launch_command.command):
+            if candidate not in candidates:
+                candidates.append(candidate)
         if not candidates:
             return
 

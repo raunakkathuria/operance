@@ -99,6 +99,7 @@ def test_linux_apps_adapter_opens_explicit_url_targets() -> None:
     commands: list[list[str]] = []
 
     adapter = LinuxAppsAdapter(
+        desktop_entry_dirs=(),
         run_command=lambda command: commands.append(command) or subprocess.CompletedProcess(
             command,
             0,
@@ -120,6 +121,7 @@ def test_linux_apps_adapter_normalizes_localhost_targets_for_xdg_open() -> None:
     commands: list[list[str]] = []
 
     adapter = LinuxAppsAdapter(
+        desktop_entry_dirs=(),
         run_command=lambda command: commands.append(command) or subprocess.CompletedProcess(
             command,
             0,
@@ -202,6 +204,7 @@ def test_linux_apps_adapter_opens_configured_default_browser_without_process_pro
         return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
 
     adapter = LinuxAppsAdapter(
+        desktop_entry_dirs=(),
         run_command=run_command,
         resolve_executable=resolve_executable,
     )
@@ -242,6 +245,7 @@ def test_linux_apps_adapter_uses_gtk_launch_for_desktop_entries_and_requires_suc
     commands: list[list[str]] = []
 
     adapter = LinuxAppsAdapter(
+        desktop_entry_dirs=(),
         run_command=lambda command: commands.append(command) or subprocess.CompletedProcess(
             command,
             0,
@@ -255,6 +259,205 @@ def test_linux_apps_adapter_uses_gtk_launch_for_desktop_entries_and_requires_suc
 
     assert message == "Launched firefox"
     assert commands == [["/usr/bin/gtk-launch", "firefox.desktop"]]
+
+
+def test_linux_apps_adapter_resolves_desktop_entry_by_name(tmp_path: Path) -> None:
+    from operance.adapters.linux import LinuxAppsAdapter
+
+    applications_dir = tmp_path / "applications"
+    applications_dir.mkdir()
+    (applications_dir / "google-chrome.desktop").write_text(
+        "\n".join(
+            [
+                "[Desktop Entry]",
+                "Type=Application",
+                "Name=Google Chrome",
+                "Exec=/usr/bin/google-chrome-stable %U",
+                "Keywords=browser;web;",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    commands: list[list[str]] = []
+
+    adapter = LinuxAppsAdapter(
+        desktop_entry_dirs=(applications_dir,),
+        run_command=lambda command: commands.append(command) or subprocess.CompletedProcess(
+            command,
+            0,
+            stdout="",
+            stderr="",
+        ),
+        resolve_executable=lambda name: "/usr/bin/gtk-launch" if name == "gtk-launch" else None,
+    )
+
+    message = adapter.launch("chrome")
+
+    assert message == "Launched Google Chrome"
+    assert commands == [["/usr/bin/gtk-launch", "google-chrome.desktop"]]
+
+
+def test_linux_apps_adapter_resolves_desktop_entry_by_keyword(tmp_path: Path) -> None:
+    from operance.adapters.linux import LinuxAppsAdapter
+
+    applications_dir = tmp_path / "applications"
+    applications_dir.mkdir()
+    (applications_dir / "code.desktop").write_text(
+        "\n".join(
+            [
+                "[Desktop Entry]",
+                "Type=Application",
+                "Name=Visual Studio Code",
+                "GenericName=Text Editor",
+                "Exec=/usr/share/code/code --unity-launch %F",
+                "Keywords=vscode;code;editor;",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    commands: list[list[str]] = []
+
+    adapter = LinuxAppsAdapter(
+        desktop_entry_dirs=(applications_dir,),
+        run_command=lambda command: commands.append(command) or subprocess.CompletedProcess(
+            command,
+            0,
+            stdout="",
+            stderr="",
+        ),
+        resolve_executable=lambda name: "/usr/bin/gtk-launch" if name == "gtk-launch" else None,
+    )
+
+    message = adapter.launch("vscode")
+
+    assert message == "Launched Visual Studio Code"
+    assert commands == [["/usr/bin/gtk-launch", "code.desktop"]]
+
+
+def test_linux_apps_adapter_verifies_resolved_desktop_entry_process(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from operance.adapters import linux
+    from operance.adapters.linux import LinuxAppsAdapter
+
+    monkeypatch.setattr(linux, "APP_LAUNCH_VERIFICATION_TIMEOUT_SECONDS", 0)
+    monkeypatch.setattr(linux, "APP_LAUNCH_VERIFICATION_SETTLE_SECONDS", 0)
+    applications_dir = tmp_path / "applications"
+    applications_dir.mkdir()
+    (applications_dir / "google-chrome.desktop").write_text(
+        "\n".join(
+            [
+                "[Desktop Entry]",
+                "Type=Application",
+                "Name=Google Chrome",
+                "Exec=/usr/bin/google-chrome-stable %U",
+                "Keywords=browser;web;",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    commands: list[list[str]] = []
+
+    def resolve_executable(name: str) -> str | None:
+        if name in {"gtk-launch", "pgrep"}:
+            return f"/usr/bin/{name}"
+        return None
+
+    def run_command(command: list[str]) -> subprocess.CompletedProcess[str]:
+        commands.append(command)
+        if command == ["/usr/bin/pgrep", "-x", "google-chrome-stable"]:
+            return subprocess.CompletedProcess(command, 0, stdout="123\n", stderr="")
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    adapter = LinuxAppsAdapter(
+        desktop_entry_dirs=(applications_dir,),
+        run_command=run_command,
+        resolve_executable=resolve_executable,
+    )
+
+    message = adapter.launch("chrome")
+
+    assert message == "Launched Google Chrome"
+    assert commands == [
+        ["/usr/bin/gtk-launch", "google-chrome.desktop"],
+        ["/usr/bin/pgrep", "-x", "google-chrome-stable"],
+    ]
+
+
+def test_linux_apps_adapter_ignores_hidden_desktop_entries(tmp_path: Path) -> None:
+    from operance.adapters.linux import LinuxAppsAdapter
+
+    applications_dir = tmp_path / "applications"
+    applications_dir.mkdir()
+    (applications_dir / "hidden-browser.desktop").write_text(
+        "\n".join(
+            [
+                "[Desktop Entry]",
+                "Type=Application",
+                "Name=Hidden Browser",
+                "NoDisplay=true",
+                "Exec=/usr/bin/hidden-browser %U",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    commands: list[list[str]] = []
+
+    adapter = LinuxAppsAdapter(
+        desktop_entry_dirs=(applications_dir,),
+        run_command=lambda command: commands.append(command) or subprocess.CompletedProcess(
+            command,
+            0,
+            stdout="",
+            stderr="",
+        ),
+        resolve_executable=lambda name: "/usr/bin/gtk-launch" if name == "gtk-launch" else None,
+    )
+
+    message = adapter.launch("hidden browser")
+
+    assert message == "Launched hidden browser"
+    assert commands == [["/usr/bin/gtk-launch", "hidden browser.desktop"]]
+
+
+def test_linux_apps_adapter_rejects_ambiguous_desktop_entry_matches(tmp_path: Path) -> None:
+    from operance.adapters.linux import LinuxAppsAdapter
+
+    applications_dir = tmp_path / "applications"
+    applications_dir.mkdir()
+    (applications_dir / "alpha-editor.desktop").write_text(
+        "\n".join(
+            [
+                "[Desktop Entry]",
+                "Type=Application",
+                "Name=Alpha Editor",
+                "Exec=/usr/bin/alpha-editor",
+                "Keywords=editor;",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (applications_dir / "beta-editor.desktop").write_text(
+        "\n".join(
+            [
+                "[Desktop Entry]",
+                "Type=Application",
+                "Name=Beta Editor",
+                "Exec=/usr/bin/beta-editor",
+                "Keywords=editor;",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    adapter = LinuxAppsAdapter(
+        desktop_entry_dirs=(applications_dir,),
+        resolve_executable=lambda name: "/usr/bin/gtk-launch" if name == "gtk-launch" else None,
+    )
+
+    with pytest.raises(ValueError, match="ambiguous application target editor"):
+        adapter.launch("editor")
 
 
 def test_linux_apps_adapter_verifies_gtk_launch_created_process(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -277,6 +480,7 @@ def test_linux_apps_adapter_verifies_gtk_launch_created_process(monkeypatch: pyt
         return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
 
     adapter = LinuxAppsAdapter(
+        desktop_entry_dirs=(),
         run_command=run_command,
         resolve_executable=resolve_executable,
     )

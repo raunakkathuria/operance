@@ -129,6 +129,7 @@ def test_static_website_command_examples_match_verified_beta_surface() -> None:
         assert example in text
 
     assert "destructive actions ask for confirmation" in text
+    assert "Installed desktop apps resolve from Linux app metadata" in text
 
 
 def test_static_website_does_not_advertise_unreleased_agent_surface() -> None:
