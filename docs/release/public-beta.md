@@ -36,6 +36,7 @@ Supported command families are intentionally conservative:
 
 - open apps, the default browser, and websites
 - focus or quit apps, with confirmation for quit
+- show notifications
 - answer time, battery, Wi-Fi, volume, and mute status
 - set, mute, and unmute audio
 - show recent files
@@ -59,6 +60,7 @@ then install it:
 bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm
 operance --version
 operance --installed-smoke
+operance --public-beta-checklist
 ```
 
 The setup script is the stable local setup surface for the current packaged
@@ -105,6 +107,12 @@ If you only need the issue text without writing the archive, run:
 
 ```bash
 operance --issue-report
+```
+
+For a single public beta install, verify, try, and report checklist, run:
+
+```bash
+operance --public-beta-checklist
 ```
 
 ---

@@ -168,7 +168,23 @@
           </div>
           <pre><code>bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm
 operance --installed-smoke
+operance --public-beta-checklist
 operance --supported-commands --supported-commands-available-only</code></pre>
+        </section>
+
+        <section class="feedback-loop">
+          <div class="section-label">Beta Feedback Loop</div>
+          <h2 class="section-h">Install. Verify. Try. Report.</h2>
+          <p>
+            Public beta testing should produce useful reports, not vague
+            screenshots. Operance includes one checklist for the install path
+            and one redacted issue draft for failures.
+          </p>
+          <div class="feedback-steps">
+            <div><span>1</span><strong>Verify</strong><small><code>operance --public-beta-checklist</code></small></div>
+            <div><span>2</span><strong>Try</strong><small>click-to-talk smoke commands</small></div>
+            <div><span>3</span><strong>Report</strong><small><code>operance --support-bundle</code></small></div>
+          </div>
         </section>
 
         <section class="commands-block">
@@ -190,6 +206,7 @@ operance --supported-commands --supported-commands-available-only</code></pre>
             <span class="pill">mute audio</span>
             <span class="pill">list windows</span>
             <span class="pill">switch to window &lt;title&gt;</span>
+            <span class="pill">show a notification saying &lt;message&gt;</span>
             <span class="pill">show recent files</span>
             <span class="pill">create folder on desktop called &lt;name&gt;</span>
             <span class="pill">delete file on desktop called &lt;name&gt;</span>
@@ -223,6 +240,11 @@ operance --supported-commands --supported-commands-available-only</code></pre>
               <span class="doc-tag">Port to a new OS</span>
               <strong>docs/architecture/adapter-authoring.md</strong>
               <small>Add OS support without rewriting core.</small>
+            </a>
+            <a href="https://github.com/raunakkathuria/operance/blob/main/examples/adapter_sdk/README.md" target="_blank" rel="noopener noreferrer">
+              <span class="doc-tag">Adapter examples</span>
+              <strong>examples/adapter_sdk</strong>
+              <small>Run minimal provider and adapter examples.</small>
             </a>
             <a href="https://github.com/raunakkathuria/operance/blob/main/docs/contributing/command-authoring.md" target="_blank" rel="noopener noreferrer">
               <span class="doc-tag">Add commands</span>

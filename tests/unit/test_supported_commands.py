@@ -121,6 +121,8 @@ def test_build_supported_command_catalog_can_filter_available_commands_only() ->
     assert "files.delete_file" in commands
     assert "files.rename" in commands
     assert "files.move" in commands
+    assert "notifications.show" in commands
+    assert commands["notifications.show"]["usage_pattern"] == "show a notification saying <message>"
     assert "windows.list" in commands
     assert "windows.switch" in commands
     assert "text.type" not in commands

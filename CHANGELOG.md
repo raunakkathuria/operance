@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added `operance --public-beta-checklist`, a public beta install, verify, try, and report checklist that reuses existing installed readiness, supported-command, release, and support-bundle surfaces.
+- Added executable adapter SDK examples for minimal adapters, provider-owned blockers, conformance checks, and typed-plan execution so contributors can start new OS ports without editing core modules first.
+- Promoted `notifications.show` into the Fedora KDE Wayland verified command subset and added it to controlled live-command smoke guidance.
 - Added a generated `favicon.ico` from the Operance icon and included it in the static website artifact.
 - Added `scripts/build_site.sh` plus `wrangler.toml` so the static website builds a self-contained `dist/pages/` artifact for Cloudflare Workers Static Assets while keeping shared assets outside `site/`, and removed the duplicate GitHub Pages workflow.
 - Added GitHub-renderable Mermaid diagrams to the architecture overview, covering the high-level runtime path and the portable-core/provider/adapter boundary.
