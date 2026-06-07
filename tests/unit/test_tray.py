@@ -514,6 +514,24 @@ def test_click_to_talk_launch_gate_rejects_duplicate_start_until_finished() -> N
     assert gate.begin() is True
 
 
+def test_run_tray_app_menu_keeps_end_user_facing_actions() -> None:
+    import inspect
+
+    from operance.ui.tray import run_tray_app
+
+    source = inspect.getsource(run_tray_app)
+
+    assert 'QAction("Report an issue", menu)' in source
+    assert 'QAction("Setup and status", menu)' in source
+    assert 'QAction("Supported commands", menu)' in source
+    assert 'QAction("Show support snapshot", menu)' not in source
+    assert 'QAction("Save support snapshot", menu)' not in source
+    assert 'QAction("Show installed readiness", menu)' not in source
+    assert 'QAction("Show planner readiness", menu)' not in source
+    assert 'QAction("Reset planner runtime", menu)' not in source
+    assert 'QAction("Restart voice-loop service", menu)' not in source
+
+
 def test_acquire_tray_instance_lock_rejects_duplicate_process(tmp_path: Path) -> None:
     from operance.ui.tray import _acquire_tray_instance_lock, _release_tray_instance_lock
 

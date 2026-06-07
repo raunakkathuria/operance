@@ -86,12 +86,11 @@ For one combined install, verify, try, and report checklist, run:
 operance --public-beta-checklist
 ```
 
-The tray menu also exposes **First run setup**, **Show supported commands**,
-**Show local AI setup**, **Show planner readiness**, **Show installed
-readiness**, and **Save support bundle**, so normal beta use does not require
-memorizing CLI diagnostics. **First run setup** includes packaged-install
-readiness when running the RPM, the supported click-to-talk smoke commands,
-optional local AI validation, and what to attach to an issue.
+The tray menu exposes **Setup and status**, **Supported commands**, **Report an
+issue**, optional always-on listening controls, recent interaction details, and
+release update checks. Detailed diagnostics such as planner readiness,
+installed-smoke output, and raw support snapshots remain available from the CLI
+and the setup/status flow instead of crowding the default tray menu.
 
 The release artifact set includes `setup.sh` beside the RPM, checksums, and
 manifest. The repo-local copy lives at `scripts/setup.sh`. A hosted one-line
@@ -197,9 +196,9 @@ Operance is ready for a **Fedora KDE Wayland public beta** for outside developer
 - Local AI planner status check: `operance --planner-status`
 - Paste-ready feedback draft: `operance --issue-report`
 - Stable packaged setup entrypoint: `./scripts/setup.sh --package ./operance-0.1.0-1.noarch.rpm`
-- Tray-first onboarding: First run setup, supported commands, local AI setup,
-  planner readiness, installed readiness, and support-bundle capture are
-  available from the tray menu
+- Tray-first onboarding: setup/status, supported commands, issue reporting,
+  recent interaction details, update checks, and optional always-on listening
+  controls are available from the tray menu
 - Public beta distribution guide: [docs/release/public-beta.md](docs/release/public-beta.md)
 - Packaged release-candidate evidence gate: `./scripts/run_package_evidence_gate.sh`
 - Wake-word and TTS assets remain optional and are not part of the packaged support contract; spoken response text is available even when TTS audio is not configured
@@ -749,7 +748,7 @@ python3 scripts/check_installed_mvp_runtime.py --command operance --check-tray-s
 
 `operance --print-config` should report `"developer_mode": false`. `operance --about` reports whether the command is a packaged install or source checkout plus package profile, build commit, tag when available, build time, and install root. `operance --getting-started` prints the current first-run path, commands to try, local AI planner state, and contributor next steps. `operance --planner-setup-template` prints copy-paste local planner setup templates without mutating the host. `operance --planner-status` prints non-executing local planner status plus the safety contract that keeps model output bounded to typed actions. `operance --issue-report` prints a redacted paste-ready GitHub issue draft from the current support snapshot. `operance --check-updates` checks the configured release channel and prints whether the installed packaged build matches the latest release; it does not auto-install packages or invoke `sudo`. `operance --installed-smoke` summarizes installed package readiness, warns when the tray service is not active, fails when packaged build identity or runtime dependencies are missing, catches stale repo-local user units shadowing the packaged service, and includes evidence for build identity, live mode, tray service state, and failed or warning checks. If stale user units are reported, reinstall with `./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --replace-existing --reset-user-services`. In `systemctl --user status`, `preset: disabled` is normal on Fedora; `Loaded`, `Active`, and the `ExecStart` command path are the parts to verify.
 `./scripts/run_installed_desktop_smoke.sh` starts/enables the packaged tray user service before checking status, so `Active: inactive (dead)` is a smoke failure rather than a successful desktop state.
-The tray menu also exposes `Check for updates` and `Show installed readiness`, so users can inspect release-channel status and installed-smoke next steps without requiring a terminal.
+The tray menu exposes `Check for updates` and `Setup and status`, so users can inspect release-channel status, setup guidance, and installed-smoke next steps without requiring a terminal.
 
 Run the built-in deterministic corpus and print a summary:
 

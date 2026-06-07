@@ -83,12 +83,14 @@ wifi status
 what is the volume
 ```
 
-The tray menu is the primary non-terminal surface. Use **First run setup** to
+The tray menu is the primary non-terminal surface. Use **Setup and status** to
 walk through runtime readiness, packaged-install readiness when running the RPM,
 the click-to-talk smoke commands, optional local AI planner validation, and
-support-bundle capture. The same menu also shows supported commands, local AI
-setup, planner readiness, installed readiness, always-on listening controls,
-and support-bundle actions.
+support-bundle capture. The same compact menu also exposes supported commands,
+issue reporting, recent interaction details, release update checks, and
+optional always-on listening controls. Raw support snapshots, planner readiness,
+and installed-smoke diagnostics remain available from CLI commands when a
+developer or maintainer needs deeper output.
 
 If anything fails, collect one support bundle before changing the machine:
 

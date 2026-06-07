@@ -861,57 +861,32 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     state_action = QAction("", menu)
     state_action.setEnabled(False)
     click_to_talk_action = QAction("Click to talk", menu)
-    supported_commands_action = QAction("Show supported commands", menu)
+    supported_commands_action = QAction("Supported commands", menu)
     about_action = QAction("About Operance", menu)
     check_updates_action = QAction("Check for updates", menu)
-    getting_started_action = QAction("First run setup", menu)
-    planner_setup_action = QAction("Show local AI setup", menu)
-    planner_readiness_action = QAction("Show planner readiness", menu)
-    installed_readiness_action = QAction("Show installed readiness", menu)
-    support_snapshot_action = QAction("Show support snapshot", menu)
-    save_support_snapshot_action = QAction("Save support snapshot", menu)
-    save_support_bundle_action = QAction("Save support bundle", menu)
+    getting_started_action = QAction("Setup and status", menu)
+    save_support_bundle_action = QAction("Report an issue", menu)
     last_interaction_action = QAction("Show last interaction", menu)
     voice_loop_control_action = QAction("Start always-on listening", menu)
-    voice_loop_action = QAction("", menu)
-    voice_loop_action.setEnabled(False)
-    transcript_action = QAction("", menu)
-    transcript_action.setEnabled(False)
-    preview_action = QAction("", menu)
-    preview_action.setEnabled(False)
-    pending_action = QAction("", menu)
-    pending_action.setEnabled(False)
     confirm_action = QAction("Confirm pending command", menu)
     cancel_action = QAction("Cancel pending command", menu)
     undo_action = QAction("Undo last action", menu)
-    restart_voice_loop_action = QAction("Restart voice-loop service", menu)
-    reset_planner_action = QAction("Reset planner runtime", menu)
     quit_action = QAction("Quit Operance", menu)
 
     menu.addAction(state_action)
     menu.addAction(click_to_talk_action)
+    menu.addAction(voice_loop_control_action)
     menu.addAction(supported_commands_action)
-    menu.addAction(about_action)
-    menu.addAction(check_updates_action)
     menu.addAction(getting_started_action)
-    menu.addAction(planner_setup_action)
-    menu.addAction(planner_readiness_action)
-    menu.addAction(installed_readiness_action)
-    menu.addAction(support_snapshot_action)
-    menu.addAction(save_support_snapshot_action)
     menu.addAction(save_support_bundle_action)
     menu.addAction(last_interaction_action)
-    menu.addAction(voice_loop_control_action)
-    menu.addAction(voice_loop_action)
-    menu.addAction(transcript_action)
-    menu.addAction(preview_action)
-    menu.addAction(pending_action)
-    menu.addSeparator()
+    command_separator_action = menu.addSeparator()
     menu.addAction(confirm_action)
     menu.addAction(cancel_action)
     menu.addAction(undo_action)
-    menu.addAction(restart_voice_loop_action)
-    menu.addAction(reset_planner_action)
+    menu.addSeparator()
+    menu.addAction(check_updates_action)
+    menu.addAction(about_action)
     menu.addSeparator()
     menu.addAction(quit_action)
     tray.setContextMenu(menu)
@@ -925,28 +900,21 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
         state_action.setText(f"State: {snapshot.state_label}")
         click_to_talk_action.setText(snapshot.click_to_talk_label)
         click_to_talk_action.setEnabled(snapshot.can_start_click_to_talk)
+        last_interaction_action.setVisible(snapshot.last_interaction is not None)
         last_interaction_action.setEnabled(snapshot.last_interaction is not None)
         voice_loop_control_action.setText(snapshot.voice_loop_control_label)
         voice_loop_control_action.setEnabled(
             snapshot.can_start_voice_loop_service or snapshot.can_stop_voice_loop_service
         )
-        voice_loop_action.setText(
-            f"Voice loop: {snapshot.voice_loop_activity or snapshot.voice_loop_message or 'No runtime status'}"
+        command_separator_action.setVisible(
+            snapshot.can_confirm or snapshot.can_cancel or snapshot.can_undo
         )
-        transcript_action.setText(
-            f"Heard: {snapshot.last_command_transcript or 'No recent transcript'}"
-        )
-        preview_action.setText(
-            f"Last: {snapshot.last_command_preview or 'No recent response'}"
-        )
-        pending_action.setText(
-            f"Pending: {snapshot.pending_confirmation_prompt or 'No pending confirmation'}"
-        )
+        confirm_action.setVisible(snapshot.can_confirm)
         confirm_action.setEnabled(snapshot.can_confirm)
+        cancel_action.setVisible(snapshot.can_cancel)
         cancel_action.setEnabled(snapshot.can_cancel)
+        undo_action.setVisible(snapshot.can_undo)
         undo_action.setEnabled(snapshot.can_undo)
-        restart_voice_loop_action.setEnabled(snapshot.can_restart_voice_loop_service)
-        reset_planner_action.setEnabled(snapshot.can_reset_planner)
         undo_action.setText(
             "Undo last action" if snapshot.undo_label is None else f"Undo {snapshot.undo_label}"
         )
@@ -1139,7 +1107,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
             return
         _show_information_dialog(
             QMessageBox,
-            title="First run setup",
+            title="Setup and status",
             summary=str(report.get("headline") or "Operance getting started"),
             informative_text=_format_getting_started_highlights(report),
             details=_format_getting_started_details(report) or json.dumps(report, indent=2, sort_keys=True),
@@ -1261,7 +1229,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
             )
             return
         tray.showMessage(
-            "Support bundle saved",
+            "Issue report saved",
             f"Attach this file to a GitHub issue if something fails: {artifact_path}",
             _resolve_notification_icon(QSystemTrayIcon, "info"),
         )
@@ -1298,19 +1266,12 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     about_action.triggered.connect(show_about)
     check_updates_action.triggered.connect(show_update_status)
     getting_started_action.triggered.connect(show_getting_started)
-    planner_setup_action.triggered.connect(show_planner_setup)
-    planner_readiness_action.triggered.connect(show_planner_readiness)
-    installed_readiness_action.triggered.connect(show_installed_readiness)
-    support_snapshot_action.triggered.connect(show_support_snapshot)
-    save_support_snapshot_action.triggered.connect(save_support_snapshot)
     save_support_bundle_action.triggered.connect(save_support_bundle)
     last_interaction_action.triggered.connect(show_last_interaction)
     voice_loop_control_action.triggered.connect(control_voice_loop_service)
     confirm_action.triggered.connect(confirm_pending)
     cancel_action.triggered.connect(lambda: run_action(controller.cancel_pending))
     undo_action.triggered.connect(lambda: run_action(controller.undo_last_action))
-    restart_voice_loop_action.triggered.connect(restart_voice_loop_service)
-    reset_planner_action.triggered.connect(lambda: run_action(controller.reset_planner_runtime))
     quit_action.triggered.connect(quit_tray)
 
     timer = QTimer()
