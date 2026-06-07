@@ -1097,10 +1097,14 @@ def test_tray_controller_can_build_getting_started_report(monkeypatch, tmp_path:
     planner_status = {"mode": "disabled_needs_setup"}
     identity = {"install_mode": "source", "version": "1.2.3"}
     received: dict[str, object] = {}
+    catalog_received: dict[str, object] = {}
 
     monkeypatch.setattr("operance.ui.tray.build_environment_report", lambda: environment_report)
     monkeypatch.setattr("operance.ui.tray.build_setup_snapshot", lambda report: setup_snapshot)
-    monkeypatch.setattr("operance.ui.tray.build_supported_command_catalog", lambda report: command_catalog)
+    monkeypatch.setattr(
+        "operance.ui.tray.build_supported_command_catalog",
+        lambda report, *, skill_library=None: catalog_received.update({"skill_library": skill_library}) or command_catalog,
+    )
     monkeypatch.setattr(
         "operance.ui.tray.build_planner_status_report",
         lambda config, *, environment_report: planner_status,
@@ -1123,6 +1127,7 @@ def test_tray_controller_can_build_getting_started_report(monkeypatch, tmp_path:
     report = TrayController(daemon).getting_started_report()
 
     assert report["headline"] == "Operance is ready."
+    assert catalog_received["skill_library"] is not None
     assert received == {
         "setup_snapshot": setup_snapshot,
         "command_catalog": command_catalog,
