@@ -36,6 +36,7 @@ Supported command families are intentionally conservative:
 
 - open apps, the default browser, and websites
 - focus or quit apps, with confirmation for quit
+- show notifications
 - answer time, battery, Wi-Fi, volume, and mute status
 - set, mute, and unmute audio
 - show recent files

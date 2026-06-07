@@ -23,6 +23,7 @@ def test_live_command_smoke_dry_run_prints_controlled_fixture_steps() -> None:
         '+ tmp_dir="$(mktemp -d)"',
         '+ mkdir -p "${tmp_dir}/Desktop"',
         '+ touch "${tmp_dir}/Desktop/operance-recent-smoke.txt"',
+        '+ OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --desktop-dir ${tmp_dir}/Desktop --transcript "show a notification saying live smoke passed"',
         '+ OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --desktop-dir ${tmp_dir}/Desktop --transcript "show recent files"',
         '+ OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --desktop-dir ${tmp_dir}/Desktop --transcript "create folder on desktop called projects"',
         '+ test -d "${tmp_dir}/Desktop/projects"',

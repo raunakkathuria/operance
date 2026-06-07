@@ -69,6 +69,7 @@ Current supported command subset on that target:
 - `move folder on desktop called <name> to <folder>`, then confirm
 - `list windows`
 - `switch to window <title>`
+- `show a notification saying <message>`
 - `what time is it`
 - `what is my battery level`
 - `wifi status`

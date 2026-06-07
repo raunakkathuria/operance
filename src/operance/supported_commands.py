@@ -252,6 +252,7 @@ def _tool_usage_pattern(tool: ToolName) -> str | None:
         ToolName.APPS_QUIT: "quit <app name>",
         ToolName.WINDOWS_LIST: "list windows",
         ToolName.WINDOWS_SWITCH: "switch to window <title>",
+        ToolName.NOTIFICATIONS_SHOW: "show a notification saying <message>",
         ToolName.FILES_LIST_RECENT: "show recent files",
         ToolName.FILES_CREATE_FOLDER: "create folder on desktop called <name>",
         ToolName.FILES_DELETE_FOLDER: "delete folder on desktop called <name>",

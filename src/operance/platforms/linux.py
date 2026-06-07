@@ -40,6 +40,7 @@ CURRENT_RELEASE_VERIFIED_TOOLS = frozenset(
         ToolName.FILES_MOVE,
         ToolName.FILES_RENAME,
         ToolName.NETWORK_WIFI_STATUS,
+        ToolName.NOTIFICATIONS_SHOW,
         ToolName.POWER_BATTERY_STATUS,
         ToolName.TIME_NOW,
         ToolName.WINDOWS_LIST,

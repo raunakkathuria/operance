@@ -119,6 +119,7 @@ def test_static_website_command_examples_match_verified_beta_surface() -> None:
         "mute audio",
         "list windows",
         "switch to window <title>",
+        "show a notification saying <message>",
         "show recent files",
         "create folder on desktop called <name>",
         "delete file on desktop called <name>",

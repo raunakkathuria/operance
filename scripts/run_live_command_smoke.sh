@@ -174,6 +174,7 @@ if [[ "${dry_run}" -eq 1 ]]; then
     run_step 'tmp_dir="$(mktemp -d)"' true
     run_step 'mkdir -p "${tmp_dir}/Desktop"' true
     run_step 'touch "${tmp_dir}/Desktop/operance-recent-smoke.txt"' true
+    run_live_transcript '${tmp_dir}/Desktop' "show a notification saying live smoke passed"
     run_live_transcript '${tmp_dir}/Desktop' "show recent files"
     run_live_transcript '${tmp_dir}/Desktop' "create folder on desktop called projects"
     run_step 'test -d "${tmp_dir}/Desktop/projects"' true
@@ -207,6 +208,7 @@ fi
 desktop_dir="${tmp_dir}/Desktop"
 run_step "mkdir -p ${desktop_dir}" mkdir -p "${desktop_dir}"
 run_step "touch ${desktop_dir}/operance-recent-smoke.txt" touch "${desktop_dir}/operance-recent-smoke.txt"
+run_live_transcript "${desktop_dir}" "show a notification saying live smoke passed"
 run_live_transcript "${desktop_dir}" "show recent files"
 run_live_transcript "${desktop_dir}" "create folder on desktop called projects"
 run_step "test -d ${desktop_dir}/projects" test -d "${desktop_dir}/projects"
