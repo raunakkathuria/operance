@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added tray-managed always-on listening controls for the existing voice-loop service and short spoken-response text metadata for manual voice sessions.
+- Simplified the default tray menu for beta users by keeping issue reporting, setup/status, supported commands, recent interaction details, update checks, and context-only confirmation/undo actions while leaving raw diagnostics in CLI surfaces.
+- Shortened tray notification durations and added a small no-transcript retry guard so repeated click-to-talk clicks do not stack stale popups.
 - Added Linux desktop-entry app resolution for `open <app name>` so installed desktop apps can be launched from `.desktop` metadata without hardcoding each app in Operance.
 - Added `operance --public-beta-checklist`, a public beta install, verify, try, and report checklist that reuses existing installed readiness, supported-command, release, and support-bundle surfaces.
 - Added executable adapter SDK examples for minimal adapters, provider-owned blockers, conformance checks, and typed-plan execution so contributors can start new OS ports without editing core modules first.

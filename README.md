@@ -86,12 +86,11 @@ For one combined install, verify, try, and report checklist, run:
 operance --public-beta-checklist
 ```
 
-The tray menu also exposes **First run setup**, **Show supported commands**,
-**Show local AI setup**, **Show planner readiness**, **Show installed
-readiness**, and **Save support bundle**, so normal beta use does not require
-memorizing CLI diagnostics. **First run setup** includes packaged-install
-readiness when running the RPM, the supported click-to-talk smoke commands,
-optional local AI validation, and what to attach to an issue.
+The tray menu exposes **Setup and status**, **Supported commands**, **Report an
+issue**, optional always-on listening controls, recent interaction details, and
+release update checks. Detailed diagnostics such as planner readiness,
+installed-smoke output, and raw support snapshots remain available from the CLI
+and the setup/status flow instead of crowding the default tray menu.
 
 The release artifact set includes `setup.sh` beside the RPM, checksums, and
 manifest. The repo-local copy lives at `scripts/setup.sh`. A hosted one-line
@@ -188,7 +187,7 @@ Operance is ready for a **Fedora KDE Wayland public beta** for outside developer
 - Recommended public beta path: Fedora RPM install of the `mvp` runtime profile through `setup.sh`
 - Developer/source path: source checkout with `./scripts/install_linux_dev.sh --ui --voice`, `.venv/bin/python -m operance.cli --doctor`, `./scripts/run_mvp.sh`, and `./scripts/run_checkout_smoke.sh`
 - Default interaction: tray plus click-to-talk
-- Wake word and the continuous voice loop remain secondary to click-to-talk for release reliability
+- Optional always-on listening: the tray can start or stop the voice-loop service when the voice runtime is configured
 - The supported Fedora package path now vendors the tray UI and STT runtime dependencies needed for the MVP tray plus click-to-talk path
 - First installed-package diagnostic: `operance --installed-smoke`
 - Public beta install, verify, try, and report checklist: `operance --public-beta-checklist`
@@ -197,12 +196,12 @@ Operance is ready for a **Fedora KDE Wayland public beta** for outside developer
 - Local AI planner status check: `operance --planner-status`
 - Paste-ready feedback draft: `operance --issue-report`
 - Stable packaged setup entrypoint: `./scripts/setup.sh --package ./operance-0.1.0-1.noarch.rpm`
-- Tray-first onboarding: First run setup, supported commands, local AI setup,
-  planner readiness, installed readiness, and support-bundle capture are
-  available from the tray menu
+- Tray-first onboarding: setup/status, supported commands, issue reporting,
+  recent interaction details, update checks, and optional always-on listening
+  controls are available from the tray menu
 - Public beta distribution guide: [docs/release/public-beta.md](docs/release/public-beta.md)
 - Packaged release-candidate evidence gate: `./scripts/run_package_evidence_gate.sh`
-- Wake-word and TTS assets or backends remain optional and are not part of the packaged support contract
+- Wake-word and TTS assets remain optional and are not part of the packaged support contract; spoken response text is available even when TTS audio is not configured
 - Windows and macOS are architecture targets only; their current providers are scaffolds, not supported runtimes
 
 Not yet claimed:
@@ -237,7 +236,7 @@ What works now:
 
 - Core runtime: typed action models, deterministic intent matching, validator and policy enforcement, local audit logging, bounded local planner fallback, and MCP-compatible control surfaces.
 - Verified command subset on Fedora KDE Wayland: `open browser`, `open google.com`, `open <app name>` for installed desktop apps, safe two-step launch phrases such as `open firefox and load localhost:3000` or `open firefox and notify me`, `focus <app name>`, confirmation-gated `quit <app name>`, `show recent files`, `create folder on desktop called <name>`, confirmation-gated desktop file or folder delete, rename, and move commands, `list windows`, `switch to window <title>`, `show a notification saying <message>`, `what time is it`, `what is my battery level`, `wifi status`, `what is the volume`, `is audio muted`, `set volume to 50 percent`, `mute audio`, and `unmute audio`.
-- Voice and tray MVP: tray app, bounded click-to-talk, confirmation flows, last-interaction reporting, optional wake-word, STT, and TTS probe paths, plus repo-local background voice-loop support.
+- Voice and tray MVP: tray app, bounded click-to-talk, tray-managed always-on voice-loop controls, confirmation flows, last-interaction reporting, optional wake-word, STT, spoken response text, and TTS probe paths, plus repo-local background voice-loop support.
 - Diagnostics and support: version/about provenance, explicit release-channel checks, doctor, setup actions, installed readiness checks, runnable-command catalog, runtime status resources, support snapshot, support bundle, audit inspection, and source-checkout smoke scripts.
 - Packaging and release gates: reproducible Linux bootstrap, source-checkout install or uninstall helpers, repo-local systemd helpers, Debian or RPM scaffolds, installed-package smoke, package evidence capture, and the Fedora gate.
 
@@ -607,9 +606,7 @@ Wayland session:
 ./scripts/run_installed_desktop_smoke.sh
 ```
 
-The packaged tray is click-to-talk first. A missing continuous voice-loop runtime
-status file is expected unless the background wake-word loop has been started
-separately, and it should not block click-to-talk result notifications.
+The packaged tray is click-to-talk first, with optional always-on listening controls for the voice-loop service. A missing continuous voice-loop runtime status file is expected unless the background wake-word loop has been started separately, and it should not block click-to-talk result notifications. Spoken response text is recorded in the last-interaction report; audio playback still requires configured TTS assets.
 
 Remove an installed native package:
 
@@ -751,7 +748,7 @@ python3 scripts/check_installed_mvp_runtime.py --command operance --check-tray-s
 
 `operance --print-config` should report `"developer_mode": false`. `operance --about` reports whether the command is a packaged install or source checkout plus package profile, build commit, tag when available, build time, and install root. `operance --getting-started` prints the current first-run path, commands to try, local AI planner state, and contributor next steps. `operance --planner-setup-template` prints copy-paste local planner setup templates without mutating the host. `operance --planner-status` prints non-executing local planner status plus the safety contract that keeps model output bounded to typed actions. `operance --issue-report` prints a redacted paste-ready GitHub issue draft from the current support snapshot. `operance --check-updates` checks the configured release channel and prints whether the installed packaged build matches the latest release; it does not auto-install packages or invoke `sudo`. `operance --installed-smoke` summarizes installed package readiness, warns when the tray service is not active, fails when packaged build identity or runtime dependencies are missing, catches stale repo-local user units shadowing the packaged service, and includes evidence for build identity, live mode, tray service state, and failed or warning checks. If stale user units are reported, reinstall with `./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --replace-existing --reset-user-services`. In `systemctl --user status`, `preset: disabled` is normal on Fedora; `Loaded`, `Active`, and the `ExecStart` command path are the parts to verify.
 `./scripts/run_installed_desktop_smoke.sh` starts/enables the packaged tray user service before checking status, so `Active: inactive (dead)` is a smoke failure rather than a successful desktop state.
-The tray menu also exposes `Check for updates` and `Show installed readiness`, so users can inspect release-channel status and installed-smoke next steps without requiring a terminal.
+The tray menu exposes `Check for updates` and `Setup and status`, so users can inspect release-channel status, setup guidance, and installed-smoke next steps without requiring a terminal.
 
 Run the built-in deterministic corpus and print a summary:
 

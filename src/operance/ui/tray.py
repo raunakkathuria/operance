@@ -6,8 +6,10 @@ import fcntl
 from datetime import datetime, timezone
 from dataclasses import dataclass, field
 import json
+from time import monotonic
 from pathlib import Path
 from queue import Empty, SimpleQueue
+import subprocess
 from threading import Lock, Thread
 from typing import Any, Callable, Mapping, TextIO
 
@@ -35,6 +37,7 @@ from ..project_info import build_project_identity, project_version
 from ..release_channel import build_release_update_status
 from ..status import StatusSnapshot
 from ..stt import SpeechTranscriber, build_default_speech_transcriber
+from ..spoken_response import build_spoken_response_text
 from ..support_bundle import write_support_bundle_artifact
 from ..support_snapshot import build_support_snapshot, build_support_snapshot_help_text
 from ..supported_commands import (
@@ -49,6 +52,10 @@ from ..voice.runtime import (
     VoiceLoopRuntimeStatusSnapshot,
     build_voice_loop_runtime_status_snapshot,
 )
+
+_TRAY_NOTIFICATION_DEFAULT_MS = 3000
+_TRAY_NOTIFICATION_SHORT_MS = 1600
+_CLICK_TO_TALK_NO_TRANSCRIPT_RETRY_COOLDOWN_SECONDS = 2.0
 
 
 @dataclass(slots=True, frozen=True)
@@ -141,7 +148,10 @@ class TraySnapshot:
     can_cancel: bool
     can_undo: bool
     can_reset_planner: bool
+    can_start_voice_loop_service: bool
+    can_stop_voice_loop_service: bool
     can_restart_voice_loop_service: bool
+    voice_loop_control_label: str
     undo_label: str | None
     tooltip: str
 
@@ -175,10 +185,37 @@ class TraySnapshot:
             "can_cancel": self.can_cancel,
             "can_undo": self.can_undo,
             "can_reset_planner": self.can_reset_planner,
+            "can_start_voice_loop_service": self.can_start_voice_loop_service,
+            "can_stop_voice_loop_service": self.can_stop_voice_loop_service,
             "can_restart_voice_loop_service": self.can_restart_voice_loop_service,
+            "voice_loop_control_label": self.voice_loop_control_label,
             "undo_label": self.undo_label,
             "tooltip": self.tooltip,
         }
+
+
+@dataclass(slots=True)
+class _ClickToTalkLaunchGate:
+    now: Callable[[], float] = monotonic
+    _active: bool = field(default=False, init=False, repr=False)
+    _cooldown_until: float = field(default=0.0, init=False, repr=False)
+    _lock: Lock = field(default_factory=Lock, init=False, repr=False)
+
+    def begin(self) -> bool:
+        with self._lock:
+            current_time = self.now()
+            if self._active:
+                return False
+            if current_time < self._cooldown_until:
+                return False
+            self._active = True
+            return True
+
+    def end(self, *, cooldown_seconds: float = 0.0) -> None:
+        with self._lock:
+            self._active = False
+            if cooldown_seconds > 0:
+                self._cooldown_until = self.now() + cooldown_seconds
 
 
 @dataclass(slots=True)
@@ -197,6 +234,7 @@ class TrayController:
         repr=False,
     )
     _last_click_to_talk_error: str | None = field(default=None, init=False, repr=False)
+    _voice_loop_service_active_override: bool | None = field(default=None, init=False, repr=False)
 
     def click_to_talk_active(self) -> bool:
         with self._click_to_talk_lock:
@@ -215,6 +253,7 @@ class TrayController:
             fallback_last_response=self._last_click_to_talk_response,
             last_click_to_talk_result=self._last_click_to_talk_result,
             last_click_to_talk_error=self._last_click_to_talk_error,
+            voice_loop_service_active_override=self._voice_loop_service_active_override,
         )
 
     def confirm_pending(self) -> TraySnapshot:
@@ -247,6 +286,18 @@ class TrayController:
 
     def restart_voice_loop_service(self) -> SetupRunResult:
         return run_setup_action("restart_voice_loop_service")
+
+    def start_voice_loop_service(self) -> SetupRunResult:
+        result = _run_voice_loop_service_control("enable")
+        if result.status == "success":
+            self._voice_loop_service_active_override = True
+        return result
+
+    def stop_voice_loop_service(self) -> SetupRunResult:
+        result = _run_voice_loop_service_control("stop")
+        if result.status == "success":
+            self._voice_loop_service_active_override = False
+        return result
 
     def installed_readiness_report(self) -> TrayInstalledReadinessReport:
         return build_installed_readiness_report(build_installed_smoke_result(env=self.env))
@@ -388,6 +439,7 @@ def build_tray_snapshot(
     status: StatusSnapshot,
     *,
     voice_loop_status: VoiceLoopRuntimeStatusSnapshot | None = None,
+    voice_loop_service_active_override: bool | None = None,
     click_to_talk_active: bool = False,
     developer_mode: bool = False,
     fallback_last_transcript: str | None = None,
@@ -478,7 +530,22 @@ def build_tray_snapshot(
         can_reset_planner=(
             status.planner_consecutive_failures > 0 or status.last_planner_error is not None
         ),
-        can_restart_voice_loop_service=_can_restart_voice_loop_service(voice_loop_status),
+        can_start_voice_loop_service=_can_start_voice_loop_service(
+            voice_loop_status,
+            service_active_override=voice_loop_service_active_override,
+        ),
+        can_stop_voice_loop_service=_can_stop_voice_loop_service(
+            voice_loop_status,
+            service_active_override=voice_loop_service_active_override,
+        ),
+        can_restart_voice_loop_service=_can_restart_voice_loop_service(
+            voice_loop_status,
+            service_active_override=voice_loop_service_active_override,
+        ),
+        voice_loop_control_label=_voice_loop_control_label(
+            voice_loop_status,
+            service_active_override=voice_loop_service_active_override,
+        ),
         undo_label=status.last_undo_tool,
         tooltip=" | ".join(tooltip_parts),
     )
@@ -806,60 +873,38 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     state_action = QAction("", menu)
     state_action.setEnabled(False)
     click_to_talk_action = QAction("Click to talk", menu)
-    supported_commands_action = QAction("Show supported commands", menu)
+    supported_commands_action = QAction("Supported commands", menu)
     about_action = QAction("About Operance", menu)
     check_updates_action = QAction("Check for updates", menu)
-    getting_started_action = QAction("First run setup", menu)
-    planner_setup_action = QAction("Show local AI setup", menu)
-    planner_readiness_action = QAction("Show planner readiness", menu)
-    installed_readiness_action = QAction("Show installed readiness", menu)
-    support_snapshot_action = QAction("Show support snapshot", menu)
-    save_support_snapshot_action = QAction("Save support snapshot", menu)
-    save_support_bundle_action = QAction("Save support bundle", menu)
+    getting_started_action = QAction("Setup and status", menu)
+    save_support_bundle_action = QAction("Report an issue", menu)
     last_interaction_action = QAction("Show last interaction", menu)
-    voice_loop_action = QAction("", menu)
-    voice_loop_action.setEnabled(False)
-    transcript_action = QAction("", menu)
-    transcript_action.setEnabled(False)
-    preview_action = QAction("", menu)
-    preview_action.setEnabled(False)
-    pending_action = QAction("", menu)
-    pending_action.setEnabled(False)
+    voice_loop_control_action = QAction("Start always-on listening", menu)
     confirm_action = QAction("Confirm pending command", menu)
     cancel_action = QAction("Cancel pending command", menu)
     undo_action = QAction("Undo last action", menu)
-    restart_voice_loop_action = QAction("Restart voice-loop service", menu)
-    reset_planner_action = QAction("Reset planner runtime", menu)
     quit_action = QAction("Quit Operance", menu)
 
     menu.addAction(state_action)
     menu.addAction(click_to_talk_action)
+    menu.addAction(voice_loop_control_action)
     menu.addAction(supported_commands_action)
-    menu.addAction(about_action)
-    menu.addAction(check_updates_action)
     menu.addAction(getting_started_action)
-    menu.addAction(planner_setup_action)
-    menu.addAction(planner_readiness_action)
-    menu.addAction(installed_readiness_action)
-    menu.addAction(support_snapshot_action)
-    menu.addAction(save_support_snapshot_action)
     menu.addAction(save_support_bundle_action)
     menu.addAction(last_interaction_action)
-    menu.addAction(voice_loop_action)
-    menu.addAction(transcript_action)
-    menu.addAction(preview_action)
-    menu.addAction(pending_action)
-    menu.addSeparator()
+    command_separator_action = menu.addSeparator()
     menu.addAction(confirm_action)
     menu.addAction(cancel_action)
     menu.addAction(undo_action)
-    menu.addAction(restart_voice_loop_action)
-    menu.addAction(reset_planner_action)
+    menu.addSeparator()
+    menu.addAction(check_updates_action)
+    menu.addAction(about_action)
     menu.addSeparator()
     menu.addAction(quit_action)
     tray.setContextMenu(menu)
     last_snapshot: TraySnapshot | None = None
     click_to_talk_results: SimpleQueue[tuple[str, object]] = SimpleQueue()
+    click_to_talk_launch_gate = _ClickToTalkLaunchGate()
 
     def refresh() -> TraySnapshot:
         nonlocal last_snapshot
@@ -867,24 +912,21 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
         state_action.setText(f"State: {snapshot.state_label}")
         click_to_talk_action.setText(snapshot.click_to_talk_label)
         click_to_talk_action.setEnabled(snapshot.can_start_click_to_talk)
+        last_interaction_action.setVisible(snapshot.last_interaction is not None)
         last_interaction_action.setEnabled(snapshot.last_interaction is not None)
-        voice_loop_action.setText(
-            f"Voice loop: {snapshot.voice_loop_activity or snapshot.voice_loop_message or 'No runtime status'}"
+        voice_loop_control_action.setText(snapshot.voice_loop_control_label)
+        voice_loop_control_action.setEnabled(
+            snapshot.can_start_voice_loop_service or snapshot.can_stop_voice_loop_service
         )
-        transcript_action.setText(
-            f"Heard: {snapshot.last_command_transcript or 'No recent transcript'}"
+        command_separator_action.setVisible(
+            snapshot.can_confirm or snapshot.can_cancel or snapshot.can_undo
         )
-        preview_action.setText(
-            f"Last: {snapshot.last_command_preview or 'No recent response'}"
-        )
-        pending_action.setText(
-            f"Pending: {snapshot.pending_confirmation_prompt or 'No pending confirmation'}"
-        )
+        confirm_action.setVisible(snapshot.can_confirm)
         confirm_action.setEnabled(snapshot.can_confirm)
+        cancel_action.setVisible(snapshot.can_cancel)
         cancel_action.setEnabled(snapshot.can_cancel)
+        undo_action.setVisible(snapshot.can_undo)
         undo_action.setEnabled(snapshot.can_undo)
-        restart_voice_loop_action.setEnabled(snapshot.can_restart_voice_loop_service)
-        reset_planner_action.setEnabled(snapshot.can_reset_planner)
         undo_action.setText(
             "Undo last action" if snapshot.undo_label is None else f"Undo {snapshot.undo_label}"
         )
@@ -892,7 +934,8 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
         tray.setIcon(_build_tray_icon(app, QStyle, snapshot.tray_state, QIcon))
         notification = select_tray_notification(last_snapshot, snapshot)
         if notification is not None:
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 notification.title,
                 notification.message,
                 _resolve_notification_icon(QSystemTrayIcon, notification.level),
@@ -911,7 +954,12 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
         refresh()
         message = snapshot.last_command_preview
         if message and snapshot.notification is None:
-            tray.showMessage("Operance", message)
+            _show_tray_message(
+                tray,
+                "Operance",
+                message,
+                _resolve_notification_icon(QSystemTrayIcon, "info"),
+            )
 
     def confirm_pending() -> None:
         snapshot = controller.snapshot()
@@ -930,14 +978,16 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
             result = controller.restart_voice_loop_service()
         except ValueError as exc:
             refresh()
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 "Voice loop needs attention",
                 str(exc),
                 _resolve_notification_icon(QSystemTrayIcon, "warning"),
             )
             return
         refresh()
-        tray.showMessage(
+        _show_tray_message(
+            tray,
             "Operance" if result.status == "success" else "Voice loop restart failed",
             _setup_result_message(result),
             _resolve_notification_icon(
@@ -946,31 +996,87 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
             ),
         )
 
+    def control_voice_loop_service() -> None:
+        snapshot = controller.snapshot()
+        if snapshot.can_stop_voice_loop_service:
+            action = controller.stop_voice_loop_service
+            success_title = "Always-on listening stopped"
+            failure_title = "Could not stop always-on listening"
+        elif snapshot.can_start_voice_loop_service:
+            action = controller.start_voice_loop_service
+            success_title = "Always-on listening started"
+            failure_title = "Could not start always-on listening"
+        else:
+            refresh()
+            _show_tray_message(
+                tray,
+                "Always-on listening unavailable",
+                "Voice-loop service is not ready yet.",
+                _resolve_notification_icon(QSystemTrayIcon, "warning"),
+            )
+            return
+        try:
+            result = action()
+        except ValueError as exc:
+            refresh()
+            _show_tray_message(
+                tray,
+                "Always-on listening unavailable",
+                str(exc),
+                _resolve_notification_icon(QSystemTrayIcon, "warning"),
+            )
+            return
+        refresh()
+        _show_tray_message(
+            tray,
+            success_title if result.status == "success" else failure_title,
+            _setup_result_message(result),
+            _resolve_notification_icon(
+                QSystemTrayIcon,
+                "info" if result.status == "success" else "error",
+            ),
+        )
+
     def click_to_talk_worker() -> None:
+        cooldown_seconds = 0.0
         try:
             result = controller.start_click_to_talk()
         except Exception as exc:
             click_to_talk_results.put(("error", _format_click_to_talk_error(exc)))
             return
-        click_to_talk_results.put(("result", result))
+        else:
+            if _click_to_talk_response_status(result) == "no_transcript":
+                cooldown_seconds = _CLICK_TO_TALK_NO_TRANSCRIPT_RETRY_COOLDOWN_SECONDS
+            click_to_talk_results.put(("result", result))
+        finally:
+            click_to_talk_launch_gate.end(cooldown_seconds=cooldown_seconds)
 
     def start_click_to_talk() -> None:
+        if not click_to_talk_launch_gate.begin():
+            return
         click_to_talk_action.setEnabled(False)
         click_to_talk_action.setText("Listening...")
-        Thread(target=click_to_talk_worker, daemon=True).start()
+        try:
+            Thread(target=click_to_talk_worker, daemon=True).start()
+        except Exception:
+            click_to_talk_launch_gate.end()
+            raise
         refresh()
         notification = build_click_to_talk_started_notification()
-        tray.showMessage(
+        _show_tray_message(
+            tray,
             notification.title,
             notification.message,
             _resolve_notification_icon(QSystemTrayIcon, notification.level),
+            timeout_ms=_TRAY_NOTIFICATION_SHORT_MS,
         )
 
     def show_supported_commands() -> None:
         try:
             help_text = build_supported_command_help_text(build_supported_command_catalog())
         except Exception as exc:
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 "Supported commands unavailable",
                 str(exc),
                 _resolve_notification_icon(QSystemTrayIcon, "warning"),
@@ -1004,7 +1110,8 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
         try:
             status = controller.release_update_status()
         except Exception as exc:
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 "Update check unavailable",
                 str(exc),
                 _resolve_notification_icon(QSystemTrayIcon, "warning"),
@@ -1022,7 +1129,8 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
         try:
             report = controller.getting_started_report()
         except Exception as exc:
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 "Getting started unavailable",
                 str(exc),
                 _resolve_notification_icon(QSystemTrayIcon, "warning"),
@@ -1030,7 +1138,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
             return
         _show_information_dialog(
             QMessageBox,
-            title="First run setup",
+            title="Setup and status",
             summary=str(report.get("headline") or "Operance getting started"),
             informative_text=_format_getting_started_highlights(report),
             details=_format_getting_started_details(report) or json.dumps(report, indent=2, sort_keys=True),
@@ -1040,7 +1148,8 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
         try:
             report = controller.planner_setup_template()
         except Exception as exc:
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 "Local AI setup unavailable",
                 str(exc),
                 _resolve_notification_icon(QSystemTrayIcon, "warning"),
@@ -1058,7 +1167,8 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
         try:
             report = controller.installed_readiness_report()
         except Exception as exc:
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 "Installed readiness unavailable",
                 str(exc),
                 _resolve_notification_icon(QSystemTrayIcon, "warning"),
@@ -1076,7 +1186,8 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
         try:
             report = controller.planner_readiness_report()
         except Exception as exc:
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 "Planner readiness unavailable",
                 str(exc),
                 _resolve_notification_icon(QSystemTrayIcon, "warning"),
@@ -1099,7 +1210,8 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
                 )
             )
         except Exception as exc:
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 "Support snapshot unavailable",
                 str(exc),
                 _resolve_notification_icon(QSystemTrayIcon, "warning"),
@@ -1126,13 +1238,15 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
                 env=env,
             )
         except Exception as exc:
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 "Support snapshot save failed",
                 str(exc),
                 _resolve_notification_icon(QSystemTrayIcon, "error"),
             )
             return
-        tray.showMessage(
+        _show_tray_message(
+            tray,
             "Support snapshot saved",
             str(artifact_path),
             _resolve_notification_icon(QSystemTrayIcon, "info"),
@@ -1145,14 +1259,16 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
                 env=env,
             )
         except Exception as exc:
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 "Support bundle save failed",
                 str(exc),
                 _resolve_notification_icon(QSystemTrayIcon, "error"),
             )
             return
-        tray.showMessage(
-            "Support bundle saved",
+        _show_tray_message(
+            tray,
+            "Issue report saved",
             f"Attach this file to a GitHub issue if something fails: {artifact_path}",
             _resolve_notification_icon(QSystemTrayIcon, "info"),
         )
@@ -1160,7 +1276,8 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     def show_last_interaction() -> None:
         report = controller.snapshot().last_interaction
         if report is None:
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 "No recent interaction",
                 "Use click-to-talk or a tray action first.",
                 _resolve_notification_icon(QSystemTrayIcon, "info"),
@@ -1189,18 +1306,12 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     about_action.triggered.connect(show_about)
     check_updates_action.triggered.connect(show_update_status)
     getting_started_action.triggered.connect(show_getting_started)
-    planner_setup_action.triggered.connect(show_planner_setup)
-    planner_readiness_action.triggered.connect(show_planner_readiness)
-    installed_readiness_action.triggered.connect(show_installed_readiness)
-    support_snapshot_action.triggered.connect(show_support_snapshot)
-    save_support_snapshot_action.triggered.connect(save_support_snapshot)
     save_support_bundle_action.triggered.connect(save_support_bundle)
     last_interaction_action.triggered.connect(show_last_interaction)
+    voice_loop_control_action.triggered.connect(control_voice_loop_service)
     confirm_action.triggered.connect(confirm_pending)
     cancel_action.triggered.connect(lambda: run_action(controller.cancel_pending))
     undo_action.triggered.connect(lambda: run_action(controller.undo_last_action))
-    restart_voice_loop_action.triggered.connect(restart_voice_loop_service)
-    reset_planner_action.triggered.connect(lambda: run_action(controller.reset_planner_runtime))
     quit_action.triggered.connect(quit_tray)
 
     timer = QTimer()
@@ -1211,7 +1322,8 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     tray.show()
     startup_notification = build_startup_notification(initial_snapshot)
     if startup_notification is not None:
-        tray.showMessage(
+        _show_tray_message(
+            tray,
             startup_notification.title,
             startup_notification.message,
             _resolve_notification_icon(QSystemTrayIcon, startup_notification.level),
@@ -1227,7 +1339,8 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
         except Exception:
             installed_notification = None
         if installed_notification is not None:
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 installed_notification.title,
                 installed_notification.message,
                 _resolve_notification_icon(QSystemTrayIcon, installed_notification.level),
@@ -1355,6 +1468,12 @@ def _build_click_to_talk_interaction_report(
 
     if response.get("simulated") is True:
         details.append("Mode: simulated")
+
+    spoken_response = result.get("spoken_response")
+    if isinstance(spoken_response, dict):
+        spoken_text = spoken_response.get("text")
+        if isinstance(spoken_text, str) and spoken_text:
+            details.append(f"Spoken: {spoken_text}")
 
     processed_frames = result.get("processed_frames")
     if isinstance(processed_frames, int) and processed_frames >= 0:
@@ -1553,10 +1672,96 @@ def _resolve_tray_usage_hint(
 
 def _can_restart_voice_loop_service(
     voice_loop_status: VoiceLoopRuntimeStatusSnapshot | None,
+    *,
+    service_active_override: bool | None = None,
 ) -> bool:
+    if service_active_override is False:
+        return False
     if voice_loop_status is None or voice_loop_status.loop_state == "missing":
         return False
+    if service_active_override is True:
+        return False
+    if voice_loop_status.loop_state == "stopped":
+        return False
     return not voice_loop_status.heartbeat_fresh
+
+
+def _can_start_voice_loop_service(
+    voice_loop_status: VoiceLoopRuntimeStatusSnapshot | None,
+    *,
+    service_active_override: bool | None = None,
+) -> bool:
+    if service_active_override is True:
+        return False
+    if service_active_override is False:
+        return True
+    if voice_loop_status is None:
+        return False
+    if voice_loop_status.loop_state in {"missing", "stopped", "invalid"}:
+        return True
+    return not voice_loop_status.heartbeat_fresh
+
+
+def _can_stop_voice_loop_service(
+    voice_loop_status: VoiceLoopRuntimeStatusSnapshot | None,
+    *,
+    service_active_override: bool | None = None,
+) -> bool:
+    if service_active_override is True:
+        return True
+    if service_active_override is False:
+        return False
+    if voice_loop_status is None:
+        return False
+    if voice_loop_status.loop_state in {"missing", "stopped", "invalid"}:
+        return False
+    return voice_loop_status.heartbeat_fresh
+
+
+def _voice_loop_control_label(
+    voice_loop_status: VoiceLoopRuntimeStatusSnapshot | None,
+    *,
+    service_active_override: bool | None = None,
+) -> str:
+    if _can_stop_voice_loop_service(
+        voice_loop_status,
+        service_active_override=service_active_override,
+    ):
+        return "Stop always-on listening"
+    return "Start always-on listening"
+
+
+def _run_voice_loop_service_control(action: str) -> SetupRunResult:
+    systemctl_args = ["systemctl", "--user", action]
+    command_parts = ["systemctl", "--user", action]
+    if action in {"enable", "disable"}:
+        systemctl_args.append("--now")
+        command_parts.append("--now")
+    systemctl_args.append("operance-voice-loop.service")
+    command_parts.append("operance-voice-loop.service")
+    command = " ".join(command_parts)
+    completed = subprocess.run(
+        systemctl_args,
+        capture_output=True,
+        check=False,
+        text=True,
+    )
+    action_id = {
+        "enable": "enable_voice_loop_service",
+        "start": "start_voice_loop_service",
+        "stop": "stop_voice_loop_service",
+        "disable": "disable_voice_loop_service",
+    }.get(action, f"{action}_voice_loop_service")
+    return SetupRunResult(
+        action_id=action_id,
+        label=f"{action.capitalize()} voice-loop user service",
+        command=command,
+        status="success" if completed.returncode == 0 else "failed",
+        returncode=completed.returncode,
+        stdout=completed.stdout,
+        stderr=completed.stderr,
+        dry_run=False,
+    )
 
 
 def _voice_loop_needs_attention(
@@ -1571,7 +1776,14 @@ def _voice_loop_needs_attention(
 
 def _setup_result_message(result: SetupRunResult) -> str:
     if result.status == "success":
-        return "Restarted voice-loop user service."
+        action_id = result.action_id
+        if action_id in {"enable_voice_loop_service", "start_voice_loop_service"}:
+            return "Started always-on listening."
+        if action_id == "stop_voice_loop_service":
+            return "Stopped always-on listening."
+        if action_id == "restart_voice_loop_service":
+            return "Restarted voice-loop user service."
+        return f"{result.label} completed."
     stderr = (result.stderr or "").strip()
     if stderr:
         return stderr
@@ -1579,6 +1791,29 @@ def _setup_result_message(result: SetupRunResult) -> str:
     if stdout:
         return stdout
     return f"{result.label} failed."
+
+
+def _show_tray_message(
+    tray: object,
+    title: str,
+    message: str,
+    icon: object,
+    *,
+    timeout_ms: int = _TRAY_NOTIFICATION_DEFAULT_MS,
+) -> None:
+    show_message = getattr(tray, "showMessage")
+    try:
+        show_message(title, message, icon, timeout_ms)
+    except TypeError:
+        show_message(title, message, icon)
+
+
+def _click_to_talk_response_status(result: dict[str, object]) -> str | None:
+    response = result.get("response")
+    if not isinstance(response, dict):
+        return None
+    status = response.get("status")
+    return status if isinstance(status, str) else None
 
 
 def _drain_click_to_talk_results(
@@ -1594,7 +1829,8 @@ def _drain_click_to_talk_results(
             return
 
         if kind == "error":
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 "Click-to-talk failed",
                 str(payload),
                 _resolve_notification_icon(qsystemtrayicon, "error"),
@@ -1611,10 +1847,16 @@ def _drain_click_to_talk_results(
             continue
         status = response.get("status")
         if snapshot.notification is None or status == "no_transcript":
-            tray.showMessage(
+            _show_tray_message(
+                tray,
                 "Operance",
                 _format_click_to_talk_notification_message(report),
                 _resolve_notification_icon(qsystemtrayicon, _result_level(str(status))),
+                timeout_ms=(
+                    _TRAY_NOTIFICATION_SHORT_MS
+                    if status == "no_transcript"
+                    else _TRAY_NOTIFICATION_DEFAULT_MS
+                ),
             )
 
 

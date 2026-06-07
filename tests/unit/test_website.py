@@ -69,6 +69,8 @@ def test_static_website_is_product_first_and_mentions_current_scope() -> None:
     parser = _parse_site()
     text = parser.text
 
+    assert "Public Beta" in text
+    assert "Public Beta · v0.1.0" not in text
     assert "Your Computer Understands You Now." in text
     assert "local-first ai desktop action layer" in text.lower()
     assert "Fedora KDE Plasma Wayland first" in text
@@ -100,6 +102,7 @@ def test_static_website_has_beta_feedback_loop() -> None:
     assert "Beta Feedback Loop" in text
     assert "Install. Verify. Try. Report." in text
     assert "click-to-talk smoke commands" in text
+    assert "start optional always-on listening" in text
     assert "operance --support-bundle" in text
 
 

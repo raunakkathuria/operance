@@ -16,13 +16,13 @@ runs.
 The current public beta is intentionally narrow:
 
 - target: Fedora KDE Plasma Wayland
-- interaction: tray plus click-to-talk
+- interaction: tray plus click-to-talk, with optional tray-managed always-on voice-loop controls
 - execution: local desktop adapters by default in the packaged RPM
 - optional AI: local OpenAI-compatible planner fallback after readiness passes
 - reporting: support bundles attached to GitHub issues
 
 This is not yet a broad consumer launch, Windows or macOS release, wake-word
-first product, or zero-setup installer.
+first default product, bundled TTS release, or zero-setup installer.
 
 ---
 
@@ -83,11 +83,14 @@ wifi status
 what is the volume
 ```
 
-The tray menu is the primary non-terminal surface. Use **First run setup** to
+The tray menu is the primary non-terminal surface. Use **Setup and status** to
 walk through runtime readiness, packaged-install readiness when running the RPM,
 the click-to-talk smoke commands, optional local AI planner validation, and
-support-bundle capture. The same menu also shows supported commands, local AI
-setup, planner readiness, installed readiness, and support-bundle actions.
+support-bundle capture. The same compact menu also exposes supported commands,
+issue reporting, recent interaction details, release update checks, and
+optional always-on listening controls. Raw support snapshots, planner readiness,
+and installed-smoke diagnostics remain available from CLI commands when a
+developer or maintainer needs deeper output.
 
 If anything fails, collect one support bundle before changing the machine:
 
