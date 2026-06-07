@@ -277,6 +277,28 @@ def test_build_tray_snapshot_can_start_stopped_voice_loop_without_restart() -> N
     assert payload["voice_loop_control_label"] == "Start always-on listening"
 
 
+def test_build_tray_snapshot_can_show_stop_from_voice_loop_service_override() -> None:
+    from operance.ui import build_tray_snapshot
+
+    snapshot = build_tray_snapshot(
+        _status_snapshot(),
+        voice_loop_status=_voice_loop_status_snapshot(
+            status="ok",
+            loop_state="stopped",
+            heartbeat_fresh=False,
+            stopped_reason="interrupted",
+        ),
+        voice_loop_service_active_override=True,
+    )
+
+    payload = snapshot.to_dict()
+
+    assert payload["can_start_voice_loop_service"] is False
+    assert payload["can_stop_voice_loop_service"] is True
+    assert payload["can_restart_voice_loop_service"] is False
+    assert payload["voice_loop_control_label"] == "Stop always-on listening"
+
+
 def test_build_tray_startup_notification_prefers_click_to_talk_hint() -> None:
     from operance.ui import build_tray_snapshot
     from operance.ui.tray import build_startup_notification
@@ -477,6 +499,19 @@ def test_build_spoken_response_text_is_exported_from_ui() -> None:
     from operance.ui import build_spoken_response_text
 
     assert build_spoken_response_text({"status": "success", "text": "Opened browser"}) == "Opened browser"
+
+
+def test_click_to_talk_launch_gate_rejects_duplicate_start_until_finished() -> None:
+    from operance.ui.tray import _ClickToTalkLaunchGate
+
+    gate = _ClickToTalkLaunchGate()
+
+    assert gate.begin() is True
+    assert gate.begin() is False
+
+    gate.end()
+
+    assert gate.begin() is True
 
 
 def test_acquire_tray_instance_lock_rejects_duplicate_process(tmp_path: Path) -> None:
@@ -882,10 +917,13 @@ def test_tray_controller_can_start_voice_loop_service(monkeypatch, tmp_path: Pat
 
     controller = TrayController(daemon)
     result = controller.start_voice_loop_service()
+    snapshot = controller.snapshot()
 
     assert result.status == "success"
     assert result.command == "systemctl --user enable --now operance-voice-loop.service"
     assert commands == [["systemctl", "--user", "enable", "--now", "operance-voice-loop.service"]]
+    assert snapshot.voice_loop_control_label == "Stop always-on listening"
+    assert snapshot.can_stop_voice_loop_service is True
 
 
 def test_tray_controller_can_stop_voice_loop_service(monkeypatch, tmp_path: Path) -> None:
@@ -916,10 +954,13 @@ def test_tray_controller_can_stop_voice_loop_service(monkeypatch, tmp_path: Path
 
     controller = TrayController(daemon)
     result = controller.stop_voice_loop_service()
+    snapshot = controller.snapshot()
 
     assert result.status == "success"
     assert result.command == "systemctl --user stop operance-voice-loop.service"
     assert commands == [["systemctl", "--user", "stop", "operance-voice-loop.service"]]
+    assert snapshot.voice_loop_control_label == "Start always-on listening"
+    assert snapshot.can_start_voice_loop_service is True
 
 
 def test_tray_controller_can_build_planner_readiness_report(monkeypatch, tmp_path: Path) -> None:

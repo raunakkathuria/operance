@@ -190,6 +190,23 @@ class TraySnapshot:
 
 
 @dataclass(slots=True)
+class _ClickToTalkLaunchGate:
+    _active: bool = field(default=False, init=False, repr=False)
+    _lock: Lock = field(default_factory=Lock, init=False, repr=False)
+
+    def begin(self) -> bool:
+        with self._lock:
+            if self._active:
+                return False
+            self._active = True
+            return True
+
+    def end(self) -> None:
+        with self._lock:
+            self._active = False
+
+
+@dataclass(slots=True)
 class TrayController:
     daemon: OperanceDaemon
     env: Mapping[str, str] | None = None
@@ -205,6 +222,7 @@ class TrayController:
         repr=False,
     )
     _last_click_to_talk_error: str | None = field(default=None, init=False, repr=False)
+    _voice_loop_service_active_override: bool | None = field(default=None, init=False, repr=False)
 
     def click_to_talk_active(self) -> bool:
         with self._click_to_talk_lock:
@@ -223,6 +241,7 @@ class TrayController:
             fallback_last_response=self._last_click_to_talk_response,
             last_click_to_talk_result=self._last_click_to_talk_result,
             last_click_to_talk_error=self._last_click_to_talk_error,
+            voice_loop_service_active_override=self._voice_loop_service_active_override,
         )
 
     def confirm_pending(self) -> TraySnapshot:
@@ -257,10 +276,16 @@ class TrayController:
         return run_setup_action("restart_voice_loop_service")
 
     def start_voice_loop_service(self) -> SetupRunResult:
-        return _run_voice_loop_service_control("enable")
+        result = _run_voice_loop_service_control("enable")
+        if result.status == "success":
+            self._voice_loop_service_active_override = True
+        return result
 
     def stop_voice_loop_service(self) -> SetupRunResult:
-        return _run_voice_loop_service_control("stop")
+        result = _run_voice_loop_service_control("stop")
+        if result.status == "success":
+            self._voice_loop_service_active_override = False
+        return result
 
     def installed_readiness_report(self) -> TrayInstalledReadinessReport:
         return build_installed_readiness_report(build_installed_smoke_result(env=self.env))
@@ -402,6 +427,7 @@ def build_tray_snapshot(
     status: StatusSnapshot,
     *,
     voice_loop_status: VoiceLoopRuntimeStatusSnapshot | None = None,
+    voice_loop_service_active_override: bool | None = None,
     click_to_talk_active: bool = False,
     developer_mode: bool = False,
     fallback_last_transcript: str | None = None,
@@ -492,10 +518,22 @@ def build_tray_snapshot(
         can_reset_planner=(
             status.planner_consecutive_failures > 0 or status.last_planner_error is not None
         ),
-        can_start_voice_loop_service=_can_start_voice_loop_service(voice_loop_status),
-        can_stop_voice_loop_service=_can_stop_voice_loop_service(voice_loop_status),
-        can_restart_voice_loop_service=_can_restart_voice_loop_service(voice_loop_status),
-        voice_loop_control_label=_voice_loop_control_label(voice_loop_status),
+        can_start_voice_loop_service=_can_start_voice_loop_service(
+            voice_loop_status,
+            service_active_override=voice_loop_service_active_override,
+        ),
+        can_stop_voice_loop_service=_can_stop_voice_loop_service(
+            voice_loop_status,
+            service_active_override=voice_loop_service_active_override,
+        ),
+        can_restart_voice_loop_service=_can_restart_voice_loop_service(
+            voice_loop_status,
+            service_active_override=voice_loop_service_active_override,
+        ),
+        voice_loop_control_label=_voice_loop_control_label(
+            voice_loop_status,
+            service_active_override=voice_loop_service_active_override,
+        ),
         undo_label=status.last_undo_tool,
         tooltip=" | ".join(tooltip_parts),
     )
@@ -879,6 +917,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     tray.setContextMenu(menu)
     last_snapshot: TraySnapshot | None = None
     click_to_talk_results: SimpleQueue[tuple[str, object]] = SimpleQueue()
+    click_to_talk_launch_gate = _ClickToTalkLaunchGate()
 
     def refresh() -> TraySnapshot:
         nonlocal last_snapshot
@@ -1013,12 +1052,21 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
         except Exception as exc:
             click_to_talk_results.put(("error", _format_click_to_talk_error(exc)))
             return
-        click_to_talk_results.put(("result", result))
+        else:
+            click_to_talk_results.put(("result", result))
+        finally:
+            click_to_talk_launch_gate.end()
 
     def start_click_to_talk() -> None:
+        if not click_to_talk_launch_gate.begin():
+            return
         click_to_talk_action.setEnabled(False)
         click_to_talk_action.setText("Listening...")
-        Thread(target=click_to_talk_worker, daemon=True).start()
+        try:
+            Thread(target=click_to_talk_worker, daemon=True).start()
+        except Exception:
+            click_to_talk_launch_gate.end()
+            raise
         refresh()
         notification = build_click_to_talk_started_notification()
         tray.showMessage(
@@ -1621,8 +1669,14 @@ def _resolve_tray_usage_hint(
 
 def _can_restart_voice_loop_service(
     voice_loop_status: VoiceLoopRuntimeStatusSnapshot | None,
+    *,
+    service_active_override: bool | None = None,
 ) -> bool:
+    if service_active_override is False:
+        return False
     if voice_loop_status is None or voice_loop_status.loop_state == "missing":
+        return False
+    if service_active_override is True:
         return False
     if voice_loop_status.loop_state == "stopped":
         return False
@@ -1631,7 +1685,13 @@ def _can_restart_voice_loop_service(
 
 def _can_start_voice_loop_service(
     voice_loop_status: VoiceLoopRuntimeStatusSnapshot | None,
+    *,
+    service_active_override: bool | None = None,
 ) -> bool:
+    if service_active_override is True:
+        return False
+    if service_active_override is False:
+        return True
     if voice_loop_status is None:
         return False
     if voice_loop_status.loop_state in {"missing", "stopped", "invalid"}:
@@ -1641,7 +1701,13 @@ def _can_start_voice_loop_service(
 
 def _can_stop_voice_loop_service(
     voice_loop_status: VoiceLoopRuntimeStatusSnapshot | None,
+    *,
+    service_active_override: bool | None = None,
 ) -> bool:
+    if service_active_override is True:
+        return True
+    if service_active_override is False:
+        return False
     if voice_loop_status is None:
         return False
     if voice_loop_status.loop_state in {"missing", "stopped", "invalid"}:
@@ -1651,8 +1717,13 @@ def _can_stop_voice_loop_service(
 
 def _voice_loop_control_label(
     voice_loop_status: VoiceLoopRuntimeStatusSnapshot | None,
+    *,
+    service_active_override: bool | None = None,
 ) -> str:
-    if _can_stop_voice_loop_service(voice_loop_status):
+    if _can_stop_voice_loop_service(
+        voice_loop_status,
+        service_active_override=service_active_override,
+    ):
         return "Stop always-on listening"
     return "Start always-on listening"
 
