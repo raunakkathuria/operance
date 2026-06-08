@@ -20,9 +20,11 @@ def test_build_release_update_status_reports_current_packaged_release() -> None:
         "install_mode": "packaged",
         "latest_tag": None,
         "message": "Remote release check was not requested.",
+        "release_asset_base_url": None,
         "release_url": None,
         "repository": "raunakkathuria/operance",
         "status": "unknown",
+        "setup_command": None,
         "suggested_command": "operance --check-updates",
         "update_available": None,
     }
@@ -47,9 +49,17 @@ def test_build_release_update_status_detects_newer_prerelease() -> None:
     assert status["latest_tag"] == "v0.1.0-beta.5"
     assert status["update_available"] is True
     assert status["release_url"] == "https://github.example/releases/v0.1.0-beta.5"
+    assert status["release_asset_base_url"] == (
+        "https://github.com/raunakkathuria/operance/releases/download/v0.1.0-beta.5"
+    )
+    assert status["setup_command"] == (
+        "bash <(curl -fsSL https://github.com/raunakkathuria/operance/releases/download/v0.1.0-beta.5/setup.sh) "
+        "--release-url https://github.com/raunakkathuria/operance/releases/download/v0.1.0-beta.5"
+    )
     assert status["message"] == "Update available: v0.1.0-beta.5."
     assert status["suggested_command"] == (
-        "Download and install the latest RPM from https://github.example/releases/v0.1.0-beta.5"
+        "bash <(curl -fsSL https://github.com/raunakkathuria/operance/releases/download/v0.1.0-beta.5/setup.sh) "
+        "--release-url https://github.com/raunakkathuria/operance/releases/download/v0.1.0-beta.5"
     )
 
 

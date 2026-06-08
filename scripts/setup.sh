@@ -2,6 +2,7 @@
 set -euo pipefail
 
 package_path=""
+release_url=""
 support_bundle_out=""
 use_sudo=1
 dry_run=0
@@ -14,6 +15,8 @@ Set up a packaged Operance install for the supported Fedora KDE Wayland path.
 
 Options:
   --package PATH          Built Operance RPM artifact to install.
+  --release-url URL       GitHub release asset base URL containing setup.sh,
+                          SHA256SUMS, release-artifacts-manifest.json, and RPM.
   --support-bundle-out PATH
                           Write the setup support bundle to this path.
   --no-sudo               Forward --no-sudo to package installation.
@@ -47,6 +50,14 @@ run_optional_step() {
     fi
 }
 
+run_capture_step() {
+    local display="$1"
+    shift
+
+    echo "+ ${display}" >&2
+    "$@"
+}
+
 user_systemd_dir() {
     if [[ -n "${XDG_CONFIG_HOME:-}" ]]; then
         printf '%s\n' "${XDG_CONFIG_HOME}/systemd/user"
@@ -66,6 +77,13 @@ while [[ $# -gt 0 ]]; do
                 fail "--package requires a path"
             fi
             package_path="$1"
+            ;;
+        --release-url)
+            shift
+            if [[ $# -eq 0 ]]; then
+                fail "--release-url requires a URL"
+            fi
+            release_url="${1%/}"
             ;;
         --support-bundle-out)
             shift
@@ -91,19 +109,12 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
-if [[ -z "${package_path}" ]]; then
-    fail "--package is required"
+if [[ -n "${package_path}" && -n "${release_url}" ]]; then
+    fail "use either --package or --release-url, not both"
 fi
-if [[ ! -f "${package_path}" ]]; then
-    fail "package artifact not found: ${package_path}"
+if [[ -z "${package_path}" && -z "${release_url}" ]]; then
+    fail "--package or --release-url is required"
 fi
-case "${package_path}" in
-    *.rpm)
-        ;;
-    *)
-        fail "scripts/setup.sh currently supports Fedora RPM artifacts only"
-        ;;
-esac
 
 if [[ "${dry_run}" -eq 0 ]]; then
     if ! command -v dnf >/dev/null 2>&1; then
@@ -112,7 +123,77 @@ if [[ "${dry_run}" -eq 0 ]]; then
     if ! command -v systemctl >/dev/null 2>&1; then
         fail "systemctl not found on PATH"
     fi
+    if [[ -n "${release_url}" ]]; then
+        if ! command -v curl >/dev/null 2>&1; then
+            fail "curl not found on PATH"
+        fi
+        if ! command -v sha256sum >/dev/null 2>&1; then
+            fail "sha256sum not found on PATH"
+        fi
+        if ! command -v python3 >/dev/null 2>&1; then
+            fail "python3 not found on PATH"
+        fi
+    fi
 fi
+
+if [[ -n "${release_url}" ]]; then
+    if [[ "${dry_run}" -eq 1 ]]; then
+        release_dir="${TMPDIR:-/tmp}/operance-release"
+        run_step "mkdir -p ${release_dir}" mkdir -p "${release_dir}"
+        run_step "curl -fsSL ${release_url}/release-artifacts-manifest.json -o ${release_dir}/release-artifacts-manifest.json" \
+            curl -fsSL "${release_url}/release-artifacts-manifest.json" -o "${release_dir}/release-artifacts-manifest.json"
+        run_step "curl -fsSL ${release_url}/SHA256SUMS -o ${release_dir}/SHA256SUMS" \
+            curl -fsSL "${release_url}/SHA256SUMS" -o "${release_dir}/SHA256SUMS"
+        run_step "curl -fsSL ${release_url}/setup.sh -o ${release_dir}/setup.sh" \
+            curl -fsSL "${release_url}/setup.sh" -o "${release_dir}/setup.sh"
+        run_step "resolve RPM artifact from release manifest" true
+        package_path="${release_dir}/<release-rpm>"
+        run_step "curl -fsSL ${release_url}/<release-rpm> -o ${package_path}" \
+            curl -fsSL "${release_url}/<release-rpm>" -o "${package_path}"
+        run_step "cd ${release_dir} && sha256sum -c SHA256SUMS" \
+            bash -c "cd '${release_dir}' && sha256sum -c SHA256SUMS"
+    else
+        release_dir="$(mktemp -d)"
+        run_step "mkdir -p ${release_dir}" mkdir -p "${release_dir}"
+        run_step "curl -fsSL ${release_url}/release-artifacts-manifest.json -o ${release_dir}/release-artifacts-manifest.json" \
+            curl -fsSL "${release_url}/release-artifacts-manifest.json" -o "${release_dir}/release-artifacts-manifest.json"
+        run_step "curl -fsSL ${release_url}/SHA256SUMS -o ${release_dir}/SHA256SUMS" \
+            curl -fsSL "${release_url}/SHA256SUMS" -o "${release_dir}/SHA256SUMS"
+        run_step "curl -fsSL ${release_url}/setup.sh -o ${release_dir}/setup.sh" \
+            curl -fsSL "${release_url}/setup.sh" -o "${release_dir}/setup.sh"
+        rpm_name="$(run_capture_step "resolve RPM artifact from release manifest" python3 - "${release_dir}/release-artifacts-manifest.json" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+manifest = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+for artifact in manifest.get("artifacts", []):
+    if isinstance(artifact, dict) and artifact.get("type") == "fedora-rpm":
+        name = Path(str(artifact.get("name") or artifact.get("path", ""))).name
+        if isinstance(name, str) and name.endswith(".rpm"):
+            print(name)
+            raise SystemExit(0)
+raise SystemExit("release manifest does not contain a Fedora RPM artifact")
+PY
+)"
+        package_path="${release_dir}/${rpm_name}"
+        run_step "curl -fsSL ${release_url}/${rpm_name} -o ${package_path}" \
+            curl -fsSL "${release_url}/${rpm_name}" -o "${package_path}"
+        run_step "cd ${release_dir} && sha256sum -c SHA256SUMS" \
+            bash -c "cd '${release_dir}' && sha256sum -c SHA256SUMS"
+    fi
+fi
+
+if [[ ! -f "${package_path}" && "${dry_run}" -eq 0 ]]; then
+    fail "package artifact not found: ${package_path}"
+fi
+case "${package_path}" in
+    *.rpm|*/\<release-rpm\>)
+        ;;
+    *)
+        fail "scripts/setup.sh currently supports Fedora RPM artifacts only"
+        ;;
+esac
 
 unit_dir="$(user_systemd_dir)"
 for unit in operance-tray.service operance-voice-loop.service; do

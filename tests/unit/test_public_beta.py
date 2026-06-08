@@ -4,10 +4,17 @@ from operance.public_beta import build_public_beta_checklist
 
 
 def test_public_beta_checklist_reports_ready_packaged_path() -> None:
+    setup_command = (
+        "bash <(curl -fsSL https://github.com/raunakkathuria/operance/releases/download/v0.1.0-beta.10/setup.sh) "
+        "--release-url https://github.com/raunakkathuria/operance/releases/download/v0.1.0-beta.10"
+    )
     payload = build_public_beta_checklist(
         identity={"install_mode": "packaged", "version": "0.1.0", "package_profile": "mvp"},
         command_catalog={"summary": {"available_commands": 8}},
-        release_status={"message": "Remote release check was not requested."},
+        release_status={
+            "message": "Update available: v0.1.0-beta.10.",
+            "setup_command": setup_command,
+        },
         installed_readiness={"status": "ok"},
     )
 
@@ -17,7 +24,7 @@ def test_public_beta_checklist_reports_ready_packaged_path() -> None:
     assert payload["checklist"][0] == {
         "label": "Install packaged beta",
         "status": "done",
-        "command": "bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm",
+        "command": setup_command,
     }
     assert payload["checklist"][1] == {
         "label": "Verify installed runtime",
@@ -40,9 +47,10 @@ def test_public_beta_checklist_points_source_checkouts_to_release_assets() -> No
     assert payload["status"] == "source_checkout"
     assert payload["summary"] == "This is a source checkout; public beta testers should use the packaged RPM path."
     assert payload["checklist"][0]["status"] == "recommended"
+    assert payload["checklist"][0]["command"] == "bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm"
     assert payload["checklist"][1] == {
         "label": "Verify installed runtime",
         "status": "not_applicable",
         "command": None,
     }
-    assert "Download setup.sh and the RPM from the same GitHub release." in payload["next_steps"]
+    assert "Use the setup command from the current GitHub release assets." in payload["next_steps"]

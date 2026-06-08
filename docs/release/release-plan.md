@@ -100,6 +100,7 @@ Do not treat these as blockers for the current Fedora developer release:
 - Windows or macOS support
 - broad distro or desktop-environment support
 - a general third-party plugin SDK
+- a skills marketplace or searchable skill registry
 - wake-word-first product interaction
 - a zero-setup consumer desktop installer
 - claiming the full implemented Linux command surface as release-verified

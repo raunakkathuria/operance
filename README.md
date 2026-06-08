@@ -46,8 +46,19 @@ Windows and macOS provider scaffolds exist for adapter authors, but they are int
 
 ## Public Beta Quickstart
 
-Use the packaged Fedora RPM for the public beta experience. Download `setup.sh`
-and the RPM from the same GitHub release, then run the stable setup entrypoint:
+Use the packaged Fedora RPM for the public beta experience. From the current
+GitHub release, run the setup script against that release's asset URL:
+
+```bash
+curl -fsSLO https://github.com/raunakkathuria/operance/releases/download/<release-tag>/setup.sh
+bash ./setup.sh --release-url https://github.com/raunakkathuria/operance/releases/download/<release-tag>
+operance --version
+operance --installed-smoke
+operance --public-beta-checklist
+```
+
+If you already downloaded the RPM from the same release, the stable local
+package setup path is:
 
 ```bash
 bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm
@@ -95,10 +106,10 @@ installed-smoke output, and raw support snapshots remain available from the CLI
 and the setup/status flow instead of crowding the default tray menu.
 
 The release artifact set includes `setup.sh` beside the RPM, checksums, and
-manifest. The repo-local copy lives at `scripts/setup.sh`. A hosted one-line
-installer is a future distribution shape, but it is not live yet; use the
-release asset script until a public URL, release asset policy, and checksum or
-signing story are published.
+manifest. The repo-local copy lives at `scripts/setup.sh`. `--release-url`
+downloads the manifest, checksums, setup script, and RPM from the same release
+asset base URL, verifies `SHA256SUMS`, then runs the same install, tray startup,
+installed-smoke, command catalog, and support-bundle flow as `--package`.
 
 Use [docs/release/public-beta.md](docs/release/public-beta.md) for the public
 beta install, local AI planner, release artifact, and feedback path.
@@ -199,6 +210,7 @@ Operance is ready for a **Fedora KDE Wayland public beta** for outside developer
 - Local AI planner status check: `operance --planner-status`
 - Paste-ready feedback draft: `operance --issue-report`
 - Stable packaged setup entrypoint: `./scripts/setup.sh --package ./operance-0.1.0-1.noarch.rpm`
+- Release-asset setup entrypoint: `./setup.sh --release-url https://github.com/raunakkathuria/operance/releases/download/<release-tag>`
 - Tray-first onboarding: setup/status, supported commands, issue reporting,
   recent interaction details, update checks, and optional always-on listening
   controls are available from the tray menu
@@ -213,6 +225,7 @@ Not yet claimed:
 - Windows or macOS delivery
 - wake-word-first as the default interaction model
 - a zero-setup consumer install story
+- a skills marketplace or searchable skill registry
 
 Use [docs/release/public-beta.md](docs/release/public-beta.md) for the public beta distribution path, [docs/release/public-handoff.md](docs/release/public-handoff.md) for the current public handoff, [docs/release/release-readiness.md](docs/release/release-readiness.md) for the release stop line, [docs/release/fedora-checklist.md](docs/release/fedora-checklist.md) for the exact Fedora gate, [docs/release/release-plan.md](docs/release/release-plan.md) for the current release sequence, [docs/requirements/linux.md](docs/requirements/linux.md) for Linux setup, packaging, and advanced diagnostics, and [docs/release/public-repo-metadata.md](docs/release/public-repo-metadata.md) for suggested GitHub About metadata.
 

@@ -528,11 +528,15 @@ Prepare the release upload artifacts after that evidence gate passes:
 
 This writes the normalized `mvp` RPM, stable `setup.sh`, `SHA256SUMS`, and
 `release-artifacts-manifest.json` under `dist/release/` so maintainers can
-upload one predictable artifact set to GitHub releases. The manifest install
-command intentionally points at `bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm`
-so public testers use the same setup workflow that resets stale user services,
-starts the tray, runs installed smoke, prints runnable commands, and captures a
-support bundle.
+upload one predictable artifact set to GitHub releases. The manifest includes
+the local package command, `bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm`,
+and the release-asset command,
+`bash <(curl -fsSL https://github.com/raunakkathuria/operance/releases/download/<tag>/setup.sh) --release-url https://github.com/raunakkathuria/operance/releases/download/<tag>`.
+Both paths use the same setup workflow that resets stale user services, starts
+the tray, runs installed smoke, prints runnable commands, and captures a
+support bundle. The `--release-url` path also downloads the manifest,
+`SHA256SUMS`, setup script, and RPM from the same release asset URL before
+verifying checksums.
 
 Run the installed desktop smoke after installing the RPM in the active KDE session:
 

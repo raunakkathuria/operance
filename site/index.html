@@ -161,12 +161,13 @@
             <div class="section-label">Try It Now</div>
             <h2 class="section-h">Install the Packaged Fedora Beta.</h2>
             <p>
-              Download <code>setup.sh</code> and the RPM from the same GitHub
-              release, then run these commands to install, verify, and list the
-              commands available on your host.
+              Download <code>setup.sh</code> from the current GitHub release,
+              point it at the same release asset URL, then verify the installed
+              runtime and command catalog.
             </p>
           </div>
-          <pre><code>bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm
+          <pre><code>curl -fsSLO https://github.com/raunakkathuria/operance/releases/download/&lt;release-tag&gt;/setup.sh
+bash ./setup.sh --release-url https://github.com/raunakkathuria/operance/releases/download/&lt;release-tag&gt;
 operance --installed-smoke
 operance --public-beta-checklist
 operance --supported-commands --supported-commands-available-only</code></pre>
