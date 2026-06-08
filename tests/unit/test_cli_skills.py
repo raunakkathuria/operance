@@ -15,7 +15,7 @@ def test_cli_skills_prints_builtin_skill_catalog_without_daemon(monkeypatch, cap
     payload = json.loads(captured.out)
 
     assert exit_code == 0
-    assert payload["summary"]["pack_count"] >= 1
+    assert payload["summary"]["pack_count"] == 0
     assert payload["safety_contract"]["execution"] == "typed_actions_only"
 
 

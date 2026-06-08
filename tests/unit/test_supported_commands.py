@@ -125,7 +125,7 @@ def test_build_supported_command_catalog_can_filter_available_commands_only() ->
     assert commands["notifications.show"]["usage_pattern"] == "show a notification saying <message>"
     assert "windows.list" in commands
     assert "windows.switch" in commands
-    assert catalog["skills"]["summary"]["pack_count"] >= 1
+    assert catalog["skills"]["summary"]["pack_count"] == 0
     assert "text.type" not in commands
     assert catalog["summary"]["unverified_commands"] == 0
     assert catalog["summary"]["blocked_commands"] == 0

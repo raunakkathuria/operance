@@ -4,26 +4,19 @@ import pytest
 
 from operance.intent import DeterministicIntentMatcher
 from operance.models.actions import PlanSource, RiskTier, ToolName
-from operance.skills import (
-    SkillValidationError,
-    build_default_skill_library,
-    load_skill_pack_from_mapping,
-)
+from operance.skills import SkillLibrary, SkillValidationError, load_skill_pack_from_mapping
 
 
-def test_builtin_skill_library_loads_safe_typed_command_packs() -> None:
+def test_default_skill_library_is_empty_until_user_loads_packs() -> None:
+    from operance.skills import build_default_skill_library
+
     library = build_default_skill_library()
 
     payload = library.to_dict()
 
-    assert payload["summary"]["pack_count"] >= 1
-    assert payload["summary"]["command_count"] >= 1
-    assert "open operance docs" in {
-        phrase
-        for pack in payload["packs"]
-        for command in pack["commands"]
-        for phrase in command["phrases"]
-    }
+    assert payload["summary"]["pack_count"] == 0
+    assert payload["summary"]["command_count"] == 0
+    assert payload["packs"] == []
 
 
 def test_skill_pack_rejects_raw_shell_tools() -> None:
@@ -128,19 +121,35 @@ def test_skill_pack_rejects_url_target_for_non_launch_tool() -> None:
         )
 
 
-def test_deterministic_matcher_can_match_builtin_skill_phrase() -> None:
-    matcher = DeterministicIntentMatcher(skill_library=build_default_skill_library())
+def test_deterministic_matcher_can_match_loaded_skill_phrase() -> None:
+    pack = load_skill_pack_from_mapping(
+        {
+            "skill_id": "example.dev",
+            "name": "Developer shortcuts",
+            "description": "Local development shortcuts.",
+            "commands": [
+                {
+                    "id": "open_local_app",
+                    "phrases": ["open local app"],
+                    "actions": [{"tool": "apps.launch", "args": {"app": "localhost:3000"}}],
+                }
+            ],
+        }
+    )
+    matcher = DeterministicIntentMatcher(skill_library=SkillLibrary((pack,)))
 
-    plan = matcher.match("open operance docs")
+    plan = matcher.match("open local app")
 
     assert plan is not None
     assert plan.source == PlanSource.DETERMINISTIC
     assert [(action.tool, action.args) for action in plan.actions] == [
-        (ToolName.APPS_LAUNCH, {"app": "https://github.com/raunakkathuria/operance/blob/main/README.md"})
+        (ToolName.APPS_LAUNCH, {"app": "localhost:3000"})
     ]
 
 
 def test_skill_library_round_trips_as_json_safe_metadata() -> None:
+    from operance.skills import build_default_skill_library
+
     payload = build_default_skill_library().to_dict()
 
     encoded = json.dumps(payload, sort_keys=True)

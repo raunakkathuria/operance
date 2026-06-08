@@ -94,7 +94,7 @@ def normalize_skill_phrase(value: str) -> str:
 
 
 def build_default_skill_library() -> SkillLibrary:
-    return load_skill_library_from_mappings(_builtin_skill_pack_mappings())
+    return SkillLibrary(())
 
 
 def build_skill_library_from_paths(
@@ -376,52 +376,3 @@ def _safety_contract() -> dict[str, object]:
         "policy": "confirmation-gated actions remain confirmation-gated",
         "adapter_boundary": "skills describe intent; OS adapters execute native behavior",
     }
-
-
-def _builtin_skill_pack_mappings() -> tuple[dict[str, object], ...]:
-    return (
-        {
-            "skill_id": "operance.project",
-            "name": "Operance project shortcuts",
-            "description": "Safe shortcuts for project docs and feedback paths.",
-            "platforms": ["linux", "windows", "macos"],
-            "commands": [
-                {
-                    "id": "open_docs",
-                    "description": "Open the public README in the default browser.",
-                    "phrases": ["open operance docs", "show operance docs"],
-                    "actions": [
-                        {
-                            "tool": "apps.launch",
-                            "args": {"app": "https://github.com/raunakkathuria/operance/blob/main/README.md"},
-                        }
-                    ],
-                },
-                {
-                    "id": "open_issues",
-                    "description": "Open the GitHub issue tracker.",
-                    "phrases": ["open operance issues", "report operance issue"],
-                    "actions": [
-                        {
-                            "tool": "apps.launch",
-                            "args": {"app": "https://github.com/raunakkathuria/operance/issues"},
-                        }
-                    ],
-                },
-            ],
-        },
-        {
-            "skill_id": "operance.developer",
-            "name": "Developer workflow shortcuts",
-            "description": "Portable developer examples that stay within typed actions.",
-            "platforms": ["linux", "windows", "macos"],
-            "commands": [
-                {
-                    "id": "open_local_app",
-                    "description": "Open a common local development server.",
-                    "phrases": ["open local app", "open dev server"],
-                    "actions": [{"tool": "apps.launch", "args": {"app": "localhost:3000"}}],
-                }
-            ],
-        },
-    )
