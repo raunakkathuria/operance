@@ -61,6 +61,11 @@ class PlannerSettings:
 
 
 @dataclass(slots=True, frozen=True)
+class SkillsSettings:
+    pack_paths: tuple[Path, ...] = ()
+
+
+@dataclass(slots=True, frozen=True)
 class PathsSettings:
     data_dir: Path
     log_dir: Path
@@ -81,6 +86,7 @@ class AppConfig:
     runtime: RuntimeSettings
     audio: AudioSettings
     planner: PlannerSettings
+    skills: SkillsSettings
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> "AppConfig":
@@ -130,6 +136,11 @@ class AppConfig:
                 30.0,
             ),
         )
+        skill_pack_paths = tuple(
+            Path(item).expanduser()
+            for item in source.get("OPERANCE_SKILL_PACKS", "").split(os.pathsep)
+            if item.strip()
+        )
 
         return cls(
             app_name=source.get("OPERANCE_APP_NAME", "operance"),
@@ -139,6 +150,7 @@ class AppConfig:
             runtime=runtime,
             audio=audio,
             planner=planner,
+            skills=SkillsSettings(pack_paths=skill_pack_paths),
         )
 
     def ensure_directories(self) -> None:
@@ -178,5 +190,8 @@ class AppConfig:
                 "max_retries": self.planner.max_retries,
                 "max_consecutive_failures": self.planner.max_consecutive_failures,
                 "failure_cooldown_seconds": self.planner.failure_cooldown_seconds,
+            },
+            "skills": {
+                "pack_paths": [str(path) for path in self.skills.pack_paths],
             },
         }

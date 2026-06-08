@@ -38,6 +38,7 @@ from ..release_channel import build_release_update_status
 from ..status import StatusSnapshot
 from ..stt import SpeechTranscriber, build_default_speech_transcriber
 from ..spoken_response import build_spoken_response_text
+from ..skills import build_skill_library_from_paths
 from ..support_bundle import write_support_bundle_artifact
 from ..support_snapshot import build_support_snapshot, build_support_snapshot_help_text
 from ..supported_commands import (
@@ -336,7 +337,11 @@ class TrayController:
     def getting_started_report(self) -> dict[str, object]:
         environment_report = build_environment_report()
         setup_snapshot = build_setup_snapshot(environment_report)
-        command_catalog = build_supported_command_catalog(environment_report)
+        skill_library = build_skill_library_from_paths(self.daemon.config.skills.pack_paths)
+        command_catalog = build_supported_command_catalog(
+            environment_report,
+            skill_library=skill_library,
+        )
         planner_status = build_planner_status_report(
             self.daemon.config.planner,
             environment_report=environment_report,
@@ -1073,7 +1078,10 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
 
     def show_supported_commands() -> None:
         try:
-            help_text = build_supported_command_help_text(build_supported_command_catalog())
+            skill_library = build_skill_library_from_paths(daemon.config.skills.pack_paths)
+            help_text = build_supported_command_help_text(
+                build_supported_command_catalog(skill_library=skill_library)
+            )
         except Exception as exc:
             _show_tray_message(
                 tray,

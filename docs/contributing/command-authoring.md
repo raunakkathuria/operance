@@ -11,6 +11,9 @@ execution behind adapters.
 Do not add Linux, Windows, or macOS transport details to planner, validator,
 policy, daemon, MCP, or typed action orchestration code.
 
+If the behavior already maps to an existing typed action, prefer a JSON desktop
+skill pack instead of changing core code. See [skill-packs.md](skill-packs.md).
+
 ## Implementation Path
 
 1. Add or update the typed tool in `src/operance/models/actions.py` only when the

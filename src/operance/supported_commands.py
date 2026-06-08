@@ -6,12 +6,14 @@ from .doctor import build_environment_report
 from .models.actions import ToolName
 from .platforms import get_platform_provider
 from .registry import build_default_action_registry
+from .skills import SkillLibrary, build_default_skill_library
 
 
 def build_supported_command_catalog(
     report: dict[str, object] | None = None,
     *,
     available_only: bool = False,
+    skill_library: SkillLibrary | None = None,
 ) -> dict[str, object]:
     environment_report = build_environment_report() if report is None else report
     provider = get_platform_provider(
@@ -25,6 +27,7 @@ def build_supported_command_catalog(
     snapshot = _build_setup_snapshot(environment_report)
     steps_by_name = {step.name: step for step in snapshot.steps}
     registry = build_default_action_registry()
+    skills = skill_library or build_default_skill_library()
 
     commands_by_domain: dict[str, list[dict[str, object]]] = {}
 
@@ -88,6 +91,7 @@ def build_supported_command_catalog(
             "blocked_commands": blocked_count,
         },
         "domains": domains,
+        "skills": skills.to_dict(),
     }
 
 
@@ -98,6 +102,10 @@ def build_supported_command_help_text(catalog: dict[str, object]) -> dict[str, o
     domains = catalog.get("domains")
     if not isinstance(domains, list):
         domains = []
+    skills = catalog.get("skills")
+    skill_packs = skills.get("packs") if isinstance(skills, dict) else []
+    if not isinstance(skill_packs, list):
+        skill_packs = []
 
     available_count = _int_value(summary.get("available_commands"))
     unverified_count = _int_value(summary.get("unverified_commands"))
@@ -153,6 +161,21 @@ def build_supported_command_help_text(catalog: dict[str, object]) -> dict[str, o
     if not details_lines:
         details_lines.append("No supported command metadata is available.")
 
+    for pack in skill_packs:
+        if not isinstance(pack, dict):
+            continue
+        commands = pack.get("commands")
+        if not isinstance(commands, list) or not commands:
+            continue
+        label = str(pack.get("name") or pack.get("skill_id") or "Skill pack")
+        details_lines.append(f"{label} skill pack:")
+        for command in commands:
+            if not isinstance(command, dict):
+                continue
+            phrases = command.get("phrases")
+            if isinstance(phrases, list) and phrases:
+                details_lines.append(f"- {phrases[0]}")
+
     return {
         "title": "Supported commands",
         "summary": (
@@ -160,9 +183,31 @@ def build_supported_command_help_text(catalog: dict[str, object]) -> dict[str, o
             f"{confirmation_count} ask for confirmation before running. "
             f"{blocked_count} need setup."
         ),
-        "examples": _help_examples(domains),
+        "examples": _help_examples(domains) + _skill_help_examples(skill_packs),
         "details": "\n".join(details_lines),
     }
+
+
+def _skill_help_examples(skill_packs: list[object]) -> list[str]:
+    examples: list[str] = []
+    for pack in skill_packs:
+        if not isinstance(pack, dict):
+            continue
+        commands = pack.get("commands")
+        if not isinstance(commands, list):
+            continue
+        for command in commands:
+            if not isinstance(command, dict):
+                continue
+            phrases = command.get("phrases")
+            if isinstance(phrases, list):
+                for phrase in phrases:
+                    if isinstance(phrase, str) and phrase:
+                        examples.append(phrase)
+                        break
+            if len(examples) >= 2:
+                return examples
+    return examples
 
 
 def _command_example_text(command: dict[str, object], *, prefer_usage_pattern: bool = False) -> str:

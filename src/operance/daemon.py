@@ -40,6 +40,7 @@ from .responder import ResponseBuilder
 from .runtime.event_bus import InMemoryEventBus
 from .runtime.metrics import CommandMetrics, MetricsCollector
 from .runtime.state_machine import RuntimeStateMachine
+from .skills import build_skill_library_from_paths
 from .status import StatusSnapshot
 from .validator import PlanValidator
 
@@ -99,7 +100,10 @@ class OperanceDaemon:
     def build_default(cls, env: Mapping[str, str] | None = None) -> "OperanceDaemon":
         config = AppConfig.from_env(env)
         adapters = build_default_adapter_set(config)
-        return cls(config=config, adapters=adapters)
+        intent_matcher = DeterministicIntentMatcher(
+            skill_library=build_skill_library_from_paths(config.skills.pack_paths)
+        )
+        return cls(config=config, adapters=adapters, intent_matcher=intent_matcher)
 
     def start(self) -> None:
         if self.running:

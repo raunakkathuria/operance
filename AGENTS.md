@@ -57,6 +57,21 @@ portable-core, provider, and adapter boundaries. During review, reject designs
 that add speculative abstraction, duplicate platform logic in the core, or
 generalize beyond the current tested requirement.
 
+## Product UX Guardrails
+
+Treat the tray as the primary end-user surface. Keep it minimal and focused on
+actions normal users need in the moment: click-to-talk, always-on listening,
+supported commands, setup/status, issue reporting, recent interaction,
+confirmation/undo when relevant, update checks, about, and quit.
+
+Do not add developer-heavy diagnostics, raw JSON dumps, planner internals,
+service-reset controls, support-snapshot variants, or experimental extension
+management directly to the default tray menu unless the product flow explicitly
+requires it. Prefer CLI commands, setup/status dialogs, support bundles, or
+developer docs for those surfaces. If a tray option is added, state why it is
+useful to an end user and keep the label product-facing rather than
+implementation-facing.
+
 ## Testing Guidelines
 
 Use `pytest` and follow TDD: write or update a failing test first, implement the smallest fix, then rerun `.venv/bin/python -m pytest`. Name tests `test_<behavior>.py` and keep them under `tests/unit/`. Add regression coverage for new CLI flags, planner contracts, validator rules, and adapter-facing executor behavior.
@@ -93,6 +108,8 @@ Before calling a feature complete:
 - confirm OS-native execution details stay in adapters
 - confirm adapter contracts and provider release-verified tools pass the adapter conformance gate
 - confirm the implementation follows `KISS`, `YAGNI`, and `DRY`
+- confirm tray changes keep the default tray menu end-user focused and do not
+  expose developer diagnostics unless deliberately justified
 - update relevant documentation, or explicitly state that no documentation change is needed and why
 - ensure `README.md` reflects any changed public/user workflow
 - ensure `docs/requirements/linux.md` reflects any changed Linux setup, packaging, service, or integration behavior

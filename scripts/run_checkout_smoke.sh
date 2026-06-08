@@ -83,6 +83,10 @@ run_step "${python_bin} -m operance.cli --planner-status" "${python_bin}" "-m" "
 run_step \
     "${python_bin} -m operance.cli --supported-commands --supported-commands-available-only" \
     "${python_bin}" "-m" "operance.cli" "--supported-commands" "--supported-commands-available-only"
+run_step "${python_bin} -m operance.cli --skills" "${python_bin}" "-m" "operance.cli" "--skills"
+run_step \
+    "${python_bin} -m operance.cli --skill-validate tests/fixtures/skill_pack_safe.json" \
+    "${python_bin}" "-m" "operance.cli" "--skill-validate" "tests/fixtures/skill_pack_safe.json"
 run_step \
     "${python_bin} -m operance.cli --planner-fixture tests/fixtures/planner_mvp.jsonl" \
     "${python_bin}" "-m" "operance.cli" "--planner-fixture" "tests/fixtures/planner_mvp.jsonl"

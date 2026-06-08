@@ -19,6 +19,7 @@ from .activation import (
     build_planner_status_report,
 )
 from .adapters import validate_adapter_set
+from .config import AppConfig
 from .corpus import run_default_corpus
 from .daemon import OperanceDaemon
 from .doctor import build_environment_report
@@ -46,6 +47,11 @@ from .release_channel import build_release_update_status
 from .replay import run_replay_fixture
 from .schemas import build_action_plan_schema, build_action_result_schema
 from .session import process_transcript, run_interactive_session, run_transcript_file
+from .skills import (
+    SkillValidationError,
+    build_skill_library_from_paths,
+    load_skill_pack_from_path,
+)
 from .stt import build_default_speech_transcriber
 from .support_bundle import write_support_bundle_artifact
 from .support_snapshot import build_support_snapshot
@@ -101,6 +107,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--print-config", action="store_true", help="Print the effective configuration")
     parser.add_argument("--supported-commands", action="store_true", help="Print the current supported command catalog")
+    parser.add_argument("--skills", action="store_true", help="Print the active desktop skill pack catalog")
+    parser.add_argument("--skill-validate", help="Validate one desktop skill pack JSON file")
     parser.add_argument(
         "--adapter-conformance",
         action="store_true",
@@ -385,10 +393,37 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(json.dumps(build_release_update_status(channel=args.release_channel), sort_keys=True))
         return 0
 
+    if args.skills:
+        config = AppConfig.from_env(env)
+        print(json.dumps(build_skill_library_from_paths(config.skills.pack_paths).to_dict(), sort_keys=True))
+        return 0
+
+    if args.skill_validate:
+        try:
+            pack = load_skill_pack_from_path(Path(args.skill_validate))
+        except SkillValidationError as exc:
+            print(json.dumps({"status": "failed", "errors": exc.errors}, sort_keys=True))
+            return 1
+        print(
+            json.dumps(
+                {
+                    "status": "ok",
+                    "skill_id": pack.skill_id,
+                    "name": pack.name,
+                    "command_count": len(pack.commands),
+                    "phrase_count": sum(len(command.phrases) for command in pack.commands),
+                    "safety_contract": "typed_actions_only",
+                },
+                sort_keys=True,
+            )
+        )
+        return 0
+
     daemon = OperanceDaemon.build_default(env)
 
     if args.public_beta_checklist:
         environment_report = build_environment_report()
+        skill_library = build_skill_library_from_paths(daemon.config.skills.pack_paths)
         identity = build_project_identity()
         installed_readiness = (
             build_installed_smoke_result(env=env, report=environment_report).to_dict()
@@ -402,6 +437,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     command_catalog=build_supported_command_catalog(
                         environment_report,
                         available_only=True,
+                        skill_library=skill_library,
                     ),
                     release_status=build_release_update_status(identity=identity, check_remote=False),
                     installed_readiness=installed_readiness,
@@ -417,10 +453,12 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.getting_started:
         environment_report = build_environment_report()
+        skill_library = build_skill_library_from_paths(daemon.config.skills.pack_paths)
         setup_snapshot = build_setup_snapshot(environment_report)
         command_catalog = build_supported_command_catalog(
             environment_report,
             available_only=True,
+            skill_library=skill_library,
         )
         planner_status = build_planner_status_report(
             daemon.config.planner,
@@ -452,6 +490,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 build_supported_command_catalog(
                     build_environment_report(),
                     available_only=args.supported_commands_available_only,
+                    skill_library=build_skill_library_from_paths(daemon.config.skills.pack_paths),
                 ),
                 sort_keys=True,
             )
