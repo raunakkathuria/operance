@@ -48,7 +48,9 @@ def build_release_update_status(
         "installed_commit": installed_commit,
         "latest_tag": None,
         "update_available": None,
+        "release_asset_base_url": None,
         "release_url": None,
+        "setup_command": None,
         "message": "Remote release check was not requested.",
         "suggested_command": "operance --check-updates",
     }
@@ -70,11 +72,15 @@ def build_release_update_status(
 
     latest_tag = _string_value(release.get("tag_name"))
     release_url = _string_value(release.get("html_url"))
+    release_asset_base_url = _release_asset_base_url(repository, latest_tag)
+    setup_command = _release_asset_setup_command(release_asset_base_url)
     base_payload.update(
         {
             "status": "ok",
             "latest_tag": latest_tag,
+            "release_asset_base_url": release_asset_base_url,
             "release_url": release_url,
+            "setup_command": setup_command,
         }
     )
 
@@ -116,7 +122,8 @@ def build_release_update_status(
         {
             "update_available": True,
             "message": f"Update available: {latest_tag}.",
-            "suggested_command": (
+            "suggested_command": setup_command
+            or (
                 f"Download and install the latest RPM from {release_url}"
                 if release_url
                 else "Download and install the latest RPM from the Operance GitHub releases page."
@@ -167,6 +174,21 @@ def _github_release_api_url(repository: str, channel: str) -> str:
     if channel == "stable":
         return f"https://api.github.com/repos/{repository}/releases/latest"
     return f"https://api.github.com/repos/{repository}/releases"
+
+
+def _release_asset_base_url(repository: str, tag: str | None) -> str | None:
+    if tag is None:
+        return None
+    return f"https://github.com/{repository}/releases/download/{tag}"
+
+
+def _release_asset_setup_command(release_asset_base_url: str | None) -> str | None:
+    if release_asset_base_url is None:
+        return None
+    return (
+        f"bash <(curl -fsSL {release_asset_base_url}/setup.sh) "
+        f"--release-url {release_asset_base_url}"
+    )
 
 
 def _release_channel(raw_channel: str | None) -> str:

@@ -73,6 +73,28 @@ def test_setup_script_dry_run_supports_no_sudo(tmp_path: Path) -> None:
     )
 
 
+def test_setup_script_dry_run_supports_release_asset_url() -> None:
+    result = _run_setup_script(
+        "--release-url",
+        "https://github.com/raunakkathuria/operance/releases/download/v0.1.0-beta.10/",
+        "--dry-run",
+    )
+
+    lines = result.stdout.splitlines()
+
+    assert result.stderr == ""
+    assert lines[:7] == [
+        "+ mkdir -p /tmp/operance-release",
+        "+ curl -fsSL https://github.com/raunakkathuria/operance/releases/download/v0.1.0-beta.10/release-artifacts-manifest.json -o /tmp/operance-release/release-artifacts-manifest.json",
+        "+ curl -fsSL https://github.com/raunakkathuria/operance/releases/download/v0.1.0-beta.10/SHA256SUMS -o /tmp/operance-release/SHA256SUMS",
+        "+ curl -fsSL https://github.com/raunakkathuria/operance/releases/download/v0.1.0-beta.10/setup.sh -o /tmp/operance-release/setup.sh",
+        "+ resolve RPM artifact from release manifest",
+        "+ curl -fsSL https://github.com/raunakkathuria/operance/releases/download/v0.1.0-beta.10/<release-rpm> -o /tmp/operance-release/<release-rpm>",
+        "+ cd /tmp/operance-release && sha256sum -c SHA256SUMS",
+    ]
+    assert "+ sudo dnf install -y /tmp/operance-release/<release-rpm>" in lines
+
+
 def test_setup_script_is_standalone_release_asset() -> None:
     script = SCRIPT_PATH.read_text(encoding="utf-8")
 

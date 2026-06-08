@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added release-asset setup support to `scripts/setup.sh --release-url`, so public Fedora testers can install from one GitHub release asset URL with manifest, checksum, setup script, and RPM verification before the normal tray startup, installed-smoke, command catalog, and support-bundle flow.
+- Expanded release manifests and `operance --check-updates` with release-asset setup commands while keeping updates diagnostic-only and sudo-visible through the setup path.
+- Updated public beta, release, Linux, and website install guidance around the release-asset setup path, and recorded skills marketplace/search as a future enhancement rather than current scope.
 - Added safe JSON desktop skill packs with `operance --skills`, `operance --skill-validate`, safe target resolution for apps, URLs, and Desktop entries, `OPERANCE_SKILL_PACKS` loading, supported-command discovery, and deterministic typed-action execution through the existing validator, policy, confirmation, and adapter path.
 - Added tray-managed always-on listening controls for the existing voice-loop service and short spoken-response text metadata for manual voice sessions.
 - Simplified the default tray menu for beta users by keeping issue reporting, setup/status, supported commands, recent interaction details, update checks, and context-only confirmation/undo actions while leaving raw diagnostics in CLI surfaces.

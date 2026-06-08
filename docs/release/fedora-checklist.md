@@ -126,6 +126,13 @@ Upload these generated files from `dist/release/` to GitHub releases:
 - `SHA256SUMS`
 - `release-artifacts-manifest.json`
 
+Release notes should prefer the release-asset setup path:
+
+```bash
+curl -fsSLO https://github.com/raunakkathuria/operance/releases/download/<release-tag>/setup.sh
+bash ./setup.sh --release-url https://github.com/raunakkathuria/operance/releases/download/<release-tag>
+```
+
 Success means all of the following are true:
 
 - the RPM artifact is built at the documented path

@@ -89,7 +89,8 @@ def test_static_website_has_demo_and_beta_install_path() -> None:
     assert "open browser" in text
     assert "open google.com" in text
     assert "open firefox and notify me" not in text
-    assert "bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm" in text
+    assert "curl -fsSLO https://github.com/raunakkathuria/operance/releases/download/<release-tag>/setup.sh" in text
+    assert "bash ./setup.sh --release-url https://github.com/raunakkathuria/operance/releases/download/<release-tag>" in text
     assert "operance --installed-smoke" in text
     assert "operance --public-beta-checklist" in text
     assert "operance --supported-commands --supported-commands-available-only" in text

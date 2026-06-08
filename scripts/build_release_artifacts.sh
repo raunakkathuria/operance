@@ -171,20 +171,37 @@ def git_value(*args: str) -> str | None:
     value = completed.stdout.strip()
     return value or None
 
+git_tag = git_value("describe", "--tags", "--exact-match")
+release_asset_base_url = (
+    f"https://github.com/raunakkathuria/operance/releases/download/{git_tag}"
+    if git_tag
+    else None
+)
+release_asset_install_command = (
+    f"bash <(curl -fsSL {release_asset_base_url}/setup.sh) --release-url {release_asset_base_url}"
+    if release_asset_base_url
+    else "bash <(curl -fsSL https://github.com/raunakkathuria/operance/releases/download/<tag>/setup.sh) --release-url https://github.com/raunakkathuria/operance/releases/download/<tag>"
+)
+
 payload = {
     "artifact_profile": "mvp",
     "artifacts": [
         {
+            "name": rpm_path.name,
             "path": str(rpm_path),
             "sha256": hashlib.sha256(rpm_path.read_bytes()).hexdigest(),
             "size_bytes": rpm_path.stat().st_size,
             "type": "fedora-rpm",
         },
         {
+            "name": checksums_path.name,
             "path": str(checksums_path),
+            "sha256": hashlib.sha256(checksums_path.read_bytes()).hexdigest(),
+            "size_bytes": checksums_path.stat().st_size,
             "type": "checksums",
         },
         {
+            "name": setup_path.name,
             "path": str(setup_path),
             "sha256": hashlib.sha256(setup_path.read_bytes()).hexdigest(),
             "size_bytes": setup_path.stat().st_size,
@@ -193,9 +210,11 @@ payload = {
     ],
     "git_commit": git_value("rev-parse", "HEAD"),
     "git_commit_short": git_value("rev-parse", "--short", "HEAD"),
-    "git_tag": git_value("describe", "--tags", "--exact-match"),
+    "git_tag": git_tag,
     "install_command": f"bash ./setup.sh --package ./{rpm_path.name}",
     "package_version": version,
+    "release_asset_base_url": release_asset_base_url,
+    "release_asset_install_command": release_asset_install_command,
     "supported_target": "Fedora KDE Plasma Wayland",
     "validation_commands": [
         "operance --version",

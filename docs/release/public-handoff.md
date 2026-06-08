@@ -91,6 +91,7 @@ This repo does **not** currently claim:
 - wake-word-first as the default product interaction
 - a fully bundled consumer installer with all model assets included
 - a zero-setup consumer install story
+- a skills marketplace or searchable skill registry
 
 Wake-word and TTS assets remain optional. The supported path is tray plus
 click-to-talk on Fedora KDE Wayland.
@@ -139,10 +140,15 @@ Maintainers preparing GitHub release assets should run:
 ```
 
 Upload the generated RPM, `setup.sh`, `SHA256SUMS`, and release artifact
-manifest from `dist/release/`. The public install command for those assets is
-`bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm`, so outside testers
-use the same reset, tray startup, installed-smoke, command-discovery, and
-support-bundle path that maintainers validate.
+manifest from `dist/release/`. The public install command for those assets is:
+
+```bash
+curl -fsSLO https://github.com/raunakkathuria/operance/releases/download/<release-tag>/setup.sh
+bash ./setup.sh --release-url https://github.com/raunakkathuria/operance/releases/download/<release-tag>
+```
+
+That command uses the same reset, tray startup, installed-smoke,
+command-discovery, and support-bundle path that maintainers validate.
 
 ---
 

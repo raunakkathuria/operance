@@ -98,3 +98,5 @@ def test_release_artifacts_manifest_uses_stable_setup_command() -> None:
             "install_command": f"bash ./setup.sh --package ./{rpm_path.name}",
         '''
     ).strip() in script
+    assert '"release_asset_base_url": release_asset_base_url,' in script
+    assert '"release_asset_install_command": release_asset_install_command,' in script

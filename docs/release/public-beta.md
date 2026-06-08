@@ -22,7 +22,8 @@ The current public beta is intentionally narrow:
 - reporting: support bundles attached to GitHub issues
 
 This is not yet a broad consumer launch, Windows or macOS release, wake-word
-first default product, bundled TTS release, or zero-setup installer.
+first default product, bundled TTS release, zero-setup installer, or skills
+marketplace.
 
 ---
 
@@ -53,8 +54,19 @@ operance --supported-commands --supported-commands-available-only
 
 ## 3. Try The Packaged Beta
 
-Download `setup.sh` and the Fedora RPM from the same GitHub release assets,
-then install it:
+From the current GitHub release, download `setup.sh` and point it at the same
+release asset URL:
+
+```bash
+curl -fsSLO https://github.com/raunakkathuria/operance/releases/download/<release-tag>/setup.sh
+bash ./setup.sh --release-url https://github.com/raunakkathuria/operance/releases/download/<release-tag>
+operance --version
+operance --installed-smoke
+operance --public-beta-checklist
+```
+
+If you already downloaded the RPM from the same release, use the local package
+path:
 
 ```bash
 bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm
@@ -63,9 +75,11 @@ operance --installed-smoke
 operance --public-beta-checklist
 ```
 
-The setup script is the stable local setup surface for the current packaged
-path. It installs the RPM, resets stale user-scoped Operance services, starts
-the tray service, runs installed readiness, prints the supported command
+The setup script is the stable setup surface for the current packaged path.
+With `--release-url`, it downloads the release manifest, checksums, setup
+script, and RPM from the same GitHub release asset URL, verifies
+`SHA256SUMS`, installs the RPM, resets stale user-scoped Operance services,
+starts the tray service, runs installed readiness, prints the supported command
 catalog, captures a support bundle, and lists the manual tray checks to run.
 Do not use release-phase names such as alpha or beta for script filenames; keep
 setup and gate names stable across releases.
@@ -200,6 +214,15 @@ That writes:
 - `dist/release/SHA256SUMS`
 - `dist/release/release-artifacts-manifest.json`
 
+The manifest includes both the local package command and the release-asset
+setup command. Use the release-asset command in GitHub release notes after the
+assets are uploaded:
+
+```bash
+curl -fsSLO https://github.com/raunakkathuria/operance/releases/download/<release-tag>/setup.sh
+bash ./setup.sh --release-url https://github.com/raunakkathuria/operance/releases/download/<release-tag>
+```
+
 Then run the installed package evidence gate on the target Fedora KDE machine:
 
 ```bash
@@ -210,12 +233,14 @@ Publish the RPM, `setup.sh`, `SHA256SUMS`, and release artifact manifest as
 GitHub release assets only after the manual tray click-to-talk checks pass.
 
 Future hosted setup may take the shape below, but do not publish it as a live
-install command until the project has a stable public URL, release asset policy,
-and checksum or signing story:
+install command until the project has a stable public URL and signing story:
 
 ```bash
 curl -fsSL https://operance.dev/setup.sh | sh
 ```
+
+Future skills marketplace or searchable skill discovery is also deferred until
+the Linux product install and command experience is stable.
 
 ---
 

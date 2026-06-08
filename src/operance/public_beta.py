@@ -18,6 +18,7 @@ def build_public_beta_checklist(
     installed_status = _string_value(_dict_value(installed_readiness).get("status"))
     packaged = install_mode == "packaged"
     ready = packaged and installed_status == "ok" and available_commands > 0
+    install_command = _install_command(release_status)
 
     return {
         "status": "ready" if ready else ("source_checkout" if not packaged else "needs_attention"),
@@ -35,7 +36,7 @@ def build_public_beta_checklist(
             {
                 "label": "Install packaged beta",
                 "status": "done" if packaged else "recommended",
-                "command": "bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm",
+                "command": install_command,
             },
             {
                 "label": "Verify installed runtime",
@@ -75,6 +76,7 @@ def build_public_beta_checklist(
             ready=ready,
             installed_status=installed_status,
             command_prefix=command_prefix,
+            install_command=install_command,
         ),
     }
 
@@ -93,6 +95,7 @@ def _next_steps(
     ready: bool,
     installed_status: str,
     command_prefix: str,
+    install_command: str,
 ) -> list[str]:
     if ready:
         return [
@@ -105,9 +108,16 @@ def _next_steps(
             f"Run {command_prefix} --support-bundle before changing the machine if the install path fails.",
         ]
     return [
-        "Download setup.sh and the RPM from the same GitHub release.",
-        "Run bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm.",
+        "Use the setup command from the current GitHub release assets.",
+        f"Run {install_command}.",
     ]
+
+
+def _install_command(release_status: dict[str, object]) -> str:
+    setup_command = release_status.get("setup_command")
+    if isinstance(setup_command, str) and setup_command:
+        return setup_command
+    return "bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm"
 
 
 def _click_to_talk_smoke_commands() -> list[dict[str, str]]:
