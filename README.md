@@ -221,6 +221,16 @@ Operance is ready for a **Fedora KDE Wayland public beta** for outside developer
 - Wake-word and TTS assets remain optional and are not part of the packaged support contract; spoken response text is available even when TTS audio is not configured
 - Windows and macOS are architecture targets only; their current providers are scaffolds, not supported runtimes
 
+Always-on listening is wake-word gated. For the current beta, use it as two steps:
+
+```text
+Operance
+<short pause>
+open browser
+```
+
+The same pattern applies to other commands, such as `search google for linux automation` or `what time is it`. Saying `Operance open browser` as one continuous phrase may be less reliable because the continuous voice loop starts STT only after wake detection. Click-to-talk remains the recommended beta path when you want the most responsive command capture.
+
 Not yet claimed:
 
 - broad distro or desktop-environment support
@@ -626,7 +636,7 @@ Wayland session:
 ./scripts/run_installed_desktop_smoke.sh
 ```
 
-The packaged tray is click-to-talk first, with optional always-on listening controls for the voice-loop service. A missing continuous voice-loop runtime status file is expected unless the background wake-word loop has been started separately, and it should not block click-to-talk result notifications. Spoken response text is recorded in the last-interaction report; audio playback still requires configured TTS assets.
+The packaged tray is click-to-talk first, with optional always-on listening controls for the voice-loop service. In always-on mode, say `Operance`, pause briefly, then say the command. A missing continuous voice-loop runtime status file is expected unless the background wake-word loop has been started separately, and it should not block click-to-talk result notifications. Spoken response text is recorded in the last-interaction report; audio playback still requires configured TTS assets.
 
 Remove an installed native package:
 
