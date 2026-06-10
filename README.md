@@ -72,8 +72,10 @@ Then click the tray icon and say:
 ```text
 open browser
 open google.com
+search google for linux automation
 open firefox
 open localhost:3000
+open downloads
 open firefox and notify me
 what time is it
 wifi status
@@ -219,6 +221,16 @@ Operance is ready for a **Fedora KDE Wayland public beta** for outside developer
 - Wake-word and TTS assets remain optional and are not part of the packaged support contract; spoken response text is available even when TTS audio is not configured
 - Windows and macOS are architecture targets only; their current providers are scaffolds, not supported runtimes
 
+Always-on listening is wake-word gated. For the current beta, use it as two steps:
+
+```text
+Operance
+<short pause>
+open browser
+```
+
+The same pattern applies to other commands, such as `search google for linux automation` or `what time is it`. Saying `Operance open browser` as one continuous phrase may be less reliable because the continuous voice loop starts STT only after wake detection. Click-to-talk remains the recommended beta path when you want the most responsive command capture.
+
 Not yet claimed:
 
 - broad distro or desktop-environment support
@@ -252,7 +264,8 @@ Operance already has a coherent Linux-first developer release path: a typed and 
 What works now:
 
 - Core runtime: typed action models, deterministic intent matching, validator and policy enforcement, local audit logging, bounded local planner fallback, and MCP-compatible control surfaces.
-- Verified command subset on Fedora KDE Wayland: `open browser`, `open google.com`, `open <app name>` for installed desktop apps, safe two-step launch phrases such as `open firefox and load localhost:3000` or `open firefox and notify me`, `focus <app name>`, confirmation-gated `quit <app name>`, `show recent files`, `create folder on desktop called <name>`, confirmation-gated desktop file or folder delete, rename, and move commands, `list windows`, `switch to window <title>`, `show a notification saying <message>`, `what time is it`, `what is my battery level`, `wifi status`, `what is the volume`, `is audio muted`, `set volume to 50 percent`, `mute audio`, and `unmute audio`.
+- Verified command subset on Fedora KDE Wayland: `open browser`, `open google.com`, `search google for <query>`, `open <app name>` for installed desktop apps, safe two-step launch phrases such as `open firefox and load localhost:3000` or `open firefox and notify me`, `focus <app name>`, confirmation-gated `quit <app name>`, `open downloads`, `open documents`, `open desktop`, `show recent files`, `create folder on desktop called <name>`, confirmation-gated desktop file or folder delete, rename, and move commands, `list windows`, `switch to window <title>`, `show a notification saying <message>`, `what time is it`, `time`, `what is my battery level`, `battery`, `wifi status`, `what is the volume`, `volume`, `is audio muted`, `muted`, `set volume to 50 percent`, `volume 50 percent`, `mute audio`, `mute`, `unmute audio`, and `unmute`.
+- Tray feedback: when a command is heard, the tray state changes through `Understanding command` and `Opening <target>` or `Executing command`, and the tooltip shows `Heard: ...` before the final result notification.
 - Voice and tray MVP: tray app, bounded click-to-talk, tray-managed always-on voice-loop controls, confirmation flows, last-interaction reporting, optional wake-word, STT, spoken response text, and TTS probe paths, plus repo-local background voice-loop support.
 - Diagnostics and support: version/about provenance, explicit release-channel checks, doctor, setup actions, installed readiness checks, runnable-command catalog, runtime status resources, support snapshot, support bundle, audit inspection, and source-checkout smoke scripts.
 - Packaging and release gates: reproducible Linux bootstrap, source-checkout install or uninstall helpers, repo-local systemd helpers, Debian or RPM scaffolds, installed-package smoke, package evidence capture, and the Fedora gate.
@@ -623,7 +636,7 @@ Wayland session:
 ./scripts/run_installed_desktop_smoke.sh
 ```
 
-The packaged tray is click-to-talk first, with optional always-on listening controls for the voice-loop service. A missing continuous voice-loop runtime status file is expected unless the background wake-word loop has been started separately, and it should not block click-to-talk result notifications. Spoken response text is recorded in the last-interaction report; audio playback still requires configured TTS assets.
+The packaged tray is click-to-talk first, with optional always-on listening controls for the voice-loop service. In always-on mode, say `Operance`, pause briefly, then say the command. A missing continuous voice-loop runtime status file is expected unless the background wake-word loop has been started separately, and it should not block click-to-talk result notifications. Spoken response text is recorded in the last-interaction report; audio playback still requires configured TTS assets.
 
 Remove an installed native package:
 

@@ -554,12 +554,18 @@ def test_mcp_server_exposes_tool_input_schemas() -> None:
         "open firefox",
         "open browser",
         "open google.com",
+        "search google for linux automation",
         "open http://localhost:3000",
         "browse to localhost 3000",
         "browse to docs.python.org/3",
         "open firefox and load localhost:3000",
     ]
-    assert tools["audio.set_muted"]["example_transcripts"] == ["mute audio", "unmute audio"]
+    assert tools["audio.set_muted"]["example_transcripts"] == [
+        "mute audio",
+        "mute",
+        "unmute audio",
+        "unmute",
+    ]
     assert tools["apps.launch"]["allowed_side_effects"] == ["launch_app", "open_url"]
     assert tools["time.now"]["allowed_side_effects"] == []
     assert tools["audio.set_volume"]["allowed_side_effects"] == ["set_audio_volume"]

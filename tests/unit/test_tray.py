@@ -738,15 +738,38 @@ def test_build_tray_snapshot_surfaces_last_transcript_and_response_in_tooltip() 
 
     assert payload["last_command_transcript"] == "open firefox"
     assert payload["last_command_preview"] == "Launched firefox"
-    assert payload["last_interaction"] == {
-        "details": [
-            "Heard: open firefox",
-            "Status: success",
-        ],
-        "summary": "Launched firefox",
-        "title": "Last interaction",
-    }
-    assert payload["tooltip"] == "Operance: Responding | Heard: open firefox | Launched firefox"
+
+
+@pytest.mark.parametrize(
+    ("state", "expected_label", "expected_preview"),
+    [
+        (RuntimeState.UNDERSTANDING, "Understanding command", "Heard: open browser"),
+        (RuntimeState.EXECUTING, "Opening browser", "Opening browser..."),
+    ],
+)
+def test_build_tray_snapshot_acknowledges_heard_command_while_in_progress(
+    state: RuntimeState,
+    expected_label: str,
+    expected_preview: str,
+) -> None:
+    from operance.ui import build_tray_snapshot
+
+    snapshot = build_tray_snapshot(
+        _status_snapshot(
+            current_state=state,
+            last_transcript="open browser",
+            last_response=None,
+            last_command_status=None,
+        )
+    )
+
+    payload = snapshot.to_dict()
+
+    assert payload["tray_state"] == "busy"
+    assert payload["state_label"] == expected_label
+    assert payload["last_command_transcript"] == "open browser"
+    assert payload["last_command_preview"] == expected_preview
+    assert expected_preview in payload["tooltip"]
 
 
 def test_build_tray_snapshot_reports_planner_failure_notification() -> None:

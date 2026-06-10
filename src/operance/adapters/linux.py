@@ -1474,17 +1474,37 @@ class LinuxFilesAdapter:
         recent_files = [path for path in target_root.iterdir() if path.is_file()]
         return sorted(recent_files, key=lambda path: path.stat().st_mtime, reverse=True)[: self.max_recent_files]
 
+    def open_location(self, location: str) -> str:
+        path = self._resolve_known_location(location)
+        self._open_resolved_path(path, command_label="xdg-open")
+        return f"Opened {location} folder"
+
     def open_path(self, path: Path) -> str:
         if not path.exists():
             raise ValueError(f"desktop entry not found: {path.name}")
+        self._open_resolved_path(path, command_label="xdg-open")
+        return f"Opened desktop entry {path.name}"
+
+    def _open_resolved_path(self, path: Path, *, command_label: str) -> None:
         xdg_open = self.resolve_executable("xdg-open")
         if xdg_open is None:
             raise ValueError("xdg-open is not available")
         _require_success(
             self.run_command([xdg_open, str(path)]),
-            command_label="xdg-open",
+            command_label=command_label,
         )
-        return f"Opened desktop entry {path.name}"
+
+    def _resolve_known_location(self, location: str) -> Path:
+        if location == "desktop":
+            return self.desktop_dir
+        home_dir = self.desktop_dir.parent
+        if location == "downloads":
+            return home_dir / "Downloads"
+        if location == "documents":
+            return home_dir / "Documents"
+        if location == "home":
+            return home_dir
+        raise ValueError(f"unsupported folder location: {location}")
 
     def create_folder(self, root: Path, name: str) -> Path:
         root.mkdir(parents=True, exist_ok=True)

@@ -270,6 +270,9 @@ class ActionExecutor:
         if tool == ToolName.FILES_OPEN:
             adapter = self._require_adapter(self.adapters.files, tool)
             location = str(args["location"])
+            if "name" not in args:
+                message = adapter.open_location(location)
+                return ActionResultItem(tool=tool, status="success", message=message)
             if location == "desktop":
                 entry_path = adapter.desktop_dir / str(args["name"])
                 message = adapter.open_path(entry_path)

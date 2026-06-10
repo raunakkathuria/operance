@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from urllib.parse import quote_plus
 
 from ..key_presses import normalize_supported_key
 from ..launch_targets import is_url_like_target, normalize_explicit_url_target
@@ -41,6 +42,10 @@ def _normalize_spoken_launch_target(value: str) -> str:
 def _normalize_spoken_app_target(value: str) -> str:
     candidate = _normalize_spoken_launch_target(value)
     return recover_spoken_app_target(candidate)
+
+
+def _google_search_url(query: str) -> str:
+    return f"https://www.google.com/search?q={quote_plus(query.strip())}"
 
 
 def _is_simple_app_phrase(value: str, *, allow_url_like: bool = False) -> bool:
@@ -94,6 +99,27 @@ class DeterministicIntentMatcher:
         launch_notify_plan = self._launch_notify_plan(text, normalized)
         if launch_notify_plan is not None:
             return launch_notify_plan
+
+        search_match = re.fullmatch(r"(?:search google for|google search for|search for) (.+)", normalized)
+        if search_match:
+            query = search_match.group(1).strip()
+            if query:
+                return self._single_action_plan(
+                    text,
+                    ToolName.APPS_LAUNCH,
+                    args={"app": _google_search_url(query)},
+                )
+
+        folder_location_match = re.fullmatch(
+            r"(?:open|show) (desktop|downloads|documents|home)(?: folder)?",
+            normalized,
+        )
+        if folder_location_match:
+            return self._single_action_plan(
+                text,
+                ToolName.FILES_OPEN,
+                args={"location": folder_location_match.group(1)},
+            )
 
         if normalized in {"open firefox", "launch firefox"}:
             return self._single_action_plan(
@@ -334,16 +360,16 @@ class DeterministicIntentMatcher:
                 requires_confirmation=True,
             )
 
-        if normalized in {"what time is it", "tell me the time", "current time"}:
+        if normalized in {"what time is it", "tell me the time", "current time", "time"}:
             return self._single_action_plan(text, ToolName.TIME_NOW)
 
-        if normalized in {"what is my battery level", "battery status", "battery level"}:
+        if normalized in {"what is my battery level", "battery status", "battery level", "battery"}:
             return self._single_action_plan(text, ToolName.POWER_BATTERY_STATUS)
 
-        if normalized in {"what is the volume", "current volume", "get volume"}:
+        if normalized in {"what is the volume", "current volume", "get volume", "volume"}:
             return self._single_action_plan(text, ToolName.AUDIO_GET_VOLUME)
 
-        if normalized in {"is audio muted", "is the audio muted", "audio mute status"}:
+        if normalized in {"is audio muted", "is the audio muted", "audio mute status", "muted"}:
             return self._single_action_plan(text, ToolName.AUDIO_MUTE_STATUS)
 
         if normalized in {"what is on the clipboard", "read clipboard", "read the clipboard"}:
@@ -426,9 +452,13 @@ class DeterministicIntentMatcher:
                 requires_confirmation=True,
             )
 
-        volume_match = re.fullmatch(r"set( the)? volume to (\d{1,3}) percent", normalized)
+        volume_match = (
+            re.fullmatch(r"set( the)? volume to (\d{1,3}) percent", normalized)
+            or re.fullmatch(r"set( the)? volume (\d{1,3})(?: percent)?", normalized)
+            or re.fullmatch(r"volume (\d{1,3}) percent", normalized)
+        )
         if volume_match:
-            percent = int(volume_match.group(2))
+            percent = int(volume_match.groups()[-1])
             if 0 <= percent <= 100:
                 risk_tier, requires_confirmation = derive_action_safety_metadata(
                     ToolName.AUDIO_SET_VOLUME,
@@ -444,7 +474,7 @@ class DeterministicIntentMatcher:
                     requires_confirmation=requires_confirmation,
                 )
 
-        if normalized in {"mute audio", "mute sound"}:
+        if normalized in {"mute audio", "mute sound", "mute"}:
             return self._single_action_plan(
                 text,
                 ToolName.AUDIO_SET_MUTED,
@@ -452,7 +482,7 @@ class DeterministicIntentMatcher:
                 risk_tier=RiskTier.TIER_1,
             )
 
-        if normalized in {"unmute audio", "unmute sound"}:
+        if normalized in {"unmute audio", "unmute sound", "unmute"}:
             return self._single_action_plan(
                 text,
                 ToolName.AUDIO_SET_MUTED,

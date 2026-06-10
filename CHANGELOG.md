@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Documented the always-on listening speaking pattern as `Operance`, short pause, then command, and clarified why click-to-talk remains the more responsive beta path.
+- Expanded the verified deterministic Linux command surface with semantic Google search, known-folder opening, shorter time/battery/audio phrases, and concise mute/unmute/volume variants while keeping execution behind typed actions, validation, and adapter-owned Linux resolution.
+- Added in-progress tray acknowledgement so heard commands surface `Understanding command`, `Opening <target>`, or `Executing command` before the final response, making click-to-talk and always-on interactions clearer to users.
 - Added release-asset setup support to `scripts/setup.sh --release-url`, so public Fedora testers can install from one GitHub release asset URL with manifest, checksum, setup script, and RPM verification before the normal tray startup, installed-smoke, command catalog, and support-bundle flow.
 - Expanded release manifests and `operance --check-updates` with release-asset setup commands while keeping updates diagnostic-only and sudo-visible through the setup path.
 - Updated public beta, release, Linux, and website install guidance around the release-asset setup path, and recorded skills marketplace/search as a future enhancement rather than current scope.
