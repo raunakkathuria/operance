@@ -259,6 +259,11 @@ class MockFilesAdapter:
     def list_recent(self, root: Path | None = None) -> list[Path]:
         return list(self.recent_files)
 
+    def open_location(self, location: str) -> str:
+        if location in {"desktop", "downloads", "documents", "home"}:
+            return f"Opened {location} folder"
+        raise ValueError(f"unsupported folder location: {location}")
+
     def open_path(self, path: Path) -> str:
         if not path.exists():
             raise ValueError(f"desktop entry not found: {path.name}")

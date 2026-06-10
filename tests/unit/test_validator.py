@@ -32,6 +32,7 @@ def test_default_action_registry_exposes_seed_command_specs() -> None:
         "open firefox",
         "open browser",
         "open google.com",
+        "search google for linux automation",
         "open http://localhost:3000",
         "browse to localhost 3000",
         "browse to docs.python.org/3",
@@ -52,7 +53,7 @@ def test_default_action_registry_exposes_seed_command_specs() -> None:
     assert volume_spec is not None
     assert volume_spec.required_args == ("percent",)
     assert volume_spec.risk_tier == RiskTier.TIER_1
-    assert volume_spec.example_transcripts == ("set volume to 50 percent",)
+    assert volume_spec.example_transcripts == ("set volume to 50 percent", "volume 50 percent")
     assert volume_spec.allowed_side_effects == ("set_audio_volume",)
     assert volume_spec.undo_summary == "Undo will restore the previous volume."
 

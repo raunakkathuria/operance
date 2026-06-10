@@ -261,6 +261,30 @@ def test_linux_apps_adapter_uses_gtk_launch_for_desktop_entries_and_requires_suc
     assert commands == [["/usr/bin/gtk-launch", "firefox.desktop"]]
 
 
+def test_linux_files_adapter_opens_known_locations_with_xdg_open(tmp_path: Path) -> None:
+    from operance.adapters.linux import LinuxFilesAdapter
+
+    desktop_dir = tmp_path / "Desktop"
+    desktop_dir.mkdir()
+    (tmp_path / "Downloads").mkdir()
+    commands: list[list[str]] = []
+    adapter = LinuxFilesAdapter(
+        desktop_dir=desktop_dir,
+        run_command=lambda command: commands.append(command) or subprocess.CompletedProcess(
+            command,
+            0,
+            stdout="",
+            stderr="",
+        ),
+        resolve_executable=lambda name: "/usr/bin/xdg-open" if name == "xdg-open" else None,
+    )
+
+    message = adapter.open_location("downloads")
+
+    assert message == "Opened downloads folder"
+    assert commands == [["/usr/bin/xdg-open", str(tmp_path / "Downloads")]]
+
+
 def test_linux_apps_adapter_resolves_desktop_entry_by_name(tmp_path: Path) -> None:
     from operance.adapters.linux import LinuxAppsAdapter
 

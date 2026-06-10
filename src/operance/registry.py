@@ -67,6 +67,7 @@ def build_default_action_registry() -> ActionRegistry:
                 "open firefox",
                 "open browser",
                 "open google.com",
+                "search google for linux automation",
                 "open http://localhost:3000",
                 "browse to localhost 3000",
                 "browse to docs.python.org/3",
@@ -249,26 +250,28 @@ def build_default_action_registry() -> ActionRegistry:
             allowed_side_effects=("close_window",),
         )
     )
-    registry.register(ToolSpec(ToolName.TIME_NOW, "Get the current time", example_transcripts=("what time is it",)))
+    registry.register(
+        ToolSpec(ToolName.TIME_NOW, "Get the current time", example_transcripts=("what time is it", "time"))
+    )
     registry.register(
         ToolSpec(
             ToolName.POWER_BATTERY_STATUS,
             "Get battery status",
-            example_transcripts=("what is my battery level",),
+            example_transcripts=("what is my battery level", "battery"),
         )
     )
     registry.register(
         ToolSpec(
             ToolName.AUDIO_GET_VOLUME,
             "Get the current audio volume",
-            example_transcripts=("what is the volume",),
+            example_transcripts=("what is the volume", "volume"),
         )
     )
     registry.register(
         ToolSpec(
             ToolName.AUDIO_MUTE_STATUS,
             "Get the current audio mute status",
-            example_transcripts=("is audio muted",),
+            example_transcripts=("is audio muted", "muted"),
         )
     )
     registry.register(
@@ -364,7 +367,7 @@ def build_default_action_registry() -> ActionRegistry:
                 {"percent": {"type": "integer", "minimum": 0, "maximum": 100}},
                 required=("percent",),
             ),
-            example_transcripts=("set volume to 50 percent",),
+            example_transcripts=("set volume to 50 percent", "volume 50 percent"),
             risk_tier=RiskTier.TIER_1,
             undoable=True,
             allowed_side_effects=("set_audio_volume",),
@@ -377,7 +380,7 @@ def build_default_action_registry() -> ActionRegistry:
             "Mute or unmute audio",
             ("muted",),
             input_schema=_object_schema({"muted": {"type": "boolean"}}, required=("muted",)),
-            example_transcripts=("mute audio", "unmute audio"),
+            example_transcripts=("mute audio", "mute", "unmute audio", "unmute"),
             risk_tier=RiskTier.TIER_1,
             undoable=True,
             allowed_side_effects=("set_audio_muted",),
@@ -439,17 +442,23 @@ def build_default_action_registry() -> ActionRegistry:
     registry.register(
         ToolSpec(
             ToolName.FILES_OPEN,
-            "Open a desktop entry or recent file",
-            ("location", "name"),
+            "Open a known folder, desktop entry, or recent file",
+            ("location",),
             input_schema=_object_schema(
                 {
-                    "location": {"type": "string", "enum": ["desktop", "recent"]},
+                    "location": {"type": "string", "enum": ["desktop", "recent", "downloads", "documents", "home"]},
                     "name": {"type": "string"},
                 },
-                required=("location", "name"),
+                required=("location",),
             ),
-            example_transcripts=("open file on desktop called notes.txt", "open recent file called notes.txt"),
-            allowed_side_effects=("open_desktop_entry",),
+            example_transcripts=(
+                "open downloads",
+                "open documents",
+                "open desktop",
+                "open file on desktop called notes.txt",
+                "open recent file called notes.txt",
+            ),
+            allowed_side_effects=("open_known_folder", "open_desktop_entry"),
             validate_args=_validate_file_open_args,
         )
     )
@@ -681,13 +690,20 @@ def _validate_desktop_entry_args(
 
 def _validate_file_open_args(args: dict[str, object]) -> list[str]:
     errors: list[str] = []
+    location = args.get("location")
 
-    if args.get("location") not in {"desktop", "recent"}:
-        errors.append("location must be 'desktop' or 'recent'")
+    if location not in {"desktop", "recent", "downloads", "documents", "home"}:
+        errors.append("location must be 'desktop', 'recent', 'downloads', 'documents', or 'home'")
 
     value = args.get("name")
-    if not isinstance(value, str) or not _is_simple_desktop_entry_name(value):
+    if location in {"desktop", "recent"} and "name" in args and (
+        not isinstance(value, str) or not _is_simple_desktop_entry_name(value)
+    ):
         errors.append("name must be a simple desktop entry name")
+    if location == "recent" and "name" not in args:
+        errors.append("name is required for recent files")
+    if location in {"downloads", "documents", "home"} and "name" in args:
+        errors.append("name is not supported for known folders")
 
     return errors
 

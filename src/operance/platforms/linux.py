@@ -38,6 +38,7 @@ CURRENT_RELEASE_VERIFIED_TOOLS = frozenset(
         ToolName.FILES_DELETE_FOLDER,
         ToolName.FILES_LIST_RECENT,
         ToolName.FILES_MOVE,
+        ToolName.FILES_OPEN,
         ToolName.FILES_RENAME,
         ToolName.NETWORK_WIFI_STATUS,
         ToolName.NOTIFICATIONS_SHOW,

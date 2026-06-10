@@ -472,6 +472,16 @@ def build_tray_snapshot(
     else:
         last_command_transcript = status.last_transcript
         last_command_preview = status.last_response
+    state_label = _resolve_in_progress_state_label(
+        status,
+        state_label=state_label,
+        last_command_transcript=last_command_transcript,
+    )
+    last_command_preview = _resolve_in_progress_command_preview(
+        status,
+        last_command_transcript=last_command_transcript,
+        last_command_preview=last_command_preview,
+    )
     pending_confirmation_prompt = status.pending_plan_preview if status.pending_confirmation else None
     confirmation_dialog = _build_confirmation_dialog(status)
     notification = _build_notification(status, voice_loop_status=voice_loop_status)
@@ -1676,6 +1686,50 @@ def _resolve_tray_usage_hint(
     if voice_loop_status is not None and _voice_loop_needs_attention(voice_loop_status):
         return None
     return "Left-click to talk"
+
+
+def _resolve_in_progress_state_label(
+    status: StatusSnapshot,
+    *,
+    state_label: str,
+    last_command_transcript: str | None,
+) -> str:
+    if status.current_state == RuntimeState.UNDERSTANDING and last_command_transcript:
+        return "Understanding command"
+    if status.current_state == RuntimeState.EXECUTING and last_command_transcript:
+        target = _launch_target_from_transcript(last_command_transcript)
+        if target:
+            return f"Opening {target}"
+        return "Executing command"
+    return state_label
+
+
+def _resolve_in_progress_command_preview(
+    status: StatusSnapshot,
+    *,
+    last_command_transcript: str | None,
+    last_command_preview: str | None,
+) -> str | None:
+    if last_command_preview is not None:
+        return last_command_preview
+    if status.current_state == RuntimeState.UNDERSTANDING and last_command_transcript:
+        return f"Heard: {last_command_transcript}"
+    if status.current_state == RuntimeState.EXECUTING and last_command_transcript:
+        target = _launch_target_from_transcript(last_command_transcript)
+        if target:
+            return f"Opening {target}..."
+        return "Executing command..."
+    return None
+
+
+def _launch_target_from_transcript(transcript: str) -> str | None:
+    normalized = transcript.strip().lower()
+    for prefix in ("open ", "launch ", "start "):
+        if normalized.startswith(prefix):
+            target = normalized.removeprefix(prefix).strip()
+            if target:
+                return target
+    return None
 
 
 def _can_restart_voice_loop_service(
