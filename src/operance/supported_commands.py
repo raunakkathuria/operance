@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from .command_guidance import COMMAND_RECOVERY_EXAMPLES
 from .doctor import build_environment_report
 from .models.actions import ToolName
 from .platforms import get_platform_provider
@@ -284,10 +285,22 @@ def _help_examples(domains: list[object], *, limit: int = 6) -> list[str]:
             for command in domain_commands
             if isinstance(command, dict) and command.get("live_runtime_status") == "available"
         )
-    return [
-        _command_example_text(command)
-        for command in sorted(commands, key=_help_command_priority)[:limit]
-    ]
+    available_tools = {str(command.get("tool") or "") for command in commands}
+    examples: list[str] = []
+    for example in COMMAND_RECOVERY_EXAMPLES:
+        if example == "what time is it" and ToolName.TIME_NOW.value not in available_tools:
+            continue
+        if example != "what time is it" and ToolName.APPS_LAUNCH.value not in available_tools:
+            continue
+        examples.append(example)
+
+    for command in sorted(commands, key=_help_command_priority):
+        example = _command_example_text(command)
+        if example not in examples:
+            examples.append(example)
+        if len(examples) >= limit:
+            return examples[:limit]
+    return examples[:limit]
 
 
 def _tool_usage_pattern(tool: ToolName) -> str | None:

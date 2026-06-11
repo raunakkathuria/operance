@@ -7,7 +7,7 @@ def test_replay_fixture_runner_reports_pass_and_fail_counts(tmp_path: Path) -> N
         "\n".join(
             [
                 '{"transcript":"open firefox","expected_response":"Launched firefox","expected_status":"success"}',
-                '{"transcript":"install updates","expected_response":"I did not understand that command.","expected_status":"unmatched"}',
+                '{"transcript":"install updates","expected_response":"I did not understand that command yet. Try: open browser; open google.com; search google for linux automation; what time is it.","expected_status":"unmatched"}',
                 '{"transcript":"what time is it","expected_response":"wrong","expected_status":"success"}',
             ]
         )

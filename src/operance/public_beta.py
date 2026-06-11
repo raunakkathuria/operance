@@ -124,6 +124,7 @@ def _click_to_talk_smoke_commands() -> list[dict[str, str]]:
     return [
         {"say": "open browser", "expected": "The default browser opens."},
         {"say": "open google.com", "expected": "The default browser opens https://google.com."},
+        {"say": "search google for linux automation", "expected": "The default browser opens a Google search."},
         {"say": "open firefox", "expected": "Firefox opens."},
         {"say": "open localhost:3000", "expected": "The default browser opens localhost:3000."},
         {"say": "what time is it", "expected": "Operance answers with the current local time."},

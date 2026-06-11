@@ -72,6 +72,9 @@ def test_build_supported_command_help_text_renders_examples_and_blockers() -> No
         "2 commands are ready on this machine. 1 ask for confirmation before running. 2 need setup."
     )
     assert help_text["examples"] == [
+        "open browser",
+        "open google.com",
+        "search google for linux automation",
         "open firefox",
         "quit firefox (asks for confirmation)",
     ]

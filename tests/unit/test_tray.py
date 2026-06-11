@@ -9,6 +9,12 @@ from operance.status import StatusSnapshot
 from operance.voice.runtime import VoiceLoopRuntimeStatusSnapshot
 
 
+def _unmatched_response() -> str:
+    from operance.responder import UNMATCHED_RESPONSE
+
+    return UNMATCHED_RESPONSE
+
+
 def _status_snapshot(**overrides: object) -> StatusSnapshot:
     payload: dict[str, object] = {
         "current_state": RuntimeState.IDLE,
@@ -779,7 +785,7 @@ def test_build_tray_snapshot_reports_planner_failure_notification() -> None:
         _status_snapshot(
             current_state=RuntimeState.RESPONDING,
             last_transcript="let me know when this is done",
-            last_response="I did not understand that command.",
+            last_response=_unmatched_response(),
             last_command_status="unmatched",
             last_routing_reason="planner_failed",
             last_planner_error="planner failed for let me know when this is done",
@@ -806,7 +812,7 @@ def test_build_tray_snapshot_enables_planner_reset_during_cooldown() -> None:
         _status_snapshot(
             current_state=RuntimeState.RESPONDING,
             last_transcript="let me know again",
-            last_response="I did not understand that command.",
+            last_response=_unmatched_response(),
             last_command_status="unmatched",
             last_routing_reason="planner_cooldown_active",
             last_planner_error="planner failed for tell me when this finishes",
@@ -849,7 +855,7 @@ def test_select_tray_notification_only_emits_new_events() -> None:
         _status_snapshot(
             current_state=RuntimeState.RESPONDING,
             last_transcript="install updates",
-            last_response="I did not understand that command.",
+            last_response=_unmatched_response(),
             last_command_status="unmatched",
             completed_commands=1,
             p95_latency_ms=88.0,

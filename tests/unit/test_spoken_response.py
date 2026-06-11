@@ -7,8 +7,11 @@ import pytest
         ({"status": "success", "text": "Opened default browser"}, "Opened default browser"),
         ({"status": "no_transcript", "text": "I did not catch a command."}, "Sorry, I did not hear that."),
         (
-            {"status": "unmatched", "text": "I did not understand that command."},
-            "Sorry, I do not know how to do that yet.",
+            {
+                "status": "unmatched",
+                "text": "I did not understand that command yet. Try: open browser.",
+            },
+            "Sorry, I did not understand that yet. Try open browser or what time is it.",
         ),
         (
             {"status": "awaiting_confirmation", "text": "Command requires confirmation."},
