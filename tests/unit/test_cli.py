@@ -997,6 +997,28 @@ def test_cli_planner_status_prints_non_executing_local_ai_status(monkeypatch, ca
     assert "The local model may only return the Operance typed action schema." in payload["safety_contract"]
 
 
+def test_cli_local_ai_coach_prints_product_facing_planner_setup(monkeypatch, capsys) -> None:
+    monkeypatch.setattr("operance.cli.build_environment_report", _ready_linux_report)
+
+    exit_code = main(["--local-ai-coach"])
+
+    payload = json.loads(capsys.readouterr().out)
+
+    assert exit_code == 0
+    assert payload["title"] == "Local AI setup"
+    assert payload["summary"] == "Local AI planner readiness passed; live fallback is still opt-in."
+    assert payload["profile"] == "ollama"
+    assert payload["required_for_tray"] is False
+    assert payload["steps"][0]["command"] == "ollama run qwen2.5:3b"
+    assert payload["steps"][2]["commands"][-1] == (
+        'python3 -m operance.cli --planner-readiness "open firefox and notify me"'
+    )
+    assert payload["steps"][3]["command"] == (
+        'python3 -m operance.cli --planner-execute "let me know when this is done"'
+    )
+    assert "The planner path never executes raw shell" in " ".join(payload["safety_contract"])
+
+
 def test_cli_supported_commands_prints_runtime_guidance_for_unsupported_text_input(monkeypatch, capsys) -> None:
     monkeypatch.setattr(
         "operance.cli.build_environment_report",

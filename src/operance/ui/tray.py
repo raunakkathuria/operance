@@ -27,6 +27,7 @@ from ..installed_smoke import (
     InstalledSmokeResult,
     build_installed_smoke_result,
 )
+from ..local_ai_coach import build_local_ai_coach
 from ..models.events import RuntimeState
 from ..planner import (
     DEFAULT_PLANNER_READINESS_TRANSCRIPT,
@@ -333,6 +334,21 @@ class TrayController:
         return build_planner_setup_template(
             profile,
             command_prefix=_command_prefix_for_identity(build_project_identity()),
+        )
+
+    def local_ai_coach_report(self) -> dict[str, object]:
+        environment_report = build_environment_report()
+        identity = build_project_identity()
+        command_prefix = _command_prefix_for_identity(identity)
+        planner_status = build_planner_status_report(
+            self.daemon.config.planner,
+            environment_report=environment_report,
+        )
+        setup_template = build_planner_setup_template("ollama", command_prefix=command_prefix)
+        return build_local_ai_coach(
+            planner_status=planner_status,
+            setup_template=setup_template,
+            command_prefix=command_prefix,
         )
 
     def getting_started_report(self) -> dict[str, object]:
@@ -842,6 +858,66 @@ def _format_planner_setup_highlights(report: dict[str, object]) -> str:
     return "\n".join(lines)
 
 
+def _format_local_ai_coach_summary(report: dict[str, object]) -> str:
+    return str(report.get("summary") or "Local AI planner fallback is optional.")
+
+
+def _format_local_ai_coach_highlights(report: dict[str, object]) -> str:
+    lines = [str(report.get("setup_policy") or "Optional local AI setup.")]
+    steps = report.get("steps")
+    if isinstance(steps, list):
+        for step in steps[:3]:
+            if not isinstance(step, dict):
+                continue
+            label = step.get("label")
+            command = step.get("command")
+            commands = step.get("commands")
+            if isinstance(label, str):
+                if isinstance(command, str) and command:
+                    lines.append(f"{label}: {command}")
+                elif isinstance(commands, list) and commands:
+                    first_command = next((item for item in commands if isinstance(item, str)), None)
+                    if first_command:
+                        lines.append(f"{label}: {first_command}")
+                    else:
+                        lines.append(label)
+                else:
+                    lines.append(label)
+    return "\n".join(lines)
+
+
+def _format_local_ai_coach_details(report: dict[str, object]) -> str:
+    sections: list[str] = []
+    steps = report.get("steps")
+    if isinstance(steps, list):
+        lines: list[str] = []
+        for step in steps:
+            if not isinstance(step, dict):
+                continue
+            label = step.get("label")
+            description = step.get("description")
+            command = step.get("command")
+            commands = step.get("commands")
+            if isinstance(label, str):
+                lines.append(f"- {label}")
+            if isinstance(description, str):
+                lines.append(f"  {description}")
+            if isinstance(command, str) and command:
+                lines.append(f"  Command: {command}")
+            if isinstance(commands, list):
+                lines.extend(f"  Command: {item}" for item in commands if isinstance(item, str))
+        if lines:
+            sections.append("Setup steps:\n" + "\n".join(lines))
+
+    safety_contract = report.get("safety_contract")
+    if isinstance(safety_contract, list) and safety_contract:
+        lines = [f"- {item}" for item in safety_contract if isinstance(item, str)]
+        if lines:
+            sections.append("Safety contract:\n" + "\n".join(lines))
+
+    return "\n\n".join(sections) or json.dumps(report, indent=2, sort_keys=True)
+
+
 def _format_planner_readiness_summary(report: dict[str, object]) -> str:
     status = str(report.get("status") or "unknown")
     if status == "ok" and report.get("runtime_fallback_enabled") is True:
@@ -894,6 +970,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     about_action = QAction("About Operance", menu)
     check_updates_action = QAction("Check for updates", menu)
     getting_started_action = QAction("Setup and status", menu)
+    local_ai_coach_action = QAction("Local AI setup", menu)
     save_support_bundle_action = QAction("Report an issue", menu)
     last_interaction_action = QAction("Show last interaction", menu)
     voice_loop_control_action = QAction("Start always-on listening", menu)
@@ -908,6 +985,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     menu.addAction(command_coach_action)
     menu.addAction(supported_commands_action)
     menu.addAction(getting_started_action)
+    menu.addAction(local_ai_coach_action)
     menu.addAction(save_support_bundle_action)
     menu.addAction(last_interaction_action)
     command_separator_action = menu.addSeparator()
@@ -1188,6 +1266,25 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
             details=_format_getting_started_details(report) or json.dumps(report, indent=2, sort_keys=True),
         )
 
+    def show_local_ai_coach() -> None:
+        try:
+            report = controller.local_ai_coach_report()
+        except Exception as exc:
+            _show_tray_message(
+                tray,
+                "Local AI setup unavailable",
+                str(exc),
+                _resolve_notification_icon(QSystemTrayIcon, "warning"),
+            )
+            return
+        _show_information_dialog(
+            QMessageBox,
+            title=str(report.get("title") or "Local AI setup"),
+            summary=_format_local_ai_coach_summary(report),
+            informative_text=_format_local_ai_coach_highlights(report),
+            details=_format_local_ai_coach_details(report),
+        )
+
     def show_planner_setup() -> None:
         try:
             report = controller.planner_setup_template()
@@ -1351,6 +1448,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     about_action.triggered.connect(show_about)
     check_updates_action.triggered.connect(show_update_status)
     getting_started_action.triggered.connect(show_getting_started)
+    local_ai_coach_action.triggered.connect(show_local_ai_coach)
     save_support_bundle_action.triggered.connect(save_support_bundle)
     last_interaction_action.triggered.connect(show_last_interaction)
     voice_loop_control_action.triggered.connect(control_voice_loop_service)

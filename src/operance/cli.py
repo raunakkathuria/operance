@@ -26,6 +26,7 @@ from .daemon import OperanceDaemon
 from .doctor import build_environment_report
 from .feedback import build_issue_report_draft
 from .installed_smoke import build_installed_smoke_result
+from .local_ai_coach import build_local_ai_coach
 from .mcp import MCPServer, run_mcp_fixture
 from .mcp.stdio import run_stdio_session
 from .planner import (
@@ -97,6 +98,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--check-updates", action="store_true", help="Check the configured Operance release channel")
     parser.add_argument("--public-beta-checklist", action="store_true", help="Print the public beta install, verify, try, and report checklist")
     parser.add_argument("--command-coach", action="store_true", help="Print guided end-user command examples")
+    parser.add_argument("--local-ai-coach", action="store_true", help="Print guided optional local AI planner setup")
     parser.add_argument(
         "--getting-started",
         action="store_true",
@@ -451,6 +453,27 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.command_coach:
         print(json.dumps(build_command_coach(), sort_keys=True))
+        return 0
+
+    if args.local_ai_coach:
+        environment_report = build_environment_report()
+        identity = build_project_identity()
+        command_prefix = "operance" if identity.get("install_mode") == "packaged" else "python3 -m operance.cli"
+        planner_status = build_planner_status_report(
+            daemon.config.planner,
+            environment_report=environment_report,
+        )
+        setup_template = build_planner_setup_template("ollama", command_prefix=command_prefix)
+        print(
+            json.dumps(
+                build_local_ai_coach(
+                    planner_status=planner_status,
+                    setup_template=setup_template,
+                    command_prefix=command_prefix,
+                ),
+                sort_keys=True,
+            )
+        )
         return 0
 
     if args.print_config:

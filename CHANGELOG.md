@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added a shared local AI coach surfaced through `operance --local-ai-coach` and the tray `Local AI setup` action, wrapping existing planner setup/status into an opt-in, non-mutating Ollama-first onboarding flow with readiness, explicit execution test, and safety-contract guidance.
 - Added a shared command coach surfaced through `operance --command-coach` and the tray `Try commands` action, giving first-run users guided click-to-talk examples, expected outcomes, and recovery tips without opening raw diagnostics.
 - Added shared end-user command recovery guidance so unmatched commands now suggest safe runnable examples, supported-command help leads with those examples when available, and public beta first-run smoke includes a Google search command.
 - Documented the always-on listening speaking pattern as `Operance`, short pause, then command, and clarified why click-to-talk remains the more responsive beta path.
