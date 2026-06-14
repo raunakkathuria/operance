@@ -32,6 +32,10 @@ def test_public_beta_checklist_reports_ready_packaged_path() -> None:
         "command": "operance --installed-smoke",
     }
     assert payload["checklist"][3]["commands"][0]["say"] == "open browser"
+    assert payload["checklist"][3]["commands"][2] == {
+        "say": "search google for linux automation",
+        "expected": "The default browser opens a Google search.",
+    }
     assert payload["checklist"][4]["command"] == "operance --support-bundle"
     assert payload["checklist"][4]["issue_report_command"] == "operance --issue-report"
     assert payload["feedback"]["issue_url"] == "https://github.com/raunakkathuria/operance/issues/new/choose"

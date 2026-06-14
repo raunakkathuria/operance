@@ -23,7 +23,10 @@ def test_run_transcript_file_source_processes_each_non_empty_line(tmp_path: Path
     assert results[0]["response"] == "Launched firefox"
     assert results[0]["status"] == "success"
     assert results[0]["simulated"] is True
-    assert results[1]["response"] == "I did not understand that command."
+    assert results[1]["response"] == (
+        "I did not understand that command yet. Try: open browser; open google.com; "
+        "search google for linux automation; what time is it."
+    )
     assert results[1]["status"] == "unmatched"
     assert results[1]["simulated"] is True
     assert results[2]["response"] == "It is 09:41"

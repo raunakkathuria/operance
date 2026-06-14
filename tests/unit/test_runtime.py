@@ -149,7 +149,10 @@ def test_daemon_emits_fallback_response_for_unknown_transcript(tmp_path: Path) -
     daemon.emit_transcript("install updates", confidence=0.42, is_final=True)
 
     assert len(responses) == 1
-    assert responses[0].text == "I did not understand that command."
+    assert responses[0].text == (
+        "I did not understand that command yet. Try: open browser; open google.com; "
+        "search google for linux automation; what time is it."
+    )
     assert responses[0].status == "unmatched"
     assert daemon.state_machine.current_state == RuntimeState.RESPONDING
 
@@ -304,7 +307,10 @@ def test_daemon_keeps_unmatched_response_when_planner_is_disabled(tmp_path: Path
     daemon.emit_transcript("let me know when this is done", confidence=0.93, is_final=True)
 
     assert len(responses) == 1
-    assert responses[0].text == "I did not understand that command."
+    assert responses[0].text == (
+        "I did not understand that command yet. Try: open browser; open google.com; "
+        "search google for linux automation; what time is it."
+    )
     assert responses[0].status == "unmatched"
     snapshot = daemon.status_snapshot()
     assert snapshot.last_plan_source is None
@@ -333,7 +339,10 @@ def test_daemon_falls_back_to_unmatched_when_planner_errors(tmp_path: Path) -> N
     daemon.emit_transcript("let me know when this is done", confidence=0.93, is_final=True)
 
     assert len(responses) == 1
-    assert responses[0].text == "I did not understand that command."
+    assert responses[0].text == (
+        "I did not understand that command yet. Try: open browser; open google.com; "
+        "search google for linux automation; what time is it."
+    )
     assert responses[0].status == "unmatched"
     snapshot = daemon.status_snapshot()
     assert snapshot.last_plan_source is None

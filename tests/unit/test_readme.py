@@ -23,3 +23,14 @@ def test_readme_documents_always_on_listening_voice_pattern() -> None:
     assert "Operance\n<short pause>\nopen browser" in readme
     assert "Saying `Operance open browser` as one continuous phrase may be less reliable" in readme
     assert "Click-to-talk remains the recommended beta path" in readme
+
+
+def test_readme_documents_command_recovery_examples() -> None:
+    readme = README.read_text(encoding="utf-8")
+
+    assert "Command recovery:" in readme
+    assert "`open browser`" in readme
+    assert "`open google.com`" in readme
+    assert "`search google for linux automation`" in readme
+    assert "`what time is it`" in readme
+    assert "`fire force`" in readme

@@ -268,7 +268,10 @@ def test_cli_process_unknown_transcript_prints_fallback_response(capsys) -> None
 
     assert exit_code == 0
     assert payload["transcript"] == "install updates"
-    assert payload["response"] == "I did not understand that command."
+    assert payload["response"] == (
+        "I did not understand that command yet. Try: open browser; open google.com; "
+        "search google for linux automation; what time is it."
+    )
     assert payload["status"] == "unmatched"
     assert payload["simulated"] is True
 

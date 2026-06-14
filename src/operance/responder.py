@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .command_guidance import unmatched_command_response
 from .models.actions import ActionResult
 
-UNMATCHED_RESPONSE = "I did not understand that command."
+UNMATCHED_RESPONSE = unmatched_command_response()
 
 
 @dataclass(slots=True)

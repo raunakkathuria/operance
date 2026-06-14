@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added shared end-user command recovery guidance so unmatched commands now suggest safe runnable examples, supported-command help leads with those examples when available, and public beta first-run smoke includes a Google search command.
 - Documented the always-on listening speaking pattern as `Operance`, short pause, then command, and clarified why click-to-talk remains the more responsive beta path.
 - Expanded the verified deterministic Linux command surface with semantic Google search, known-folder opening, shorter time/battery/audio phrases, and concise mute/unmute/volume variants while keeping execution behind typed actions, validation, and adapter-owned Linux resolution.
 - Added in-progress tray acknowledgement so heard commands surface `Understanding command`, `Opening <target>`, or `Executing command` before the final response, making click-to-talk and always-on interactions clearer to users.

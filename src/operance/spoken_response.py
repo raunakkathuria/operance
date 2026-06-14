@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
+from .command_guidance import unmatched_spoken_response
+
 
 def build_spoken_response_text(response: Mapping[str, object] | None) -> str | None:
     if response is None:
@@ -13,7 +15,7 @@ def build_spoken_response_text(response: Mapping[str, object] | None) -> str | N
     if status == "no_transcript":
         return "Sorry, I did not hear that."
     if status == "unmatched":
-        return "Sorry, I do not know how to do that yet."
+        return unmatched_spoken_response()
     if status == "awaiting_confirmation":
         return "Please confirm before I continue."
     if status in {"failed", "denied"}:
