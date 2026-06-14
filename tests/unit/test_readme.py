@@ -43,3 +43,11 @@ def test_readme_documents_command_coach_surface() -> None:
     assert "`Try commands`" in readme
     assert "`operance --command-coach`" in readme
     assert "guided click-to-talk examples" in readme
+
+
+def test_readme_documents_local_ai_coach_surface() -> None:
+    readme = README.read_text(encoding="utf-8")
+
+    assert "`operance --local-ai-coach`" in readme
+    assert "Ollama defaults" in readme
+    assert "does not install models, start servers, or enable planner fallback" in readme

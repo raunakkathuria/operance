@@ -577,7 +577,9 @@ def test_run_tray_app_menu_keeps_end_user_facing_actions() -> None:
     assert 'QAction("Setup and status", menu)' in source
     assert 'QAction("Try commands", menu)' in source
     assert 'QAction("Supported commands", menu)' in source
+    assert 'QAction("Local AI setup", menu)' in source
     assert "build_command_coach()" in source
+    assert "local_ai_coach_report()" in source
     assert 'QAction("Show support snapshot", menu)' not in source
     assert 'QAction("Save support snapshot", menu)' not in source
     assert 'QAction("Show installed readiness", menu)' not in source
@@ -1097,6 +1099,43 @@ def test_tray_controller_can_build_planner_readiness_report(monkeypatch, tmp_pat
     assert received["transcript"] == "open firefox and notify me"
     assert received["validator"] is daemon.validator
     assert received["policy"] is daemon.policy
+
+
+def test_tray_controller_can_build_local_ai_coach_report(monkeypatch, tmp_path: Path) -> None:
+    from operance.daemon import OperanceDaemon
+    from operance.ui import TrayController
+
+    daemon = OperanceDaemon.build_default(
+        {
+            "OPERANCE_DATA_DIR": str(tmp_path / "data"),
+            "OPERANCE_DESKTOP_DIR": str(tmp_path / "Desktop"),
+        }
+    )
+    monkeypatch.setattr(
+        "operance.ui.tray.build_environment_report",
+        lambda: {"platform": "Linux", "checks": []},
+    )
+    monkeypatch.setattr(
+        "operance.ui.tray.build_planner_status_report",
+        lambda config, *, environment_report: {
+            "status": "warn",
+            "mode": "disabled_needs_setup",
+            "safe_to_enable": False,
+            "runtime_fallback_enabled": False,
+            "config": {"model": config.model},
+        },
+    )
+
+    controller = TrayController(daemon)
+    report = controller.local_ai_coach_report()
+
+    assert report["title"] == "Local AI setup"
+    assert report["profile"] == "ollama"
+    assert report["required_for_tray"] is False
+    assert report["steps"][0]["command"] == "ollama run qwen2.5:3b"
+    assert report["steps"][3]["command"] == (
+        'python3 -m operance.cli --planner-execute "let me know when this is done"'
+    )
 
 
 def test_tray_controller_can_build_getting_started_report(monkeypatch, tmp_path: Path) -> None:

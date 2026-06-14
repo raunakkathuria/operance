@@ -209,6 +209,7 @@ Operance is ready for a **Fedora KDE Wayland public beta** for outside developer
 - Public beta install, verify, try, and report checklist: `operance --public-beta-checklist`
 - First-run activation diagnostic: `operance --getting-started`
 - Explicit release-channel check: `operance --check-updates`
+- Product-facing local AI setup guide: `operance --local-ai-coach`
 - Local AI planner status check: `operance --planner-status`
 - Paste-ready feedback draft: `operance --issue-report`
 - Stable packaged setup entrypoint: `./scripts/setup.sh --package ./operance-0.1.0-1.noarch.rpm`
@@ -742,7 +743,7 @@ python3 -m operance.cli --tray-run
 
 ## CLI
 
-Most developers only need `--version`, `--about`, `--check-updates`, `--doctor`, `--public-beta-checklist`, `--getting-started`, `--planner-setup-template`, `--planner-status`, `--planner-execute`, `--supported-commands --supported-commands-available-only`, `--skills`, `--skill-validate`, `--transcript`, `--mvp-launch`, `--support-bundle`, and `--issue-report`. In the current developer release, `--supported-commands --supported-commands-available-only` is intentionally conservative: it prints only the commands that are both environment-ready and release-verified for the Fedora KDE Wayland target. The rest of this section is the lower-level CLI reference surface.
+Most developers only need `--version`, `--about`, `--check-updates`, `--doctor`, `--public-beta-checklist`, `--getting-started`, `--command-coach`, `--local-ai-coach`, `--planner-setup-template`, `--planner-status`, `--planner-execute`, `--supported-commands --supported-commands-available-only`, `--skills`, `--skill-validate`, `--transcript`, `--mvp-launch`, `--support-bundle`, and `--issue-report`. In the current developer release, `--supported-commands --supported-commands-available-only` is intentionally conservative: it prints only the commands that are both environment-ready and release-verified for the Fedora KDE Wayland target. The rest of this section is the lower-level CLI reference surface.
 
 Print the effective config:
 
@@ -771,6 +772,8 @@ operance --print-config
 operance --installed-smoke
 operance --public-beta-checklist
 operance --getting-started
+operance --command-coach
+operance --local-ai-coach
 operance --planner-setup-template
 operance --planner-status
 operance --check-updates
@@ -778,7 +781,7 @@ operance --issue-report
 python3 scripts/check_installed_mvp_runtime.py --command operance --check-tray-service
 ```
 
-`operance --print-config` should report `"developer_mode": false`. `operance --about` reports whether the command is a packaged install or source checkout plus package profile, build commit, tag when available, build time, and install root. `operance --getting-started` prints the current first-run path, commands to try, local AI planner state, and contributor next steps. `operance --planner-setup-template` prints copy-paste local planner setup templates without mutating the host. `operance --planner-status` prints non-executing local planner status plus the safety contract that keeps model output bounded to typed actions. `operance --issue-report` prints a redacted paste-ready GitHub issue draft from the current support snapshot. `operance --check-updates` checks the configured release channel and prints whether the installed packaged build matches the latest release; it does not auto-install packages or invoke `sudo`. `operance --installed-smoke` summarizes installed package readiness, warns when the tray service is not active, fails when packaged build identity or runtime dependencies are missing, catches stale repo-local user units shadowing the packaged service, and includes evidence for build identity, live mode, tray service state, and failed or warning checks. If stale user units are reported, reinstall with `./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --replace-existing --reset-user-services`. In `systemctl --user status`, `preset: disabled` is normal on Fedora; `Loaded`, `Active`, and the `ExecStart` command path are the parts to verify.
+`operance --print-config` should report `"developer_mode": false`. `operance --about` reports whether the command is a packaged install or source checkout plus package profile, build commit, tag when available, build time, and install root. `operance --getting-started` prints the current first-run path, commands to try, local AI planner state, and contributor next steps. `operance --command-coach` prints guided click-to-talk examples and expected outcomes. `operance --local-ai-coach` prints the optional local AI setup path with Ollama defaults, validation commands, an explicit one-shot execution test, and the safety contract; it does not install models, start servers, or enable planner fallback. `operance --planner-setup-template` prints copy-paste local planner setup templates without mutating the host. `operance --planner-status` prints non-executing local planner status plus the safety contract that keeps model output bounded to typed actions. `operance --issue-report` prints a redacted paste-ready GitHub issue draft from the current support snapshot. `operance --check-updates` checks the configured release channel and prints whether the installed packaged build matches the latest release; it does not auto-install packages or invoke `sudo`. `operance --installed-smoke` summarizes installed package readiness, warns when the tray service is not active, fails when packaged build identity or runtime dependencies are missing, catches stale repo-local user units shadowing the packaged service, and includes evidence for build identity, live mode, tray service state, and failed or warning checks. If stale user units are reported, reinstall with `./scripts/install_package_artifact.sh --package dist/package-artifacts/rpm/operance-0.1.0-1.noarch.rpm --installer dnf --replace-existing --reset-user-services`. In `systemctl --user status`, `preset: disabled` is normal on Fedora; `Loaded`, `Active`, and the `ExecStart` command path are the parts to verify.
 `./scripts/run_installed_desktop_smoke.sh` starts/enables the packaged tray user service before checking status, so `Active: inactive (dead)` is a smoke failure rather than a successful desktop state.
 The tray menu exposes `Check for updates` and `Setup and status`, so users can inspect release-channel status, setup guidance, and installed-smoke next steps without requiring a terminal.
 
