@@ -624,12 +624,15 @@ candidate:
 ./scripts/run_package_evidence_gate.sh --dry-run
 ./scripts/run_package_evidence_gate.sh --bundle-python .venv/bin/python
 ./scripts/run_package_evidence_gate.sh --support-bundle-out /tmp/operance-installed-support.tar.gz
+./scripts/run_package_evidence_gate.sh --bundle-python .venv/bin/python --evidence-dir /tmp/operance-release-evidence
 ```
 
 This gate rebuilds the `mvp` RPM, verifies the normalized RPM artifact, installs
 it with `--replace-existing --reset-user-services`, runs installed desktop
-smoke, captures `operance --support-bundle` from the installed command, and
-prints the manual tray click-to-talk checks to run before tagging.
+smoke, captures installed JSON evidence for build identity, installed smoke,
+public beta checklist, command coach, local AI coach, supported commands,
+and `operance --support-bundle` from the installed command, and prints the
+manual tray click-to-talk checks to run before tagging.
 
 Run the installed desktop smoke after installing the RPM in an active Fedora KDE
 Wayland session:

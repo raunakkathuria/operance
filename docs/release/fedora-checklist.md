@@ -106,12 +106,15 @@ gate:
 
 ```bash
 ./scripts/run_package_evidence_gate.sh --bundle-python .venv/bin/python
+./scripts/run_package_evidence_gate.sh --bundle-python .venv/bin/python --evidence-dir /tmp/operance-release-evidence
 ```
 
 That gate rebuilds and verifies the `mvp` RPM, installs it with stale
-user-service reset, runs installed desktop smoke, captures an installed support
-bundle when requested, and leaves the package installed for the manual
-click-to-talk checks.
+user-service reset, runs installed desktop smoke, captures installed JSON
+evidence for build identity, installed smoke, public beta checklist, command
+coach, local AI coach, supported commands, captures an installed support bundle
+when requested, and leaves the package installed for the manual click-to-talk
+checks.
 
 After validation passes, prepare the public release upload set:
 
