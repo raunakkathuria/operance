@@ -917,6 +917,22 @@ def test_cli_public_beta_checklist_includes_packaged_readiness(monkeypatch, caps
     assert payload["checklist"][4]["issue_report_command"] == "operance --issue-report"
 
 
+def test_cli_command_coach_prints_guided_examples(capsys) -> None:
+    exit_code = main(["--command-coach"])
+
+    payload = json.loads(capsys.readouterr().out)
+
+    assert exit_code == 0
+    assert payload["title"] == "Try commands"
+    assert payload["steps"][0]["say"] == "open browser"
+    assert payload["steps"][2] == {
+        "say": "search google for linux automation",
+        "expected": "Your default browser opens a Google search.",
+        "category": "Search",
+    }
+    assert "Report an issue" in payload["recovery"]
+
+
 def test_cli_planner_setup_template_prints_generic_profile(capsys) -> None:
     exit_code = main(["--planner-setup-template"])
 

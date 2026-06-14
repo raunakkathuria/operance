@@ -575,7 +575,9 @@ def test_run_tray_app_menu_keeps_end_user_facing_actions() -> None:
 
     assert 'QAction("Report an issue", menu)' in source
     assert 'QAction("Setup and status", menu)' in source
+    assert 'QAction("Try commands", menu)' in source
     assert 'QAction("Supported commands", menu)' in source
+    assert "build_command_coach()" in source
     assert 'QAction("Show support snapshot", menu)' not in source
     assert 'QAction("Save support snapshot", menu)' not in source
     assert 'QAction("Show installed readiness", menu)' not in source
