@@ -209,6 +209,86 @@ def test_build_tray_snapshot_includes_voice_loop_runtime_projection() -> None:
     assert payload["tooltip"] == "Operance: Idle | Left-click to talk"
 
 
+def test_build_tray_snapshot_acknowledges_always_on_wake_word() -> None:
+    from operance.ui import build_tray_snapshot
+
+    snapshot = build_tray_snapshot(
+        _status_snapshot(),
+        voice_loop_status=_voice_loop_status_snapshot(
+            loop_state="listening_for_command",
+            wake_detections=3,
+            last_wake_phrase="operance",
+            last_wake_confidence=0.91,
+            last_transcript_text=None,
+            last_transcript_final=None,
+            last_response_text=None,
+            last_response_status=None,
+        ),
+    )
+
+    payload = snapshot.to_dict()
+
+    assert payload["voice_loop_activity"] == "Listening for command"
+    assert payload["notification"] == {
+        "event_id": "voice_loop_listening:3:operance",
+        "level": "info",
+        "message": "Wake word heard. Say your command now.",
+        "title": "I'm listening",
+    }
+
+
+def test_build_tray_snapshot_prioritizes_always_on_response_over_wake_ack() -> None:
+    from operance.ui import build_tray_snapshot
+
+    snapshot = build_tray_snapshot(
+        _status_snapshot(),
+        voice_loop_status=_voice_loop_status_snapshot(
+            loop_state="listening_for_command",
+            wake_detections=3,
+            last_wake_phrase="operance",
+            last_transcript_text="what time is it",
+            last_transcript_final=True,
+            last_response_text="It is 17:20",
+            last_response_status="success",
+        ),
+    )
+
+    payload = snapshot.to_dict()
+
+    assert payload["notification"] == {
+        "event_id": "voice_loop_response:3:success:It is 17:20",
+        "level": "info",
+        "message": "Heard: what time is it\nIt is 17:20",
+        "title": "Operance",
+    }
+
+
+def test_build_tray_snapshot_reports_always_on_no_command_feedback() -> None:
+    from operance.ui import build_tray_snapshot
+
+    snapshot = build_tray_snapshot(
+        _status_snapshot(),
+        voice_loop_status=_voice_loop_status_snapshot(
+            loop_state="waiting_for_wake",
+            wake_detections=4,
+            last_wake_phrase="operance",
+            last_transcript_text=None,
+            last_transcript_final=False,
+            last_response_text="I heard Operance, but no command followed.",
+            last_response_status="no_command",
+        ),
+    )
+
+    payload = snapshot.to_dict()
+
+    assert payload["notification"] == {
+        "event_id": "voice_loop_response:4:no_command:I heard Operance, but no command followed.",
+        "level": "warning",
+        "message": "I heard Operance, but no command followed.",
+        "title": "Operance",
+    }
+
+
 def test_build_tray_snapshot_reports_voice_loop_warning_notification() -> None:
     from operance.ui import build_tray_snapshot
 
@@ -311,7 +391,12 @@ def test_build_tray_startup_notification_prefers_click_to_talk_hint() -> None:
 
     snapshot = build_tray_snapshot(
         _status_snapshot(),
-        voice_loop_status=_voice_loop_status_snapshot(),
+        voice_loop_status=_voice_loop_status_snapshot(
+            last_transcript_text=None,
+            last_transcript_final=None,
+            last_response_text=None,
+            last_response_status=None,
+        ),
     )
 
     notification = build_startup_notification(snapshot)
@@ -499,6 +584,16 @@ def test_build_click_to_talk_started_notification() -> None:
         "message": "Speak a command now. Operance will stop listening automatically.",
         "title": "Listening",
     }
+
+
+def test_tray_notification_timeouts_are_long_enough_to_read() -> None:
+    from operance.ui.tray import (
+        _TRAY_NOTIFICATION_DEFAULT_MS,
+        _TRAY_NOTIFICATION_SHORT_MS,
+    )
+
+    assert _TRAY_NOTIFICATION_DEFAULT_MS >= 5000
+    assert _TRAY_NOTIFICATION_SHORT_MS >= 3000
 
 
 def test_build_spoken_response_text_is_exported_from_ui() -> None:
@@ -990,6 +1085,7 @@ def test_tray_controller_can_start_voice_loop_service(monkeypatch, tmp_path: Pat
     from operance.daemon import OperanceDaemon
     from operance.ui import TrayController
 
+    monkeypatch.setattr("operance.ui.tray.build_project_identity", lambda: {"install_mode": "packaged"})
     daemon = OperanceDaemon.build_default(
         {
             "OPERANCE_DATA_DIR": str(tmp_path / "data"),
@@ -1023,10 +1119,72 @@ def test_tray_controller_can_start_voice_loop_service(monkeypatch, tmp_path: Pat
     assert snapshot.can_stop_voice_loop_service is True
 
 
+def test_tray_controller_starts_source_voice_loop_without_systemd(monkeypatch, tmp_path: Path) -> None:
+    from operance.daemon import OperanceDaemon
+    from operance.ui import TrayController
+
+    monkeypatch.setattr("operance.ui.tray.build_project_identity", lambda: {"install_mode": "source_checkout"})
+    popen_calls: list[tuple[list[str], dict[str, str]]] = []
+
+    class FakeProcess:
+        def __init__(self) -> None:
+            self.terminated = False
+            self.killed = False
+
+        def poll(self):
+            return None if not self.terminated else 0
+
+        def terminate(self) -> None:
+            self.terminated = True
+
+        def wait(self, timeout=None):
+            return 0
+
+        def kill(self) -> None:
+            self.killed = True
+            self.terminated = True
+
+    fake_process = FakeProcess()
+
+    def fake_popen(command, *, env):
+        popen_calls.append((command, env))
+        return fake_process
+
+    monkeypatch.setattr("operance.ui.tray.subprocess.Popen", fake_popen)
+    env = {
+        "OPERANCE_DATA_DIR": str(tmp_path / "data"),
+        "OPERANCE_DESKTOP_DIR": str(tmp_path / "Desktop"),
+        "OPERANCE_DEVELOPER_MODE": "0",
+    }
+    daemon = OperanceDaemon.build_default(env)
+
+    controller = TrayController(daemon, env=env)
+    result = controller.start_voice_loop_service()
+    snapshot = controller.snapshot()
+
+    assert result.status == "success"
+    assert result.action_id == "start_source_voice_loop"
+    assert result.command.endswith("-m operance.cli --voice-loop")
+    assert len(popen_calls) == 1
+    assert popen_calls[0][0][-3:] == ["-m", "operance.cli", "--voice-loop"]
+    assert popen_calls[0][1]["OPERANCE_DATA_DIR"] == str(tmp_path / "data")
+    assert popen_calls[0][1]["OPERANCE_DEVELOPER_MODE"] == "0"
+    assert snapshot.voice_loop_control_label == "Stop always-on listening"
+    assert snapshot.can_stop_voice_loop_service is True
+
+    stop_result = controller.stop_voice_loop_service()
+
+    assert stop_result.status == "success"
+    assert stop_result.action_id == "stop_source_voice_loop"
+    assert fake_process.terminated is True
+    assert fake_process.killed is False
+
+
 def test_tray_controller_can_stop_voice_loop_service(monkeypatch, tmp_path: Path) -> None:
     from operance.daemon import OperanceDaemon
     from operance.ui import TrayController
 
+    monkeypatch.setattr("operance.ui.tray.build_project_identity", lambda: {"install_mode": "packaged"})
     daemon = OperanceDaemon.build_default(
         {
             "OPERANCE_DATA_DIR": str(tmp_path / "data"),

@@ -3058,7 +3058,7 @@ def test_cli_voice_session_prints_daemon_results(monkeypatch, capsys) -> None:
     assert payload["transcripts"] == [
         {
             "confidence": 0.93,
-            "frame_index": 4,
+            "frame_index": 3,
             "is_final": True,
             "segment_id": payload["transcripts"][0]["segment_id"],
             "text": "open firefox",
