@@ -117,6 +117,8 @@ For every release candidate:
 4. run `./scripts/run_release_readiness_gate.sh --run-package-gate` before tagging
 5. run `./scripts/run_package_evidence_gate.sh --bundle-python .venv/bin/python`
    before tagging a packaged Fedora release candidate
-6. run `./scripts/build_release_artifacts.sh --bundle-python .venv/bin/python`
+6. run `./scripts/run_package_evidence_gate.sh --bundle-python .venv/bin/python --evidence-dir /tmp/operance-release-evidence`
+   to capture installed release evidence for the candidate
+7. run `./scripts/build_release_artifacts.sh --bundle-python .venv/bin/python`
    to prepare release upload assets
-7. tag only after the manual installed tray plus click-to-talk smoke passes
+8. tag only after the manual installed tray plus click-to-talk smoke passes

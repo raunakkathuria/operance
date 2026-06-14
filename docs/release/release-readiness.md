@@ -66,12 +66,14 @@ before tagging:
 
 ```bash
 ./scripts/run_package_evidence_gate.sh --bundle-python .venv/bin/python
+./scripts/run_package_evidence_gate.sh --bundle-python .venv/bin/python --evidence-dir /tmp/operance-release-evidence
 ```
 
 That gate rebuilds the `mvp` RPM, verifies the artifact, installs it with stale
-user-service reset, runs installed desktop smoke, writes an installed support
-bundle when requested, and leaves the package installed for the manual
-click-to-talk checks.
+user-service reset, runs installed desktop smoke, writes installed JSON evidence
+for build identity, installed smoke, public beta checklist, command coach, local
+AI coach, supported commands, writes an installed support bundle when requested,
+and leaves the package installed for the manual click-to-talk checks.
 
 After the installed package evidence gate and manual tray checks pass, prepare
 the GitHub release upload set:
@@ -115,6 +117,8 @@ The current public release should require all of the following:
   target Fedora KDE Wayland machine
 - `./scripts/run_package_evidence_gate.sh --bundle-python .venv/bin/python`
   passes on the target Fedora KDE Wayland machine before tagging
+- `./scripts/run_package_evidence_gate.sh --bundle-python .venv/bin/python --evidence-dir /tmp/operance-release-evidence`
+  writes the installed release evidence bundle for the candidate
 - a fresh `./scripts/build_package_artifacts.sh --rpm --bundle-profile mvp`
   rebuild completes and the normalized RPM passes `rpm -Kv`
 - a fresh installed RPM can launch the tray app from the desktop session
