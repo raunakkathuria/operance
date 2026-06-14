@@ -19,6 +19,7 @@ from .activation import (
     build_planner_status_report,
 )
 from .adapters import validate_adapter_set
+from .command_coach import build_command_coach
 from .config import AppConfig
 from .corpus import run_default_corpus
 from .daemon import OperanceDaemon
@@ -95,6 +96,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--about", action="store_true", help="Print detailed Operance runtime identity as JSON")
     parser.add_argument("--check-updates", action="store_true", help="Check the configured Operance release channel")
     parser.add_argument("--public-beta-checklist", action="store_true", help="Print the public beta install, verify, try, and report checklist")
+    parser.add_argument("--command-coach", action="store_true", help="Print guided end-user command examples")
     parser.add_argument(
         "--getting-started",
         action="store_true",
@@ -445,6 +447,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                 sort_keys=True,
             )
         )
+        return 0
+
+    if args.command_coach:
+        print(json.dumps(build_command_coach(), sort_keys=True))
         return 0
 
     if args.print_config:

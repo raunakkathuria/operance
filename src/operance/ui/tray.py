@@ -19,6 +19,7 @@ from ..activation import (
     build_planner_status_report,
 )
 from ..audio import build_default_audio_capture_source
+from ..command_coach import build_command_coach
 from ..daemon import OperanceDaemon
 from ..doctor import build_environment_report
 from ..installed_smoke import (
@@ -888,6 +889,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     state_action = QAction("", menu)
     state_action.setEnabled(False)
     click_to_talk_action = QAction("Click to talk", menu)
+    command_coach_action = QAction("Try commands", menu)
     supported_commands_action = QAction("Supported commands", menu)
     about_action = QAction("About Operance", menu)
     check_updates_action = QAction("Check for updates", menu)
@@ -903,6 +905,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     menu.addAction(state_action)
     menu.addAction(click_to_talk_action)
     menu.addAction(voice_loop_control_action)
+    menu.addAction(command_coach_action)
     menu.addAction(supported_commands_action)
     menu.addAction(getting_started_action)
     menu.addAction(save_support_bundle_action)
@@ -1114,6 +1117,29 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
             details=details if isinstance(details, str) and details else None,
         )
 
+    def show_command_coach() -> None:
+        coach = build_command_coach()
+        steps = coach.get("steps")
+        tips = coach.get("tips")
+        informative_lines: list[str] = []
+        if isinstance(steps, list):
+            informative_lines.extend(
+                f"- Say: {step.get('say')}\n  Expect: {step.get('expected')}"
+                for step in steps
+                if isinstance(step, dict) and isinstance(step.get("say"), str)
+            )
+        if isinstance(tips, list) and tips:
+            informative_lines.append("")
+            informative_lines.append("Tips:")
+            informative_lines.extend(f"- {tip}" for tip in tips if isinstance(tip, str))
+        _show_information_dialog(
+            QMessageBox,
+            title=str(coach["title"]),
+            summary=str(coach["summary"]),
+            informative_text="\n".join(informative_lines) if informative_lines else None,
+            details=str(coach.get("recovery") or ""),
+        )
+
     def show_about() -> None:
         identity = build_project_identity()
         _show_information_dialog(
@@ -1320,6 +1346,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
 
     tray.activated.connect(on_tray_activated)
     click_to_talk_action.triggered.connect(start_click_to_talk)
+    command_coach_action.triggered.connect(show_command_coach)
     supported_commands_action.triggered.connect(show_supported_commands)
     about_action.triggered.connect(show_about)
     check_updates_action.triggered.connect(show_update_status)

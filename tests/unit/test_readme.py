@@ -34,3 +34,12 @@ def test_readme_documents_command_recovery_examples() -> None:
     assert "`search google for linux automation`" in readme
     assert "`what time is it`" in readme
     assert "`fire force`" in readme
+
+
+def test_readme_documents_command_coach_surface() -> None:
+    readme = README.read_text(encoding="utf-8")
+
+    assert "Command coach:" in readme
+    assert "`Try commands`" in readme
+    assert "`operance --command-coach`" in readme
+    assert "guided click-to-talk examples" in readme
