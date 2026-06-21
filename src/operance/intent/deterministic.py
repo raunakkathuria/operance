@@ -36,6 +36,20 @@ def _normalize_spoken_launch_target(value: str) -> str:
     localhost_match = re.fullmatch(r"((?:localhost|127\.0\.0\.1))(?: port)? (\d+)", candidate)
     if localhost_match:
         return f"{localhost_match.group(1)}:{localhost_match.group(2)}"
+    normalized_candidate = candidate.casefold()
+    browser_aliases = {
+        "the browser": "browser",
+        "my browser": "browser",
+        "the web browser": "web browser",
+        "my web browser": "web browser",
+        "the default browser": "default browser",
+        "the default web browser": "default browser",
+        "default web browser": "default browser",
+    }
+    if normalized_candidate in browser_aliases:
+        return browser_aliases[normalized_candidate]
+    if normalized_candidate in {"the terminal", "my terminal"}:
+        return "terminal"
     return candidate
 
 
@@ -100,7 +114,10 @@ class DeterministicIntentMatcher:
         if launch_notify_plan is not None:
             return launch_notify_plan
 
-        search_match = re.fullmatch(r"(?:search google for|google search for|search for) (.+)", normalized)
+        search_match = re.fullmatch(
+            r"(?:search google for|google search for|search(?: the)? web for|web search for|search for|look up) (.+)",
+            normalized,
+        )
         if search_match:
             query = search_match.group(1).strip()
             if query:
@@ -111,14 +128,15 @@ class DeterministicIntentMatcher:
                 )
 
         folder_location_match = re.fullmatch(
-            r"(?:open|show) (desktop|downloads|documents|home)(?: folder)?",
+            r"(?:open|show) (?:(desktop|downloads|documents|home)(?: folder)?|folder (desktop|downloads|documents|home))",
             normalized,
         )
         if folder_location_match:
+            location = folder_location_match.group(1) or folder_location_match.group(2)
             return self._single_action_plan(
                 text,
                 ToolName.FILES_OPEN,
-                args={"location": folder_location_match.group(1)},
+                args={"location": location},
             )
 
         if normalized in {"open firefox", "launch firefox"}:
@@ -149,6 +167,16 @@ class DeterministicIntentMatcher:
         if open_url_match:
             target = normalize_explicit_url_target(_normalize_spoken_launch_target(open_url_match.group(1)))
             if _is_simple_app_phrase(target, allow_url_like=True):
+                return self._single_action_plan(
+                    text,
+                    ToolName.APPS_LAUNCH,
+                    args={"app": target},
+                )
+
+        navigate_target_match = re.fullmatch(r"(?:go to|visit|open (?:website|site)) (.+)", explicit_url_text)
+        if navigate_target_match:
+            target = normalize_explicit_url_target(_normalize_spoken_launch_target(navigate_target_match.group(1)))
+            if is_url_like_target(target) and _is_simple_app_phrase(target, allow_url_like=True):
                 return self._single_action_plan(
                     text,
                     ToolName.APPS_LAUNCH,

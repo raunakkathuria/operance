@@ -11,6 +11,10 @@ from operance.models.actions import ToolName
     [
         ("open firefox", ToolName.APPS_LAUNCH, "success", "Launched firefox"),
         ("open terminal", ToolName.APPS_LAUNCH, "success", "Launched terminal"),
+        ("open the terminal", ToolName.APPS_LAUNCH, "success", "Launched terminal"),
+        ("open the browser", ToolName.APPS_LAUNCH, "success", "Launched browser"),
+        ("go to google.com", ToolName.APPS_LAUNCH, "success", "Opened https://google.com"),
+        ("visit docs.python.org/3", ToolName.APPS_LAUNCH, "success", "Opened https://docs.python.org/3"),
         ("open code", ToolName.APPS_LAUNCH, "success", "Launched code"),
         ("open localhost:3000", ToolName.APPS_LAUNCH, "success", "Opened http://localhost:3000"),
         ("browse to localhost 3000", ToolName.APPS_LAUNCH, "success", "Opened http://localhost:3000"),
@@ -20,6 +24,12 @@ from operance.models.actions import ToolName
             ToolName.APPS_LAUNCH,
             "success",
             "Opened https://www.google.com/search?q=operance+ai+desktop",
+        ),
+        (
+            "search the web for linux automation",
+            ToolName.APPS_LAUNCH,
+            "success",
+            "Opened https://www.google.com/search?q=linux+automation",
         ),
         ("focus firefox", ToolName.APPS_FOCUS, "success", "Focused firefox"),
         ("focus code", ToolName.APPS_FOCUS, "success", "Focused code"),
@@ -83,6 +93,7 @@ from operance.models.actions import ToolName
         ),
         ("open desktop", ToolName.FILES_OPEN, "success", "Opened desktop folder"),
         ("open downloads", ToolName.FILES_OPEN, "success", "Opened downloads folder"),
+        ("open folder downloads", ToolName.FILES_OPEN, "success", "Opened downloads folder"),
         ("show documents folder", ToolName.FILES_OPEN, "success", "Opened documents folder"),
         ("open home folder", ToolName.FILES_OPEN, "success", "Opened home folder"),
         (

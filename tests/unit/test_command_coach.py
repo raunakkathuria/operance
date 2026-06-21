@@ -18,6 +18,11 @@ def test_build_command_coach_returns_guided_user_examples() -> None:
             "category": "Open apps and websites",
         },
         {
+            "say": "go to docs.python.org/3",
+            "expected": "Your default browser opens https://docs.python.org/3.",
+            "category": "Open apps and websites",
+        },
+        {
             "say": "search google for linux automation",
             "expected": "Your default browser opens a Google search.",
             "category": "Search",

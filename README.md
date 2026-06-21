@@ -73,10 +73,14 @@ Then click the tray icon and say:
 
 ```text
 open browser
+open the browser
 open google.com
+go to google.com
 search google for linux automation
+search the web for linux automation
 open firefox
 open downloads
+open folder downloads
 what time is it
 wifi status
 what is the volume
@@ -235,7 +239,7 @@ Operance
 open browser
 ```
 
-The same pattern applies to other commands, such as `search google for linux automation` or `what time is it`. You can also try one continuous phrase such as `Operance open browser`; the voice loop now feeds the wake frame into command capture and trims short wake-word residue when the command starter is recognized. If you only say `Operance` and no command follows, the tray reports that the wake word was heard and returns to waiting. Click-to-talk remains the recommended beta path when you want the most responsive command capture.
+The same pattern applies to other commands, such as `go to google.com`, `search the web for linux automation`, or `what time is it`. You can also try one continuous phrase such as `Operance open browser`; the voice loop now feeds the wake frame into command capture and trims short wake-word residue when the command starter is recognized. If you only say `Operance` and no command follows, the tray reports that the wake word was heard and returns to waiting. Click-to-talk remains the recommended beta path when you want the most responsive command capture.
 
 Not yet claimed:
 
@@ -270,7 +274,7 @@ Operance already has a coherent Linux-first public beta path: a typed and valida
 What works now:
 
 - Core runtime: typed action models, deterministic intent matching, validator and policy enforcement, local audit logging, bounded local planner fallback, and MCP-compatible control surfaces.
-- Verified command subset on Fedora KDE Wayland: `open browser`, `open google.com`, `search google for <query>`, `open <app name>` for installed desktop apps, safe two-step launch phrases such as `open firefox and load localhost:3000` or `open firefox and notify me`, `focus <app name>`, confirmation-gated `quit <app name>`, `open downloads`, `open documents`, `open desktop`, `show recent files`, `create folder on desktop called <name>`, confirmation-gated desktop file or folder delete, rename, and move commands, `list windows`, `switch to window <title>`, `show a notification saying <message>`, `what time is it`, `time`, `what is my battery level`, `battery`, `wifi status`, `what is the volume`, `volume`, `is audio muted`, `muted`, `set volume to 50 percent`, `volume 50 percent`, `mute audio`, `mute`, `unmute audio`, and `unmute`.
+- Verified command subset on Fedora KDE Wayland: `open browser`, `open the browser`, `open google.com`, `go to <website>`, `search google for <query>`, `search the web for <query>`, `open <app name>` for installed desktop apps, safe two-step launch phrases such as `open firefox and load localhost:3000` or `open firefox and notify me`, `focus <app name>`, confirmation-gated `quit <app name>`, `open downloads`, `open folder downloads`, `open documents`, `open desktop`, `show recent files`, `create folder on desktop called <name>`, confirmation-gated desktop file or folder delete, rename, and move commands, `list windows`, `switch to window <title>`, `show a notification saying <message>`, `what time is it`, `time`, `what is my battery level`, `battery`, `wifi status`, `what is the volume`, `volume`, `is audio muted`, `muted`, `set volume to 50 percent`, `volume 50 percent`, `mute audio`, `mute`, `unmute audio`, and `unmute`.
 - Tray feedback: when a command is heard, the tray state changes through `Understanding command` and `Opening <target>` or `Executing command`, and the tooltip shows `Heard: ...` before the final result notification.
 - Command recovery: unclear commands now return concrete examples such as `open browser`, `open google.com`, `search google for linux automation`, and `what time is it`; known Firefox speech variants such as `fire fall` and `fire force` are conservatively mapped to `firefox` for launch, focus, and quit commands.
 - Command coach: the tray exposes `Try commands`, and the CLI exposes `operance --command-coach`, with guided click-to-talk examples, expected outcomes, and recovery tips for first-run testing.

@@ -87,9 +87,13 @@ def test_static_website_has_demo_and_beta_install_path() -> None:
     assert {"top", "how", "try", "developers"} <= parser.ids
     assert "#demo" not in parser.links
     assert "open browser" in text
+    assert "open the browser" in text
     assert "open google.com" in text
+    assert "go to google.com" in text
     assert "search google for linux automation" in text
+    assert "search the web for linux automation" in text
     assert "open downloads" in text
+    assert "open folder downloads" in text
     assert "open firefox and notify me" not in text
     assert "curl -fsSLO https://github.com/raunakkathuria/operance/releases/download/<release-tag>/setup.sh" in text
     assert "bash ./setup.sh --release-url https://github.com/raunakkathuria/operance/releases/download/<release-tag>" in text
@@ -117,9 +121,13 @@ def test_static_website_command_examples_match_verified_beta_surface() -> None:
 
     expected_examples = {
         "open browser",
+        "open the browser",
         "open google.com",
+        "go to google.com",
         "search google for linux automation",
+        "search the web for linux automation",
         "open downloads",
+        "open folder downloads",
         "open firefox",
         "what time is it",
         "wifi status",

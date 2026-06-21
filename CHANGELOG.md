@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Expanded the generalized safe command model with natural browser, website, web-search, and known-folder phrasing such as `open the browser`, `go to google.com`, `visit docs.python.org/3`, `search the web for linux automation`, and `open folder downloads`, while keeping execution behind typed actions and adapter-owned target resolution.
 - Added a shared 10-minute beta feedback workflow through `operance --beta-feedback` and the tray `Beta feedback guide`, keeping install, readiness, click-to-talk script, and issue-report steps aligned across CLI, tray, docs, and website.
 - Expanded `operance --public-beta-checklist` with structured install readiness, tray readiness, command script, and failure-reporting sections for clearer beta tester guidance.
 - Added `docs/specs/` as the canonical spec-to-PR planning layer, including the current beta product direction, milestone roadmap, release criteria, and agent/contributor guidance for spec-first changes.
