@@ -226,6 +226,7 @@ evidence_file() {
 run_evidence_step "$(evidence_file build-identity.json)" "operance --about" operance --about
 run_evidence_step "$(evidence_file installed-smoke.json)" "operance --installed-smoke" operance --installed-smoke
 run_evidence_step "$(evidence_file public-beta-checklist.json)" "operance --public-beta-checklist" operance --public-beta-checklist
+run_evidence_step "$(evidence_file beta-feedback.json)" "operance --beta-feedback" operance --beta-feedback
 run_evidence_step "$(evidence_file command-coach.json)" "operance --command-coach" operance --command-coach
 run_evidence_step "$(evidence_file local-ai-coach.json)" "operance --local-ai-coach" operance --local-ai-coach
 run_evidence_step "$(evidence_file supported-commands-available.json)" \
@@ -250,6 +251,7 @@ Included files:
 - build-identity.json
 - installed-smoke.json
 - public-beta-checklist.json
+- beta-feedback.json
 - command-coach.json
 - local-ai-coach.json
 - supported-commands-available.json
@@ -270,6 +272,7 @@ Manual packaged evidence checks:
 - Click the tray icon and say: open firefox and notify me
 - Click the tray icon and say: search google for linux automation
 - Open the tray menu and inspect: Try commands
+- Open the tray menu and inspect: Beta feedback guide
 - Open the tray menu and inspect: Local AI setup
 - Click the tray icon and say: let me know when this is done
 - Attach the installed support bundle if any check fails

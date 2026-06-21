@@ -95,6 +95,7 @@ def test_static_website_has_demo_and_beta_install_path() -> None:
     assert "bash ./setup.sh --release-url https://github.com/raunakkathuria/operance/releases/download/<release-tag>" in text
     assert "operance --installed-smoke" in text
     assert "operance --public-beta-checklist" in text
+    assert "operance --beta-feedback" in text
     assert "operance --supported-commands --supported-commands-available-only" in text
 
 
@@ -104,9 +105,10 @@ def test_static_website_has_beta_feedback_loop() -> None:
 
     assert "Beta Feedback Loop" in text
     assert "Install. Verify. Try. Report." in text
-    assert "click-to-talk smoke commands" in text
+    assert "one 10-minute feedback guide" in text
     assert "start optional always-on listening" in text
     assert "operance --support-bundle" in text
+    assert "docs/release/beta-feedback-program.md" in text
 
 
 def test_static_website_command_examples_match_verified_beta_surface() -> None:

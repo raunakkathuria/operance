@@ -671,9 +671,11 @@ def test_run_tray_app_menu_keeps_end_user_facing_actions() -> None:
     assert 'QAction("Report an issue", menu)' in source
     assert 'QAction("Setup and status", menu)' in source
     assert 'QAction("Try commands", menu)' in source
+    assert 'QAction("Beta feedback guide", menu)' in source
     assert 'QAction("Supported commands", menu)' in source
     assert 'QAction("Local AI setup", menu)' in source
     assert "build_command_coach()" in source
+    assert "beta_feedback_guide()" in source
     assert "local_ai_coach_report()" in source
     assert 'QAction("Show support snapshot", menu)' not in source
     assert 'QAction("Save support snapshot", menu)' not in source
@@ -1454,6 +1456,76 @@ def test_format_getting_started_highlights_for_tray_dialog() -> None:
         "  - expected behavior\n\n"
         "Contributor next steps:\n"
         "- Add adapters without changing core."
+    )
+
+
+def test_tray_controller_can_build_beta_feedback_guide(monkeypatch, tmp_path: Path) -> None:
+    from operance.daemon import OperanceDaemon
+    from operance.ui import TrayController
+
+    daemon = OperanceDaemon.build_default(
+        {
+            "OPERANCE_DATA_DIR": str(tmp_path / "data"),
+            "OPERANCE_DESKTOP_DIR": str(tmp_path / "Desktop"),
+        }
+    )
+    received: dict[str, object] = {}
+
+    monkeypatch.setattr("operance.ui.tray.build_project_identity", lambda: {"install_mode": "packaged"})
+    monkeypatch.setattr(
+        "operance.ui.tray.build_release_update_status",
+        lambda **kwargs: received.update(kwargs) or {"setup_command": "bash ./setup.sh --release-url https://example.test/release"},
+    )
+
+    report = TrayController(daemon).beta_feedback_guide()
+
+    assert report["title"] == "10-minute beta feedback loop"
+    assert report["sections"][0]["commands"][0] == "bash ./setup.sh --release-url https://example.test/release"
+    assert report["sections"][2]["commands"][0] == "open browser"
+    assert received["check_remote"] is False
+
+
+def test_format_beta_feedback_for_tray_dialog() -> None:
+    from operance.ui.tray import _format_beta_feedback_details, _format_beta_feedback_highlights
+
+    guide = {
+        "target": "Fedora KDE Plasma Wayland public beta",
+        "time_budget_minutes": 10,
+        "try_commands": ["open browser", "open google.com"],
+        "issue_url": "https://github.com/raunakkathuria/operance/issues/new/choose",
+        "sections": [
+            {
+                "label": "Install",
+                "goal": "Use the packaged release path.",
+                "commands": ["bash ./setup.sh --release-url https://example.test/release"],
+            },
+            {
+                "label": "Try",
+                "goal": "Click the tray icon.",
+                "commands": ["open browser"],
+            },
+        ],
+        "report_even_if": ["tray did not appear", "command was misunderstood"],
+    }
+
+    assert _format_beta_feedback_highlights(guide) == (
+        "Target: Fedora KDE Plasma Wayland public beta\n"
+        "Time: about 10 minutes\n"
+        "First voice test: open browser\n"
+        "Report: support bundle or issue draft"
+    )
+    assert _format_beta_feedback_details(guide) == (
+        "Install:\n"
+        "Use the packaged release path.\n"
+        "- bash ./setup.sh --release-url https://example.test/release\n\n"
+        "Try:\n"
+        "Click the tray icon.\n"
+        "- open browser\n\n"
+        "Report even if:\n"
+        "- tray did not appear\n"
+        "- command was misunderstood\n\n"
+        "GitHub issues:\n"
+        "https://github.com/raunakkathuria/operance/issues/new/choose"
     )
 
 

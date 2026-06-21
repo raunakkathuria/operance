@@ -68,6 +68,7 @@ bash ./setup.sh --release-url https://github.com/raunakkathuria/operance/release
 operance --version
 operance --installed-smoke
 operance --public-beta-checklist
+operance --beta-feedback
 ```
 
 If you already downloaded the RPM from the same release, use the local package
@@ -78,6 +79,7 @@ bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm
 operance --version
 operance --installed-smoke
 operance --public-beta-checklist
+operance --beta-feedback
 ```
 
 The setup script is the stable setup surface for the current packaged path.
@@ -89,25 +91,27 @@ catalog, captures a support bundle, and lists the manual tray checks to run.
 Do not use release-phase names such as alpha or beta for script filenames; keep
 setup and gate names stable across releases.
 
-Open the tray icon and try:
+Open the tray menu, choose **Beta feedback guide**, then click the tray icon and
+try:
 
 ```text
 open browser
 open google.com
+search google for linux automation
 open firefox
-open localhost:3000
-open firefox and notify me
+open downloads
 what time is it
 wifi status
 what is the volume
+set volume to 50 percent
 ```
 
 The tray menu is the primary non-terminal surface. Use **Setup and status** to
 walk through runtime readiness, packaged-install readiness when running the RPM,
 the click-to-talk smoke commands, optional local AI planner validation, and
 support-bundle capture. The same compact menu also exposes supported commands,
-issue reporting, recent interaction details, release update checks, and
-optional always-on listening controls. Raw support snapshots, planner readiness,
+the 10-minute beta feedback guide, issue reporting, recent interaction details,
+release update checks, and optional always-on listening controls. Raw support snapshots, planner readiness,
 and installed-smoke diagnostics remain available from CLI commands when a
 developer or maintainer needs deeper output.
 
@@ -135,6 +139,7 @@ For a single public beta install, verify, try, and report checklist, run:
 
 ```bash
 operance --public-beta-checklist
+operance --beta-feedback
 ```
 
 ---

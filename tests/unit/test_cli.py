@@ -915,6 +915,29 @@ def test_cli_public_beta_checklist_includes_packaged_readiness(monkeypatch, caps
         "status": "ok",
     }
     assert payload["checklist"][4]["issue_report_command"] == "operance --issue-report"
+    assert payload["workflow"]["tray_readiness"]["command"] == "operance --installed-smoke"
+    assert payload["workflow"]["failure_reporting"]["command"] == "operance --support-bundle"
+
+
+def test_cli_beta_feedback_prints_ten_minute_feedback_loop(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(
+        "operance.cli.build_project_identity",
+        lambda: {
+            "install_mode": "packaged",
+            "version": "0.1.0",
+            "package_profile": "mvp",
+        },
+    )
+
+    exit_code = main(["--beta-feedback"])
+
+    payload = json.loads(capsys.readouterr().out)
+
+    assert exit_code == 0
+    assert payload["title"] == "10-minute beta feedback loop"
+    assert payload["sections"][1]["commands"][0] == "operance --installed-smoke"
+    assert payload["sections"][2]["commands"][0] == "open browser"
+    assert payload["sections"][3]["commands"] == ["operance --issue-report", "operance --support-bundle"]
 
 
 def test_cli_command_coach_prints_guided_examples(capsys) -> None:

@@ -44,7 +44,7 @@ from .planner import (
     run_planner_fixture,
 )
 from .project_info import build_project_identity
-from .public_beta import build_public_beta_checklist
+from .public_beta import build_beta_feedback_guide, build_public_beta_checklist
 from .release_channel import build_release_update_status
 from .replay import run_replay_fixture
 from .schemas import build_action_plan_schema, build_action_result_schema
@@ -97,6 +97,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--about", action="store_true", help="Print detailed Operance runtime identity as JSON")
     parser.add_argument("--check-updates", action="store_true", help="Check the configured Operance release channel")
     parser.add_argument("--public-beta-checklist", action="store_true", help="Print the public beta install, verify, try, and report checklist")
+    parser.add_argument("--beta-feedback", action="store_true", help="Print the 10-minute public beta feedback loop")
     parser.add_argument("--command-coach", action="store_true", help="Print guided end-user command examples")
     parser.add_argument("--local-ai-coach", action="store_true", help="Print guided optional local AI planner setup")
     parser.add_argument(
@@ -445,6 +446,19 @@ def main(argv: Sequence[str] | None = None) -> int:
                     ),
                     release_status=build_release_update_status(identity=identity, check_remote=False),
                     installed_readiness=installed_readiness,
+                ),
+                sort_keys=True,
+            )
+        )
+        return 0
+
+    if args.beta_feedback:
+        identity = build_project_identity()
+        print(
+            json.dumps(
+                build_beta_feedback_guide(
+                    identity=identity,
+                    release_status=build_release_update_status(identity=identity, check_remote=False),
                 ),
                 sort_keys=True,
             )

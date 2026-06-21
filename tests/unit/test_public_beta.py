@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from operance.public_beta import build_public_beta_checklist
+from operance.public_beta import build_beta_feedback_guide, build_public_beta_checklist
 
 
 def test_public_beta_checklist_reports_ready_packaged_path() -> None:
@@ -38,6 +38,11 @@ def test_public_beta_checklist_reports_ready_packaged_path() -> None:
     }
     assert payload["checklist"][4]["command"] == "operance --support-bundle"
     assert payload["checklist"][4]["issue_report_command"] == "operance --issue-report"
+    assert payload["workflow"]["install_readiness"]["status"] == "done"
+    assert payload["workflow"]["tray_readiness"]["command"] == "operance --installed-smoke"
+    assert payload["workflow"]["command_script"]["commands"][0] == "open browser"
+    assert payload["workflow"]["failure_reporting"]["issue_report_command"] == "operance --issue-report"
+    assert payload["feedback"]["guide_command"] == "operance --beta-feedback"
     assert payload["feedback"]["issue_url"] == "https://github.com/raunakkathuria/operance/issues/new/choose"
 
 
@@ -58,3 +63,35 @@ def test_public_beta_checklist_points_source_checkouts_to_release_assets() -> No
         "command": None,
     }
     assert "Use the setup command from the current GitHub release assets." in payload["next_steps"]
+
+
+def test_beta_feedback_guide_builds_ten_minute_loop_for_packaged_path() -> None:
+    payload = build_beta_feedback_guide(
+        identity={"install_mode": "packaged", "version": "0.1.0"},
+        release_status={"setup_command": "bash ./setup.sh --release-url https://example.test/release"},
+    )
+
+    assert payload["title"] == "10-minute beta feedback loop"
+    assert payload["time_budget_minutes"] == 10
+    assert payload["sections"][0] == {
+        "label": "Install",
+        "goal": "Use the packaged release path for beta testing.",
+        "commands": [
+            "bash ./setup.sh --release-url https://example.test/release",
+            "operance --version",
+        ],
+    }
+    assert payload["sections"][1]["commands"][0] == "operance --installed-smoke"
+    assert payload["sections"][2]["commands"] == [
+        "open browser",
+        "open google.com",
+        "search google for linux automation",
+        "open firefox",
+        "open downloads",
+        "what time is it",
+        "wifi status",
+        "what is the volume",
+        "set volume to 50 percent",
+    ]
+    assert payload["sections"][3]["commands"] == ["operance --issue-report", "operance --support-bundle"]
+    assert "command was misunderstood" in payload["report_even_if"]

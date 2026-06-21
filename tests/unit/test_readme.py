@@ -46,6 +46,14 @@ def test_readme_documents_command_coach_surface() -> None:
     assert "guided click-to-talk examples" in readme
 
 
+def test_readme_documents_beta_feedback_surface() -> None:
+    readme = README.read_text(encoding="utf-8")
+
+    assert "`operance --beta-feedback`" in readme
+    assert "**Beta feedback\nguide**" in readme
+    assert "10-minute beta feedback loop" in readme
+
+
 def test_readme_documents_local_ai_coach_surface() -> None:
     readme = README.read_text(encoding="utf-8")
 

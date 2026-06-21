@@ -95,8 +95,8 @@
           </p>
           <p>
             The current public beta is honest about scope: Fedora KDE Plasma
-            Wayland first, source checkout for contributors, and an RPM runtime
-            path for early testers.
+            Wayland first, the packaged Fedora setup path for users, and source
+            checkout for contributors.
           </p>
         </section>
 
@@ -170,6 +170,7 @@
 bash ./setup.sh --release-url https://github.com/raunakkathuria/operance/releases/download/&lt;release-tag&gt;
 operance --installed-smoke
 operance --public-beta-checklist
+operance --beta-feedback
 operance --supported-commands --supported-commands-available-only</code></pre>
         </section>
 
@@ -178,12 +179,13 @@ operance --supported-commands --supported-commands-available-only</code></pre>
           <h2 class="section-h">Install. Verify. Try. Report.</h2>
           <p>
             Public beta testing should produce useful reports, not vague
-            screenshots. Operance includes one checklist for the install path
-            and one redacted issue draft for failures.
+            screenshots. Operance includes one checklist for the install path,
+            one 10-minute feedback guide, and one redacted issue draft for
+            failures.
           </p>
           <div class="feedback-steps">
             <div><span>1</span><strong>Verify</strong><small><code>operance --public-beta-checklist</code></small></div>
-            <div><span>2</span><strong>Try</strong><small>click-to-talk smoke commands</small></div>
+            <div><span>2</span><strong>Try</strong><small><code>operance --beta-feedback</code></small></div>
             <div><span>3</span><strong>Report</strong><small><code>operance --support-bundle</code></small></div>
           </div>
         </section>
@@ -234,6 +236,11 @@ operance --supported-commands --supported-commands-available-only</code></pre>
               <span class="doc-tag">Install</span>
               <strong>docs/release/public-beta.md</strong>
               <small>Release assets, setup, feedback loop.</small>
+            </a>
+            <a href="https://github.com/raunakkathuria/operance/blob/main/docs/release/beta-feedback-program.md" target="_blank" rel="noopener noreferrer">
+              <span class="doc-tag">Feedback</span>
+              <strong>docs/release/beta-feedback-program.md</strong>
+              <small>Tester loop, outreach, triage, success metrics.</small>
             </a>
             <a href="https://github.com/raunakkathuria/operance/blob/main/docs/architecture/overview.md" target="_blank" rel="noopener noreferrer">
               <span class="doc-tag">Architecture</span>

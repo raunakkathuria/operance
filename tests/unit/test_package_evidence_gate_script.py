@@ -30,6 +30,7 @@ def test_package_evidence_gate_dry_run_prints_default_steps() -> None:
         "+ operance --about",
         "+ operance --installed-smoke",
         "+ operance --public-beta-checklist",
+        "+ operance --beta-feedback",
         "+ operance --command-coach",
         "+ operance --local-ai-coach",
         "+ operance --supported-commands --supported-commands-available-only",
@@ -40,6 +41,7 @@ def test_package_evidence_gate_dry_run_prints_default_steps() -> None:
         "- Click the tray icon and say: open firefox and notify me",
         "- Click the tray icon and say: search google for linux automation",
         "- Open the tray menu and inspect: Try commands",
+        "- Open the tray menu and inspect: Beta feedback guide",
         "- Open the tray menu and inspect: Local AI setup",
         "- Click the tray icon and say: let me know when this is done",
         "- Attach the installed support bundle if any check fails",
@@ -84,6 +86,7 @@ def test_package_evidence_gate_forwards_options_in_dry_run(tmp_path: Path) -> No
         "+ operance --about",
         "+ operance --installed-smoke",
         "+ operance --public-beta-checklist",
+        "+ operance --beta-feedback",
         "+ operance --command-coach",
         "+ operance --local-ai-coach",
         "+ operance --supported-commands --supported-commands-available-only",
@@ -94,6 +97,7 @@ def test_package_evidence_gate_forwards_options_in_dry_run(tmp_path: Path) -> No
         "- Click the tray icon and say: open firefox and notify me",
         "- Click the tray icon and say: search google for linux automation",
         "- Open the tray menu and inspect: Try commands",
+        "- Open the tray menu and inspect: Beta feedback guide",
         "- Open the tray menu and inspect: Local AI setup",
         "- Click the tray icon and say: let me know when this is done",
         "- Attach the installed support bundle if any check fails",
@@ -111,5 +115,6 @@ def test_package_evidence_gate_evidence_dir_defaults_support_bundle_path(tmp_pat
     )
 
     assert f"+ operance --support-bundle --support-bundle-out {evidence_dir / 'operance-installed-support.tar.gz'}" in result.stdout
+    assert "+ operance --beta-feedback" in result.stdout
     assert "+ operance --command-coach" in result.stdout
     assert "+ operance --local-ai-coach" in result.stdout
