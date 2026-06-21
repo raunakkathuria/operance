@@ -266,10 +266,12 @@ def _help_command_priority(command: dict[str, object]) -> tuple[int, str]:
         ToolName.FILES_LIST_RECENT.value: 7,
         ToolName.FILES_LIST_FOLDER.value: 8,
         ToolName.FILES_FIND.value: 9,
-        ToolName.WINDOWS_LIST.value: 10,
-        ToolName.WINDOWS_SWITCH.value: 11,
-        ToolName.APPS_FOCUS.value: 12,
-        ToolName.APPS_QUIT.value: 13,
+        ToolName.FILES_GET_INFO.value: 10,
+        ToolName.FILES_LIST_RECENT_FOLDER.value: 11,
+        ToolName.WINDOWS_LIST.value: 12,
+        ToolName.WINDOWS_SWITCH.value: 13,
+        ToolName.APPS_FOCUS.value: 14,
+        ToolName.APPS_QUIT.value: 15,
     }
     return (priority.get(tool, 100), tool)
 
@@ -320,6 +322,8 @@ def _tool_usage_pattern(tool: ToolName) -> str | None:
         ToolName.FILES_LIST_RECENT: "show recent files",
         ToolName.FILES_LIST_FOLDER: "list files in downloads | show files in documents | what is in downloads",
         ToolName.FILES_FIND: "find file named <name> | find folder named <name> | search documents for <name>",
+        ToolName.FILES_GET_INFO: "show details for <name> | how big is <name> | when was <name> modified",
+        ToolName.FILES_LIST_RECENT_FOLDER: "show recent downloads | show recent files in downloads",
         ToolName.FILES_CREATE_FOLDER: "create folder on desktop called <name>",
         ToolName.FILES_DELETE_FOLDER: "delete folder on desktop called <name>",
         ToolName.FILES_DELETE_FILE: "delete file on desktop called <name>",

@@ -550,6 +550,24 @@ def test_mcp_server_exposes_tool_input_schemas() -> None:
         "required": ["location", "query", "kind"],
         "additionalProperties": False,
     }
+    assert tools["files.get_info"]["input_schema"] == {
+        "type": "object",
+        "properties": {
+            "location": {"type": "string", "enum": ["desktop", "downloads", "documents", "home"]},
+            "query": {"type": "string"},
+            "kind": {"type": "string", "enum": ["file", "folder", "any"]},
+        },
+        "required": ["location", "query", "kind"],
+        "additionalProperties": False,
+    }
+    assert tools["files.list_recent_folder"]["input_schema"] == {
+        "type": "object",
+        "properties": {
+            "location": {"type": "string", "enum": ["desktop", "downloads", "documents", "home"]},
+        },
+        "required": ["location"],
+        "additionalProperties": False,
+    }
     assert tools["windows.close"]["input_schema"] == {
         "type": "object",
         "properties": {

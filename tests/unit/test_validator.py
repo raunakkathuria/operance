@@ -24,6 +24,8 @@ def test_default_action_registry_exposes_seed_command_specs() -> None:
     connect_ssid_spec = registry.get(ToolName.NETWORK_CONNECT_KNOWN_SSID)
     list_folder_spec = registry.get(ToolName.FILES_LIST_FOLDER)
     find_files_spec = registry.get(ToolName.FILES_FIND)
+    file_info_spec = registry.get(ToolName.FILES_GET_INFO)
+    recent_folder_spec = registry.get(ToolName.FILES_LIST_RECENT_FOLDER)
     delete_file_spec = registry.get(ToolName.FILES_DELETE_FILE)
     rename_spec = registry.get(ToolName.FILES_RENAME)
 
@@ -230,6 +232,24 @@ def test_default_action_registry_exposes_seed_command_specs() -> None:
         "find folder named projects",
         "find file named report.pdf in downloads",
         "search documents for invoice",
+    )
+
+    assert file_info_spec is not None
+    assert file_info_spec.required_args == ("location", "query", "kind")
+    assert file_info_spec.risk_tier == RiskTier.TIER_0
+    assert file_info_spec.example_transcripts == (
+        "show details for notes.txt",
+        "how big is notes.txt in downloads",
+        "when was notes.txt modified",
+    )
+
+    assert recent_folder_spec is not None
+    assert recent_folder_spec.required_args == ("location",)
+    assert recent_folder_spec.risk_tier == RiskTier.TIER_0
+    assert recent_folder_spec.example_transcripts == (
+        "show recent downloads",
+        "show recent files in downloads",
+        "recent documents",
     )
 
     assert delete_file_spec is not None
@@ -621,3 +641,26 @@ def test_validator_accepts_file_discovery_args() -> None:
     assert result.valid is True
     assert result.normalized_plan is not None
     assert result.errors == []
+
+
+def test_validator_rejects_unsafe_file_metadata_queries() -> None:
+    from operance.registry import build_default_action_registry
+    from operance.validator import PlanValidator
+
+    validator = PlanValidator(registry=build_default_action_registry())
+    plan = ActionPlan(
+        source=PlanSource.PLANNER,
+        original_text="show details",
+        actions=[
+            TypedAction(
+                tool=ToolName.FILES_GET_INFO,
+                args={"location": "documents", "query": "secret/notes.txt", "kind": "any"},
+            )
+        ],
+    )
+
+    result = validator.validate(plan)
+
+    assert result.valid is False
+    assert result.normalized_plan is None
+    assert result.errors == ["files.get_info: query must be a simple file or folder name fragment"]

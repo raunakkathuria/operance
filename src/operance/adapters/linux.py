@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import ast
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 import json
 import os
 from pathlib import Path
@@ -17,7 +17,7 @@ import time
 from typing import Callable
 from uuid import uuid4
 
-from .base import AdapterSet
+from .base import AdapterSet, FileEntryInfo
 from ..key_presses import normalize_supported_key, supported_key_display_name
 from ..launch_targets import is_url_like_target, normalize_launch_target
 
@@ -1510,6 +1510,25 @@ class LinuxFilesAdapter:
                 break
         return matches
 
+    def describe_entry(self, location: str, query: str, kind: str) -> FileEntryInfo:
+        matches = self.find_entries(location, query, kind)
+        exact_matches = [entry for entry in matches if entry.name.casefold() == query.casefold()]
+        candidates = exact_matches or matches
+        if not candidates:
+            raise ValueError(f"no matching {kind} found in {location}: {query}")
+        if len(candidates) > 1:
+            names = "; ".join(entry.name for entry in candidates[:5])
+            raise ValueError(f"multiple matches found in {location}: {names}")
+        return _file_entry_info(candidates[0])
+
+    def list_recent_in_location(self, location: str) -> list[FileEntryInfo]:
+        root = self._resolve_known_location(location)
+        if not root.exists() or not root.is_dir():
+            return []
+        entries = [entry for entry in root.iterdir() if not _is_hidden_path(entry, root)]
+        recent_entries = sorted(entries, key=lambda path: path.stat().st_mtime, reverse=True)[: self.max_recent_files]
+        return [_file_entry_info(entry) for entry in recent_entries]
+
     def open_location(self, location: str) -> str:
         path = self._resolve_known_location(location)
         self._open_resolved_path(path, command_label="xdg-open")
@@ -1581,6 +1600,16 @@ class LinuxFilesAdapter:
         if target.exists():
             raise ValueError(f"destination entry already exists: {target.name}")
         return path.rename(target)
+
+
+def _file_entry_info(path: Path) -> FileEntryInfo:
+    stat_result = path.stat()
+    return FileEntryInfo(
+        name=path.name,
+        entry_type="folder" if path.is_dir() else "file",
+        size_bytes=None if path.is_dir() else stat_result.st_size,
+        modified_at=datetime.fromtimestamp(stat_result.st_mtime, tz=UTC),
+    )
 
 
 def build_linux_adapter_set(

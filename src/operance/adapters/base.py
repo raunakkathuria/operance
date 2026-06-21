@@ -3,8 +3,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Protocol
+
+
+@dataclass(frozen=True, slots=True)
+class FileEntryInfo:
+    name: str
+    entry_type: str
+    size_bytes: int | None
+    modified_at: datetime
 
 
 class AppsAdapter(Protocol):
@@ -99,6 +108,10 @@ class FilesAdapter(Protocol):
     def list_location(self, location: str) -> list[Path]: ...
 
     def find_entries(self, location: str, query: str, kind: str) -> list[Path]: ...
+
+    def describe_entry(self, location: str, query: str, kind: str) -> FileEntryInfo: ...
+
+    def list_recent_in_location(self, location: str) -> list[FileEntryInfo]: ...
 
     def open_location(self, location: str) -> str: ...
 

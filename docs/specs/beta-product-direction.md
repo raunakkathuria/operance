@@ -182,6 +182,9 @@ Current accepted safe-command slice:
   file named <name>`, `find folder named <name>`, and `search documents for
   <name>` while staying inside typed `files.list_folder` and `files.find`
   actions
+- read-only file metadata accepts phrases such as `show details for <name>`,
+  `how big is <name>`, `when was <name> modified`, and `show recent downloads`
+  while reporting metadata only and never reading file contents
 
 Non-goals:
 

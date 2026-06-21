@@ -106,6 +106,44 @@ def test_plan_preview_renders_file_find_action() -> None:
     assert preview == "Planned action: find files or folders named 'invoice' in documents."
 
 
+def test_plan_preview_renders_file_info_action() -> None:
+    from operance.planner.preview import build_plan_preview
+
+    plan = ActionPlan(
+        source=PlanSource.PLANNER,
+        original_text="show details for notes.txt",
+        actions=[
+            TypedAction(
+                tool=ToolName.FILES_GET_INFO,
+                args={"location": "home", "query": "notes.txt", "kind": "any"},
+            )
+        ],
+    )
+
+    preview = build_plan_preview(plan)
+
+    assert preview == "Planned action: show details for 'notes.txt' in home."
+
+
+def test_plan_preview_renders_recent_folder_action() -> None:
+    from operance.planner.preview import build_plan_preview
+
+    plan = ActionPlan(
+        source=PlanSource.PLANNER,
+        original_text="show recent downloads",
+        actions=[
+            TypedAction(
+                tool=ToolName.FILES_LIST_RECENT_FOLDER,
+                args={"location": "downloads"},
+            )
+        ],
+    )
+
+    preview = build_plan_preview(plan)
+
+    assert preview == "Planned action: list recent entries in downloads."
+
+
 def test_plan_preview_renders_known_folder_open_action() -> None:
     from operance.planner.preview import build_plan_preview
 

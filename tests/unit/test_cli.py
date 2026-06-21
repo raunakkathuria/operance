@@ -750,6 +750,14 @@ def test_cli_supported_commands_available_only_filters_blocked_entries(monkeypat
     assert commands["files.find"]["usage_pattern"] == (
         "find file named <name> | find folder named <name> | search documents for <name>"
     )
+    assert "files.get_info" in commands
+    assert commands["files.get_info"]["usage_pattern"] == (
+        "show details for <name> | how big is <name> | when was <name> modified"
+    )
+    assert "files.list_recent_folder" in commands
+    assert commands["files.list_recent_folder"]["usage_pattern"] == (
+        "show recent downloads | show recent files in downloads"
+    )
     assert "files.create_folder" in commands
     assert commands["files.create_folder"]["usage_pattern"] == "create folder on desktop called <name>"
     assert commands["files.delete_folder"]["usage_pattern"] == "delete folder on desktop called <name>"

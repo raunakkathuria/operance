@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added read-only file metadata commands such as `show details for <name>`, `how big is <name>`, `when was <name> modified`, and `show recent downloads`, using typed `files.get_info` and `files.list_recent_folder` actions with adapter-owned stat calls, ambiguity handling, validation, planner/MCP schema coverage, and no file-content reads.
 - Added read-only known-folder discovery commands such as `list files in downloads`, `show files in documents`, `find file named <name>`, `find folder named <name>`, and `search documents for <name>`, backed by typed `files.list_folder` and `files.find` actions, adapter-owned known-folder resolution, hidden-path filtering, bounded search results, validation, MCP schema coverage, and supported-command promotion.
 - Expanded the generalized safe command model with natural browser, website, web-search, and known-folder phrasing such as `open the browser`, `go to google.com`, `visit docs.python.org/3`, `search the web for linux automation`, and `open folder downloads`, while keeping execution behind typed actions and adapter-owned target resolution.
 - Added a shared 10-minute beta feedback workflow through `operance --beta-feedback` and the tray `Beta feedback guide`, keeping install, readiness, click-to-talk script, and issue-report steps aligned across CLI, tray, docs, and website.

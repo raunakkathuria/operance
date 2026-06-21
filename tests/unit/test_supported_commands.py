@@ -127,6 +127,14 @@ def test_build_supported_command_catalog_can_filter_available_commands_only() ->
     assert commands["files.find"]["usage_pattern"] == (
         "find file named <name> | find folder named <name> | search documents for <name>"
     )
+    assert "files.get_info" in commands
+    assert commands["files.get_info"]["usage_pattern"] == (
+        "show details for <name> | how big is <name> | when was <name> modified"
+    )
+    assert "files.list_recent_folder" in commands
+    assert commands["files.list_recent_folder"]["usage_pattern"] == (
+        "show recent downloads | show recent files in downloads"
+    )
     assert "files.create_folder" in commands
     assert "files.delete_folder" in commands
     assert "files.delete_file" in commands

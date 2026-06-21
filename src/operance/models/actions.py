@@ -58,6 +58,8 @@ class ToolName(StrEnum):
     FILES_LIST_RECENT = "files.list_recent"
     FILES_LIST_FOLDER = "files.list_folder"
     FILES_FIND = "files.find"
+    FILES_GET_INFO = "files.get_info"
+    FILES_LIST_RECENT_FOLDER = "files.list_recent_folder"
     FILES_OPEN = "files.open"
     FILES_CREATE_FOLDER = "files.create_folder"
     FILES_DELETE_FOLDER = "files.delete_folder"

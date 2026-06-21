@@ -47,6 +47,7 @@ Supported command families are intentionally conservative:
 - set, mute, and unmute audio
 - show recent files
 - list or search known folders by file or folder name
+- show basic file/folder metadata and recent known-folder entries
 - create, rename, move, or delete Desktop entries with confirmation where needed
 - list windows or switch to a visible window
 

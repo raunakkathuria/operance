@@ -598,6 +598,63 @@ class DeterministicIntentMatcher:
                 },
             )
 
+        recent_folder_match = (
+            re.fullmatch(r"show recent files in (desktop|downloads|documents|home)", normalized)
+            or re.fullmatch(r"show recent (desktop|downloads|documents|home)(?: files| entries)?", normalized)
+            or re.fullmatch(r"recent (desktop|downloads|documents|home)", normalized)
+        )
+        if recent_folder_match:
+            return self._single_action_plan(
+                text,
+                ToolName.FILES_LIST_RECENT_FOLDER,
+                args={"location": recent_folder_match.group(1)},
+            )
+
+        details_match = (
+            re.fullmatch(r"(?:show|display) details for (.+?)(?: in (desktop|downloads|documents|home))?", normalized)
+            or re.fullmatch(r"file details for (.+?)(?: in (desktop|downloads|documents|home))?", normalized)
+        )
+        if details_match:
+            return self._single_action_plan(
+                text,
+                ToolName.FILES_GET_INFO,
+                args={
+                    "location": details_match.group(2) or "home",
+                    "query": details_match.group(1),
+                    "kind": "any",
+                },
+            )
+
+        file_size_match = re.fullmatch(
+            r"how big is (.+?)(?: in (desktop|downloads|documents|home))?",
+            normalized,
+        )
+        if file_size_match:
+            return self._single_action_plan(
+                text,
+                ToolName.FILES_GET_INFO,
+                args={
+                    "location": file_size_match.group(2) or "home",
+                    "query": file_size_match.group(1),
+                    "kind": "file",
+                },
+            )
+
+        modified_match = re.fullmatch(
+            r"when was (.+?) (?:last )?modified(?: in (desktop|downloads|documents|home))?",
+            normalized,
+        )
+        if modified_match:
+            return self._single_action_plan(
+                text,
+                ToolName.FILES_GET_INFO,
+                args={
+                    "location": modified_match.group(2) or "home",
+                    "query": modified_match.group(1),
+                    "kind": "any",
+                },
+            )
+
         open_recent_file_match = re.fullmatch(r"open recent file called (.+)", normalized)
         if open_recent_file_match:
             return self._single_action_plan(

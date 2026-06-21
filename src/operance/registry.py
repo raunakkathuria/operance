@@ -492,6 +492,52 @@ def build_default_action_registry() -> ActionRegistry:
     )
     registry.register(
         ToolSpec(
+            ToolName.FILES_GET_INFO,
+            "Show metadata for a file or folder in a known folder",
+            ("location", "query", "kind"),
+            input_schema=_object_schema(
+                {
+                    "location": {
+                        "type": "string",
+                        "enum": ["desktop", "downloads", "documents", "home"],
+                    },
+                    "query": {"type": "string"},
+                    "kind": {"type": "string", "enum": ["file", "folder", "any"]},
+                },
+                required=("location", "query", "kind"),
+            ),
+            example_transcripts=(
+                "show details for notes.txt",
+                "how big is notes.txt in downloads",
+                "when was notes.txt modified",
+            ),
+            validate_args=_validate_file_find_args,
+        )
+    )
+    registry.register(
+        ToolSpec(
+            ToolName.FILES_LIST_RECENT_FOLDER,
+            "List recent entries in a known folder",
+            ("location",),
+            input_schema=_object_schema(
+                {
+                    "location": {
+                        "type": "string",
+                        "enum": ["desktop", "downloads", "documents", "home"],
+                    },
+                },
+                required=("location",),
+            ),
+            example_transcripts=(
+                "show recent downloads",
+                "show recent files in downloads",
+                "recent documents",
+            ),
+            validate_args=_validate_known_folder_args,
+        )
+    )
+    registry.register(
+        ToolSpec(
             ToolName.FILES_OPEN,
             "Open a known folder, desktop entry, or recent file",
             ("location",),
