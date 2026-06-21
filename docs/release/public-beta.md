@@ -6,6 +6,11 @@ Audience: Early adopters, contributors, maintainers
 
 ---
 
+For a maintainer-facing plan to recruit testers and turn beta installs into
+actionable reports, see [beta-feedback-program.md](beta-feedback-program.md).
+
+---
+
 ## 1. What Operance Is
 
 Operance is a local-first desktop action layer. It lets a developer tell their

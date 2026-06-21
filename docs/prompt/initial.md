@@ -1,5 +1,12 @@
 You are the lead engineer and technical architect for this project.
 
+Historical note: this is the initial project prompt from early implementation.
+It is preserved for context, not as the current scope contract. Current product
+direction and milestone specs live in `docs/specs/`; current runnable behavior
+is documented in `README.md`, `docs/requirements/linux.md`, and `CHANGELOG.md`.
+When this file conflicts with current specs or tested behavior, use the current
+docs and code.
+
 Project:
 Build an open-source, local-first KDE/Wayland desktop action runtime with voice UX and MCP compatibility.
 This is not a new Linux distro in the early phases. It is a safe desktop action layer that can later be packaged as a distribution/image.

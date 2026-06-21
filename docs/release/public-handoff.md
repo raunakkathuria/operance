@@ -1,15 +1,14 @@
 # Public Handoff
 
 Status: Current public handoff  
-Type: Outside-developer release state  
+Type: Public beta release state
 Audience: Early adopters, contributors, maintainers
 
 ---
 
 ## 1. Position
 
-Operance is currently published as a **Fedora KDE Plasma Wayland developer
-release**.
+Operance is currently published as a **Fedora KDE Plasma Wayland public beta**.
 
 This release is intentionally narrow. It is meant for developers and early
 testers who can run documented commands, collect support bundles, and report
@@ -41,20 +40,19 @@ Current supported command subset on that target:
 
 Primary supported path:
 
+- Fedora RPM install through the release `setup.sh` path
+- packaged `/usr/bin/operance`
+- installed tray user service
+- installed smoke plus a human tray click-to-talk smoke
+
+Contributor development path:
+
 - source checkout
 - optional `ui` and `voice` extras installed
 - `./scripts/run_mvp.sh` for the default interaction path
 - `./scripts/run_checkout_smoke.sh` for a safe baseline
 
-Secondary supported path:
-
-- Fedora RPM install of the `mvp` runtime profile
-- validated through `./scripts/run_fedora_gate.sh --reset-user-services`
-- useful for proving packaging, install, installed-command smoke behavior,
-  bundled tray plus STT runtime availability, and live-adapter defaults for the
-  packaged command
-
-The Fedora gate defaults to:
+The packaged Fedora gate defaults to:
 
 - `./scripts/build_package_artifacts.sh --rpm --bundle-profile mvp`
 - `./scripts/run_installed_package_smoke.sh --require-mvp-runtime --reset-user-services`

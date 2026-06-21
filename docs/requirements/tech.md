@@ -12,7 +12,8 @@ The project will use **Python 3.12+ as the primary implementation language throu
 
 Native and external runtimes will be used where they already provide the performance-critical path:
 
-- **llama.cpp** for local LLM serving
+- **OpenAI-compatible local model servers** such as Ollama or llama.cpp for
+  optional local planner inference
 - **PipeWire** for low-latency audio capture and media routing
 - **KDE / KWin / D-Bus system services** for Linux desktop control
 
@@ -50,7 +51,8 @@ Python is the shortest path to a maintainable control plane because the selected
 - **openWakeWord** is designed for direct Python use and Python packaging. ([github.com](https://github.com/dscripka/openWakeWord))
 - **moonshine-voice** provides a Python package with microphone transcription support. ([pypi.org](https://pypi.org/project/moonshine-voice/))
 - **Qt for Python** is the official Python binding for Qt, and `PySide6.QtDBus` is available. ([doc.qt.io](https://doc.qt.io/qtforpython-6/))
-- **llama.cpp** already exposes an OpenAI-compatible server, so the app does not need embedded inference code. ([github.com](https://github.com/ggml-org/llama.cpp))
+- **Ollama and llama.cpp** can expose local chat-completions-compatible
+  endpoints, so the app does not need embedded inference code.
 
 Python is therefore not a fallback choice here. It is the most phase-friendly control-plane language for the current architecture.
 
@@ -61,7 +63,8 @@ Python is therefore not a fallback choice here. It is the most phase-friendly co
 ### 4.1 Control plane
 
 - **Python 3.12+**
-- **uv** for development environment and dependency management
+- standard `venv` plus editable `pip install` for the documented contributor
+  setup path
 - standard-library `dataclasses` as the default internal typed-model strategy
 - JSON-serializable contract objects for events, plans, results, and status
 - **SQLite** for local state and audit metadata
@@ -78,7 +81,8 @@ Python is therefore not a fallback choice here. It is the most phase-friendly co
 ### 4.3 Planning
 
 - deterministic matcher for common commands
-- **llama.cpp server** for local planner inference
+- OpenAI-compatible local planner endpoint, with current onboarding centered on
+  Ollama and llama.cpp templates
 - schema-constrained JSON outputs only
 - planner never executes directly
 
