@@ -38,6 +38,7 @@ from ..planner import (
     build_planner_readiness_report,
 )
 from ..project_info import build_project_identity, project_version
+from ..public_beta import build_beta_feedback_guide
 from ..release_channel import build_release_update_status
 from ..status import StatusSnapshot
 from ..stt import SpeechTranscriber, build_default_speech_transcriber
@@ -319,6 +320,13 @@ class TrayController:
 
     def release_update_status(self) -> dict[str, object]:
         return build_release_update_status(env=self.env)
+
+    def beta_feedback_guide(self) -> dict[str, object]:
+        identity = build_project_identity()
+        return build_beta_feedback_guide(
+            identity=identity,
+            release_status=build_release_update_status(identity=identity, check_remote=False, env=self.env),
+        )
 
     def planner_readiness_report(
         self,
@@ -925,6 +933,56 @@ def _format_getting_started_details(report: dict[str, object]) -> str:
     return "\n\n".join(sections)
 
 
+def _format_beta_feedback_highlights(guide: dict[str, object]) -> str:
+    lines: list[str] = []
+    target = guide.get("target")
+    if isinstance(target, str) and target:
+        lines.append(f"Target: {target}")
+    time_budget = guide.get("time_budget_minutes")
+    if isinstance(time_budget, int):
+        lines.append(f"Time: about {time_budget} minutes")
+    try_commands = guide.get("try_commands")
+    if isinstance(try_commands, list) and try_commands:
+        first_command = next((item for item in try_commands if isinstance(item, str)), None)
+        if first_command:
+            lines.append(f"First voice test: {first_command}")
+    issue_url = guide.get("issue_url")
+    if isinstance(issue_url, str) and issue_url:
+        lines.append("Report: support bundle or issue draft")
+    return "\n".join(lines)
+
+
+def _format_beta_feedback_details(guide: dict[str, object]) -> str:
+    sections: list[str] = []
+    guide_sections = guide.get("sections")
+    if isinstance(guide_sections, list):
+        for section in guide_sections:
+            if not isinstance(section, dict):
+                continue
+            label = section.get("label")
+            goal = section.get("goal")
+            commands = section.get("commands")
+            lines: list[str] = []
+            if isinstance(goal, str) and goal:
+                lines.append(goal)
+            if isinstance(commands, list):
+                lines.extend(f"- {command}" for command in commands if isinstance(command, str))
+            if isinstance(label, str) and lines:
+                sections.append(f"{label}:\n" + "\n".join(lines))
+
+    report_even_if = guide.get("report_even_if")
+    if isinstance(report_even_if, list) and report_even_if:
+        lines = [f"- {item}" for item in report_even_if if isinstance(item, str)]
+        if lines:
+            sections.append("Report even if:\n" + "\n".join(lines))
+
+    issue_url = guide.get("issue_url")
+    if isinstance(issue_url, str) and issue_url:
+        sections.append(f"GitHub issues:\n{issue_url}")
+
+    return "\n\n".join(sections) or json.dumps(guide, indent=2, sort_keys=True)
+
+
 def _format_planner_setup_summary(report: dict[str, object]) -> str:
     label = report.get("label")
     if isinstance(label, str) and label:
@@ -1053,6 +1111,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     state_action.setEnabled(False)
     click_to_talk_action = QAction("Click to talk", menu)
     command_coach_action = QAction("Try commands", menu)
+    beta_feedback_action = QAction("Beta feedback guide", menu)
     supported_commands_action = QAction("Supported commands", menu)
     about_action = QAction("About Operance", menu)
     check_updates_action = QAction("Check for updates", menu)
@@ -1070,6 +1129,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     menu.addAction(click_to_talk_action)
     menu.addAction(voice_loop_control_action)
     menu.addAction(command_coach_action)
+    menu.addAction(beta_feedback_action)
     menu.addAction(supported_commands_action)
     menu.addAction(getting_started_action)
     menu.addAction(local_ai_coach_action)
@@ -1305,6 +1365,25 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
             details=str(coach.get("recovery") or ""),
         )
 
+    def show_beta_feedback() -> None:
+        try:
+            guide = controller.beta_feedback_guide()
+        except Exception as exc:
+            _show_tray_message(
+                tray,
+                "Beta feedback unavailable",
+                str(exc),
+                _resolve_notification_icon(QSystemTrayIcon, "warning"),
+            )
+            return
+        _show_information_dialog(
+            QMessageBox,
+            title=str(guide.get("title") or "Beta feedback guide"),
+            summary=str(guide.get("summary") or "Install, verify, try, and report."),
+            informative_text=_format_beta_feedback_highlights(guide),
+            details=_format_beta_feedback_details(guide),
+        )
+
     def show_about() -> None:
         identity = build_project_identity()
         _show_information_dialog(
@@ -1532,6 +1611,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     tray.activated.connect(on_tray_activated)
     click_to_talk_action.triggered.connect(start_click_to_talk)
     command_coach_action.triggered.connect(show_command_coach)
+    beta_feedback_action.triggered.connect(show_beta_feedback)
     supported_commands_action.triggered.connect(show_supported_commands)
     about_action.triggered.connect(show_about)
     check_updates_action.triggered.connect(show_update_status)

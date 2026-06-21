@@ -112,6 +112,7 @@ bash ./setup.sh --release-url https://github.com/raunakkathuria/operance/release
 operance --version
 operance --installed-smoke
 operance --public-beta-checklist
+operance --beta-feedback
 ```
 
 Tester command script:
@@ -227,7 +228,7 @@ Post structure:
 2. Exact supported target.
 3. What works today.
 4. Known limits.
-5. The 10-minute test ask.
+5. The 10-minute test ask: `operance --beta-feedback`.
 6. Install link.
 7. Issue-report command.
 8. Maintainer promise to read reports and post a follow-up summary.
@@ -359,6 +360,7 @@ Before first outreach:
 - setup command has been tested on the target Fedora KDE Wayland machine
 - `operance --installed-smoke` passes for the release path
 - `operance --public-beta-checklist` is current
+- `operance --beta-feedback` matches the public beta guide and tray feedback guide
 - support bundle and issue report generation work
 
 Before Show HN or broader developer launch:
@@ -376,4 +378,3 @@ Before normal-user outreach:
 - failure reporting is clear from the product surface
 - docs do not require users to understand internals
 - unsupported platforms are clearly marked
-

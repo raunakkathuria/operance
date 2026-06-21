@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added a shared 10-minute beta feedback workflow through `operance --beta-feedback` and the tray `Beta feedback guide`, keeping install, readiness, click-to-talk script, and issue-report steps aligned across CLI, tray, docs, and website.
+- Expanded `operance --public-beta-checklist` with structured install readiness, tray readiness, command script, and failure-reporting sections for clearer beta tester guidance.
 - Added `docs/specs/` as the canonical spec-to-PR planning layer, including the current beta product direction, milestone roadmap, release criteria, and agent/contributor guidance for spec-first changes.
 - Cleaned stale startup-era documentation so the initial prompt and original long-form plan are marked as historical context, while active README, release, Linux, and contributor docs point at the packaged Fedora public beta path and current specs.
 - Added always-on wake-only feedback so saying only `Operance` now records `I heard Operance, but no command followed.`, shows a tray warning, and returns the voice loop to wake waiting instead of staying stuck in command capture.
