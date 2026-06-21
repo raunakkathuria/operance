@@ -32,7 +32,9 @@ def test_readme_documents_command_recovery_examples() -> None:
     assert "Command recovery:" in readme
     assert "`open browser`" in readme
     assert "`open google.com`" in readme
+    assert "`go to google.com`" in readme
     assert "`search google for linux automation`" in readme
+    assert "`search the web for linux automation`" in readme
     assert "`what time is it`" in readme
     assert "`fire force`" in readme
 

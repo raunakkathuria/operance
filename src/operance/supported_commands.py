@@ -306,8 +306,9 @@ def _help_examples(domains: list[object], *, limit: int = 6) -> list[str]:
 def _tool_usage_pattern(tool: ToolName) -> str | None:
     patterns = {
         ToolName.APPS_LAUNCH: (
-            "open browser | open google.com | search google for <query> | "
-            "open <app name> | open <app> and load <website>"
+            "open browser | open the browser | open google.com | go to <website> | "
+            "search google for <query> | search the web for <query> | open <app name> | "
+            "open <app> and load <website>"
         ),
         ToolName.APPS_FOCUS: "focus <app name>",
         ToolName.APPS_QUIT: "quit <app name>",
@@ -321,7 +322,7 @@ def _tool_usage_pattern(tool: ToolName) -> str | None:
         ToolName.FILES_RENAME: "rename folder on desktop from <source> to <target>",
         ToolName.FILES_MOVE: "move folder on desktop called <name> to <folder>",
         ToolName.FILES_OPEN: (
-            "open downloads | open documents | open desktop | "
+            "open downloads | open folder downloads | open documents | open desktop | "
             "open file on desktop called <name> | open recent file called <name>"
         ),
     }

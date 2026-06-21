@@ -670,15 +670,20 @@ def test_cli_supported_commands_prints_catalog_with_live_blockers(monkeypatch, c
     assert commands["apps.launch"]["example_transcripts"] == [
         "open firefox",
         "open browser",
+        "open the browser",
         "open google.com",
+        "go to google.com",
         "search google for linux automation",
+        "search the web for linux automation",
         "open http://localhost:3000",
         "browse to localhost 3000",
         "browse to docs.python.org/3",
+        "visit docs.python.org/3",
         "open firefox and load localhost:3000",
     ]
     assert commands["apps.launch"]["usage_pattern"] == (
-        "open browser | open google.com | search google for <query> | open <app name> | open <app> and load <website>"
+        "open browser | open the browser | open google.com | go to <website> | "
+        "search google for <query> | search the web for <query> | open <app name> | open <app> and load <website>"
     )
     assert commands["windows.list"]["live_runtime_status"] == "available"
     assert commands["windows.list"]["release_verification_status"] == "verified"
@@ -774,8 +779,9 @@ def test_cli_getting_started_prints_activation_path(monkeypatch, capsys) -> None
     assert {
         "group": "Apps and websites",
         "say": (
-            "open browser | open google.com | search google for <query> | "
-            "open <app name> | open <app> and load <website>"
+            "open browser | open the browser | open google.com | go to <website> | "
+            "search google for <query> | search the web for <query> | open <app name> | "
+            "open <app> and load <website>"
         ),
     } in payload["try_commands"]
     assert payload["local_ai_planner"]["readiness_command"] == "python3 -m operance.cli --planner-readiness"
@@ -948,11 +954,16 @@ def test_cli_command_coach_prints_guided_examples(capsys) -> None:
     assert exit_code == 0
     assert payload["title"] == "Try commands"
     assert payload["steps"][0]["say"] == "open browser"
-    assert payload["steps"][2] == {
+    assert {
+        "say": "go to docs.python.org/3",
+        "expected": "Your default browser opens https://docs.python.org/3.",
+        "category": "Open apps and websites",
+    } in payload["steps"]
+    assert {
         "say": "search google for linux automation",
         "expected": "Your default browser opens a Google search.",
         "category": "Search",
-    }
+    } in payload["steps"]
     assert "Report an issue" in payload["recovery"]
 
 

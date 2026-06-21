@@ -285,6 +285,36 @@ def test_linux_files_adapter_opens_known_locations_with_xdg_open(tmp_path: Path)
     assert commands == [["/usr/bin/xdg-open", str(tmp_path / "Downloads")]]
 
 
+def test_linux_files_adapter_prefers_xdg_user_dirs_for_known_locations(tmp_path: Path) -> None:
+    from operance.adapters.linux import LinuxFilesAdapter
+
+    desktop_dir = tmp_path / "fixture" / "Desktop"
+    real_downloads = tmp_path / "RealDownloads"
+    desktop_dir.mkdir(parents=True)
+    real_downloads.mkdir()
+    commands: list[list[str]] = []
+
+    def run_command(command: list[str]) -> subprocess.CompletedProcess[str]:
+        commands.append(command)
+        if command == ["/usr/bin/xdg-user-dir", "DOWNLOAD"]:
+            return subprocess.CompletedProcess(command, 0, stdout=f"{real_downloads}\n", stderr="")
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    adapter = LinuxFilesAdapter(
+        desktop_dir=desktop_dir,
+        run_command=run_command,
+        resolve_executable=lambda name: f"/usr/bin/{name}" if name in {"xdg-open", "xdg-user-dir"} else None,
+    )
+
+    message = adapter.open_location("downloads")
+
+    assert message == "Opened downloads folder"
+    assert commands == [
+        ["/usr/bin/xdg-user-dir", "DOWNLOAD"],
+        ["/usr/bin/xdg-open", str(real_downloads)],
+    ]
+
+
 def test_linux_apps_adapter_resolves_desktop_entry_by_name(tmp_path: Path) -> None:
     from operance.adapters.linux import LinuxAppsAdapter
 

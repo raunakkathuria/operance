@@ -1496,15 +1496,27 @@ class LinuxFilesAdapter:
 
     def _resolve_known_location(self, location: str) -> Path:
         if location == "desktop":
-            return self.desktop_dir
+            return self._xdg_user_dir("DESKTOP") or self.desktop_dir
         home_dir = self.desktop_dir.parent
         if location == "downloads":
-            return home_dir / "Downloads"
+            return self._xdg_user_dir("DOWNLOAD") or home_dir / "Downloads"
         if location == "documents":
-            return home_dir / "Documents"
+            return self._xdg_user_dir("DOCUMENTS") or home_dir / "Documents"
         if location == "home":
             return home_dir
         raise ValueError(f"unsupported folder location: {location}")
+
+    def _xdg_user_dir(self, name: str) -> Path | None:
+        xdg_user_dir = self.resolve_executable("xdg-user-dir")
+        if xdg_user_dir is None:
+            return None
+        result = self.run_command([xdg_user_dir, name])
+        if result.returncode != 0:
+            return None
+        path = result.stdout.strip()
+        if not path:
+            return None
+        return Path(path).expanduser()
 
     def create_folder(self, root: Path, name: str) -> Path:
         root.mkdir(parents=True, exist_ok=True)

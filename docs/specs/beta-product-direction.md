@@ -166,6 +166,18 @@ Scope:
 - adapter-owned OS resolution
 - product documentation that explains behavior from a user perspective
 
+Current accepted safe-command slice:
+
+- browser requests accept natural variants such as `open browser`, `open the
+  browser`, `open web browser`, and `open default browser`
+- website requests accept explicit navigation verbs such as `open google.com`,
+  `go to google.com`, `visit docs.python.org/3`, and `open website
+  github.com/raunakkathuria/operance`
+- search requests accept `search google for <query>` and `search the web for
+  <query>` while still mapping to a typed browser navigation action
+- known-folder requests accept both `open downloads` and `open folder
+  downloads`
+
 Non-goals:
 
 - every Linux shell command
@@ -244,4 +256,3 @@ Before tagging:
 - README and release docs match the installed behavior
 - changelog contains the release slice
 - tag is signed when creating the release tag
-
