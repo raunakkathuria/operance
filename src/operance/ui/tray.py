@@ -6,6 +6,8 @@ import fcntl
 from datetime import datetime, timezone
 from dataclasses import dataclass, field
 import json
+import os
+import sys
 from time import monotonic
 from pathlib import Path
 from queue import Empty, SimpleQueue
@@ -56,8 +58,8 @@ from ..voice.runtime import (
     build_voice_loop_runtime_status_snapshot,
 )
 
-_TRAY_NOTIFICATION_DEFAULT_MS = 3000
-_TRAY_NOTIFICATION_SHORT_MS = 1600
+_TRAY_NOTIFICATION_DEFAULT_MS = 5000
+_TRAY_NOTIFICATION_SHORT_MS = 3000
 _CLICK_TO_TALK_NO_TRANSCRIPT_RETRY_COOLDOWN_SECONDS = 2.0
 
 
@@ -238,12 +240,14 @@ class TrayController:
     )
     _last_click_to_talk_error: str | None = field(default=None, init=False, repr=False)
     _voice_loop_service_active_override: bool | None = field(default=None, init=False, repr=False)
+    _source_voice_loop_process: subprocess.Popen | None = field(default=None, init=False, repr=False)
 
     def click_to_talk_active(self) -> bool:
         with self._click_to_talk_lock:
             return self._click_to_talk_active
 
     def snapshot(self) -> TraySnapshot:
+        self._sync_source_voice_loop_override()
         voice_loop_status = None
         if self.include_voice_loop_status:
             voice_loop_status = build_voice_loop_runtime_status_snapshot(env=self.env)
@@ -291,16 +295,24 @@ class TrayController:
         return run_setup_action("restart_voice_loop_service")
 
     def start_voice_loop_service(self) -> SetupRunResult:
+        if self._uses_source_voice_loop_control():
+            return self._start_source_voice_loop()
         result = _run_voice_loop_service_control("enable")
         if result.status == "success":
             self._voice_loop_service_active_override = True
         return result
 
     def stop_voice_loop_service(self) -> SetupRunResult:
+        if self._uses_source_voice_loop_control():
+            return self._stop_source_voice_loop()
         result = _run_voice_loop_service_control("stop")
         if result.status == "success":
             self._voice_loop_service_active_override = False
         return result
+
+    def shutdown(self) -> None:
+        if self._source_voice_loop_process is not None:
+            self._stop_source_voice_loop()
 
     def installed_readiness_report(self) -> TrayInstalledReadinessReport:
         return build_installed_readiness_report(build_installed_smoke_result(env=self.env))
@@ -455,6 +467,81 @@ class TrayController:
         self._clear_click_to_talk_preview_fallback()
         self._last_click_to_talk_result = None
         self._last_click_to_talk_error = None
+
+    def _uses_source_voice_loop_control(self) -> bool:
+        return build_project_identity().get("install_mode") == "source_checkout"
+
+    def _source_voice_loop_command(self) -> list[str]:
+        return [sys.executable, "-m", "operance.cli", "--voice-loop"]
+
+    def _source_voice_loop_env(self) -> dict[str, str]:
+        process_env = dict(os.environ)
+        process_env.update(self.env or {})
+        return process_env
+
+    def _start_source_voice_loop(self) -> SetupRunResult:
+        if self._source_voice_loop_process is not None and self._source_voice_loop_process.poll() is None:
+            return SetupRunResult(
+                action_id="start_source_voice_loop",
+                label="Start source-checkout voice loop",
+                command=" ".join(self._source_voice_loop_command()),
+                status="success",
+                returncode=0,
+                stdout="Source-checkout voice loop is already running.",
+                stderr="",
+                dry_run=False,
+            )
+
+        command = self._source_voice_loop_command()
+        self._source_voice_loop_process = subprocess.Popen(
+            command,
+            env=self._source_voice_loop_env(),
+        )
+        self._voice_loop_service_active_override = True
+        return SetupRunResult(
+            action_id="start_source_voice_loop",
+            label="Start source-checkout voice loop",
+            command=" ".join(command),
+            status="success",
+            returncode=0,
+            stdout="Started source-checkout voice loop.",
+            stderr="",
+            dry_run=False,
+        )
+
+    def _stop_source_voice_loop(self) -> SetupRunResult:
+        command = " ".join(self._source_voice_loop_command())
+        process = self._source_voice_loop_process
+        if process is not None and process.poll() is None:
+            process.terminate()
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=5)
+        self._source_voice_loop_process = None
+        self._voice_loop_service_active_override = False
+        return SetupRunResult(
+            action_id="stop_source_voice_loop",
+            label="Stop source-checkout voice loop",
+            command=command,
+            status="success",
+            returncode=0,
+            stdout="Stopped source-checkout voice loop.",
+            stderr="",
+            dry_run=False,
+        )
+
+    def _sync_source_voice_loop_override(self) -> None:
+        if not self._uses_source_voice_loop_control():
+            return
+        if self._source_voice_loop_process is None:
+            return
+        if self._source_voice_loop_process.poll() is None:
+            self._voice_loop_service_active_override = True
+            return
+        self._source_voice_loop_process = None
+        self._voice_loop_service_active_override = False
 
 
 def build_tray_snapshot(
@@ -1434,6 +1521,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
     def quit_tray() -> None:
         timer.stop()
         tray.hide()
+        controller.shutdown()
         daemon.stop()
         app.quit()
 
@@ -1495,6 +1583,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
         if timer.isActive():
             timer.stop()
         tray.hide()
+        controller.shutdown()
         _release_tray_instance_lock(tray_lock)
         daemon.stop()
 
@@ -1694,6 +1783,19 @@ def _build_notification(
                 message=status.last_response,
                 event_id=f"unmatched:{status.last_response}",
             )
+
+    voice_loop_response = _voice_loop_response_notification(voice_loop_status)
+    if voice_loop_response is not None:
+        return voice_loop_response
+
+    if _voice_loop_listening_for_command(voice_loop_status):
+        phrase = voice_loop_status.last_wake_phrase or "wake_word"
+        return TrayNotification(
+            level="info",
+            title="I'm listening",
+            message="Wake word heard. Say your command now.",
+            event_id=f"voice_loop_listening:{voice_loop_status.wake_detections}:{phrase}",
+        )
 
     if _voice_loop_needs_attention(voice_loop_status):
         return TrayNotification(
@@ -1961,6 +2063,44 @@ def _voice_loop_needs_attention(
     return voice_loop_status.status == "warn" and bool(voice_loop_status.message)
 
 
+def _voice_loop_response_notification(
+    voice_loop_status: VoiceLoopRuntimeStatusSnapshot | None,
+) -> TrayNotification | None:
+    if voice_loop_status is None:
+        return None
+    if not voice_loop_status.heartbeat_fresh:
+        return None
+    status = getattr(voice_loop_status, "last_response_status", None) or "unknown"
+    if status != "no_command" and getattr(voice_loop_status, "last_transcript_final", None) is not True:
+        return None
+    if not voice_loop_status.last_response_text:
+        return None
+
+    message = voice_loop_status.last_response_text
+    if voice_loop_status.last_transcript_text:
+        message = f"Heard: {voice_loop_status.last_transcript_text}\n{message}"
+
+    return TrayNotification(
+        level=_result_level(status),
+        title="Operance",
+        message=message,
+        event_id=(
+            f"voice_loop_response:{getattr(voice_loop_status, 'wake_detections', 0)}:"
+            f"{status}:{voice_loop_status.last_response_text}"
+        ),
+    )
+
+
+def _voice_loop_listening_for_command(
+    voice_loop_status: VoiceLoopRuntimeStatusSnapshot | None,
+) -> bool:
+    if voice_loop_status is None:
+        return False
+    if not voice_loop_status.heartbeat_fresh:
+        return False
+    return voice_loop_status.loop_state == "listening_for_command"
+
+
 def _setup_result_message(result: SetupRunResult) -> str:
     if result.status == "success":
         action_id = result.action_id
@@ -2050,7 +2190,7 @@ def _drain_click_to_talk_results(
 def _result_level(status: str) -> str:
     if status in {"failed", "denied"}:
         return "error"
-    if status in {"unmatched", "no_transcript"}:
+    if status in {"unmatched", "no_transcript", "no_command"}:
         return "warning"
     return "info"
 

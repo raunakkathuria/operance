@@ -246,6 +246,14 @@ class OperanceDaemon:
         self.logger.info("wake_detected", extra={"phrase": phrase})
         return event
 
+    def cancel_wake_listening(self, *, source: str = "voice_loop") -> None:
+        if self.state_machine.current_state != RuntimeState.WAKE_DETECTED:
+            return
+
+        self.state_machine.transition_to(RuntimeState.COOLDOWN, f"{source} wake command timed out")
+        self.state_machine.transition_to(RuntimeState.IDLE, f"{source} wake command timed out")
+        self.logger.info("wake_listening_cancelled", extra={"source": source})
+
     def begin_manual_listening(self, *, source: str = "manual") -> None:
         if self.state_machine.current_state == RuntimeState.AWAITING_CONFIRMATION:
             return

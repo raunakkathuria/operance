@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Added always-on wake-only feedback so saying only `Operance` now records `I heard Operance, but no command followed.`, shows a tray warning, and returns the voice loop to wake waiting instead of staying stuck in command capture.
+- Improved one-utterance always-on commands by feeding the wake frame into STT, so phrases such as `Operance open browser` can be captured in the same utterance when STT returns the command.
+- Aligned source-checkout always-on tray testing with click-to-talk by starting a repo-local voice-loop child process from the source tray instead of controlling the packaged systemd service, while preserving systemd control for packaged installs.
+- Improved always-on command reliability by trimming short wake-word residue before known command starters in wake-word-gated transcripts.
+- Added an always-on listening wake acknowledgement in the tray, prioritized final command results over stale listening bubbles, and lengthened tray notification timeouts so listening/result bubbles are easier to notice and read.
 - Expanded the packaged evidence gate so the before-tag workflow validates and can capture installed build identity, installed smoke, public beta checklist, command coach, local AI coach, supported-command JSON, support bundle evidence, and tray manual checks in one release evidence directory.
 - Added a shared local AI coach surfaced through `operance --local-ai-coach` and the tray `Local AI setup` action, wrapping existing planner setup/status into an opt-in, non-mutating Ollama-first onboarding flow with readiness, explicit execution test, and safety-contract guidance.
 - Added a shared command coach surfaced through `operance --command-coach` and the tray `Try commands` action, giving first-run users guided click-to-talk examples, expected outcomes, and recovery tips without opening raw diagnostics.
