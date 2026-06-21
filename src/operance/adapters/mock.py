@@ -259,6 +259,33 @@ class MockFilesAdapter:
     def list_recent(self, root: Path | None = None) -> list[Path]:
         return list(self.recent_files)
 
+    def list_location(self, location: str) -> list[Path]:
+        path = self._resolve_known_location(location)
+        if not path.exists() or not path.is_dir():
+            return []
+        return sorted(
+            [entry for entry in path.iterdir() if not _is_hidden_path(entry, path)],
+            key=lambda entry: entry.name.casefold(),
+        )
+
+    def find_entries(self, location: str, query: str, kind: str) -> list[Path]:
+        root = self._resolve_known_location(location)
+        if not root.exists() or not root.is_dir():
+            return []
+        normalized_query = query.casefold()
+        matches: list[Path] = []
+        for entry in sorted(root.rglob("*"), key=lambda item: str(item).casefold()):
+            if _is_hidden_path(entry, root) or normalized_query not in entry.name.casefold():
+                continue
+            if kind == "file" and not entry.is_file():
+                continue
+            if kind == "folder" and not entry.is_dir():
+                continue
+            matches.append(entry)
+            if len(matches) >= 10:
+                break
+        return matches
+
     def open_location(self, location: str) -> str:
         if location in {"desktop", "downloads", "documents", "home"}:
             return f"Opened {location} folder"
@@ -296,6 +323,25 @@ class MockFilesAdapter:
         if target.exists():
             raise ValueError(f"destination entry already exists: {target.name}")
         return path.rename(target)
+
+    def _resolve_known_location(self, location: str) -> Path:
+        if location == "desktop":
+            return self.desktop_dir
+        if location == "home":
+            return self.desktop_dir
+        if location == "downloads":
+            return self.desktop_dir / "Downloads"
+        if location == "documents":
+            return self.desktop_dir / "Documents"
+        raise ValueError(f"unsupported folder location: {location}")
+
+
+def _is_hidden_path(path: Path, root: Path) -> bool:
+    try:
+        relative_parts = path.relative_to(root).parts
+    except ValueError:
+        relative_parts = path.parts
+    return any(part.startswith(".") for part in relative_parts)
 
 
 def build_mock_adapter_set(

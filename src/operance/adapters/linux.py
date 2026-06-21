@@ -133,6 +133,14 @@ def _process_name_candidates_for_launch(app: str, command: list[str]) -> list[st
     return candidates
 
 
+def _is_hidden_path(path: Path, root: Path) -> bool:
+    try:
+        relative_parts = path.relative_to(root).parts
+    except ValueError:
+        relative_parts = path.parts
+    return any(part.startswith(".") for part in relative_parts)
+
+
 def _normalize_app_lookup_text(value: str) -> str:
     normalized = value.casefold().strip()
     normalized = re.sub(r"[^a-z0-9+._-]+", " ", normalized)
@@ -1463,6 +1471,7 @@ class LinuxNotificationsAdapter:
 class LinuxFilesAdapter:
     desktop_dir: Path
     max_recent_files: int = 10
+    max_search_results: int = 10
     run_command: RunCommand = _default_run_command
     resolve_executable: ResolveExecutable = _default_resolve_executable
 
@@ -1473,6 +1482,33 @@ class LinuxFilesAdapter:
 
         recent_files = [path for path in target_root.iterdir() if path.is_file()]
         return sorted(recent_files, key=lambda path: path.stat().st_mtime, reverse=True)[: self.max_recent_files]
+
+    def list_location(self, location: str) -> list[Path]:
+        path = self._resolve_known_location(location)
+        if not path.exists() or not path.is_dir():
+            return []
+        return sorted(
+            [entry for entry in path.iterdir() if not _is_hidden_path(entry, path)],
+            key=lambda entry: entry.name.casefold(),
+        )
+
+    def find_entries(self, location: str, query: str, kind: str) -> list[Path]:
+        root = self._resolve_known_location(location)
+        if not root.exists() or not root.is_dir():
+            return []
+        normalized_query = query.casefold()
+        matches: list[Path] = []
+        for entry in sorted(root.rglob("*"), key=lambda item: str(item).casefold()):
+            if _is_hidden_path(entry, root) or normalized_query not in entry.name.casefold():
+                continue
+            if kind == "file" and not entry.is_file():
+                continue
+            if kind == "folder" and not entry.is_dir():
+                continue
+            matches.append(entry)
+            if len(matches) >= self.max_search_results:
+                break
+        return matches
 
     def open_location(self, location: str) -> str:
         path = self._resolve_known_location(location)

@@ -128,6 +128,8 @@ ADAPTER_TOOL_CONTRACTS: dict[ToolName, AdapterToolContract] = {
     ),
     ToolName.NOTIFICATIONS_SHOW: AdapterToolContract(ToolName.NOTIFICATIONS_SHOW, "notifications", ("show",)),
     ToolName.FILES_LIST_RECENT: AdapterToolContract(ToolName.FILES_LIST_RECENT, "files", ("list_recent",)),
+    ToolName.FILES_LIST_FOLDER: AdapterToolContract(ToolName.FILES_LIST_FOLDER, "files", ("list_location",)),
+    ToolName.FILES_FIND: AdapterToolContract(ToolName.FILES_FIND, "files", ("find_entries",)),
     ToolName.FILES_OPEN: AdapterToolContract(ToolName.FILES_OPEN, "files", ("open_path",)),
     ToolName.FILES_CREATE_FOLDER: AdapterToolContract(ToolName.FILES_CREATE_FOLDER, "files", ("create_folder",)),
     ToolName.FILES_DELETE_FOLDER: AdapterToolContract(ToolName.FILES_DELETE_FOLDER, "files", ("remove_folder",)),

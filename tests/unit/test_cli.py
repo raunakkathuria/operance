@@ -742,6 +742,14 @@ def test_cli_supported_commands_available_only_filters_blocked_entries(monkeypat
     assert "audio.set_muted" in commands
     assert "files.list_recent" in commands
     assert commands["files.list_recent"]["usage_pattern"] == "show recent files"
+    assert "files.list_folder" in commands
+    assert commands["files.list_folder"]["usage_pattern"] == (
+        "list files in downloads | show files in documents | what is in downloads"
+    )
+    assert "files.find" in commands
+    assert commands["files.find"]["usage_pattern"] == (
+        "find file named <name> | find folder named <name> | search documents for <name>"
+    )
     assert "files.create_folder" in commands
     assert commands["files.create_folder"]["usage_pattern"] == "create folder on desktop called <name>"
     assert commands["files.delete_folder"]["usage_pattern"] == "delete folder on desktop called <name>"

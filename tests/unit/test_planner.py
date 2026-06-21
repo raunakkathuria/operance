@@ -68,6 +68,63 @@ def test_plan_preview_renders_recent_file_open_action() -> None:
     assert preview == "Planned action: open recent file 'notes.txt'."
 
 
+def test_plan_preview_renders_folder_list_action() -> None:
+    from operance.planner.preview import build_plan_preview
+
+    plan = ActionPlan(
+        source=PlanSource.PLANNER,
+        original_text="list files in downloads",
+        actions=[
+            TypedAction(
+                tool=ToolName.FILES_LIST_FOLDER,
+                args={"location": "downloads"},
+            )
+        ],
+    )
+
+    preview = build_plan_preview(plan)
+
+    assert preview == "Planned action: list files in downloads."
+
+
+def test_plan_preview_renders_file_find_action() -> None:
+    from operance.planner.preview import build_plan_preview
+
+    plan = ActionPlan(
+        source=PlanSource.PLANNER,
+        original_text="search documents for invoice",
+        actions=[
+            TypedAction(
+                tool=ToolName.FILES_FIND,
+                args={"location": "documents", "query": "invoice", "kind": "any"},
+            )
+        ],
+    )
+
+    preview = build_plan_preview(plan)
+
+    assert preview == "Planned action: find files or folders named 'invoice' in documents."
+
+
+def test_plan_preview_renders_known_folder_open_action() -> None:
+    from operance.planner.preview import build_plan_preview
+
+    plan = ActionPlan(
+        source=PlanSource.PLANNER,
+        original_text="open downloads",
+        actions=[
+            TypedAction(
+                tool=ToolName.FILES_OPEN,
+                args={"location": "downloads"},
+            )
+        ],
+    )
+
+    preview = build_plan_preview(plan)
+
+    assert preview == "Planned action: open downloads folder."
+
+
 def test_plan_preview_renders_quit_app_action() -> None:
     from operance.planner.preview import build_plan_preview
 

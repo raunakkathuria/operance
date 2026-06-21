@@ -1412,6 +1412,54 @@ def test_linux_files_adapter_lists_recent_files_in_modified_order(tmp_path: Path
     assert adapter.list_recent() == [newer_file, older_file]
 
 
+def test_linux_files_adapter_lists_known_location_without_hidden_entries(tmp_path: Path) -> None:
+    from operance.adapters.linux import LinuxFilesAdapter
+
+    desktop_dir = tmp_path / "Desktop"
+    desktop_dir.mkdir()
+    downloads_dir = tmp_path / "Downloads"
+    downloads_dir.mkdir()
+    visible_file = downloads_dir / "invoice.pdf"
+    visible_folder = downloads_dir / "Projects"
+    hidden_file = downloads_dir / ".secret"
+    visible_file.write_text("invoice", encoding="utf-8")
+    visible_folder.mkdir()
+    hidden_file.write_text("secret", encoding="utf-8")
+    commands: list[list[str]] = []
+    adapter = LinuxFilesAdapter(
+        desktop_dir=desktop_dir,
+        run_command=lambda command: commands.append(command)
+        or subprocess.CompletedProcess(command, 0, f"{downloads_dir}\n", ""),
+    )
+
+    assert adapter.list_location("downloads") == [visible_file, visible_folder]
+    assert commands == [["/usr/bin/xdg-user-dir", "DOWNLOAD"]]
+
+
+def test_linux_files_adapter_finds_entries_by_name_and_kind(tmp_path: Path) -> None:
+    from operance.adapters.linux import LinuxFilesAdapter
+
+    desktop_dir = tmp_path / "Desktop"
+    desktop_dir.mkdir()
+    documents_dir = tmp_path / "Documents"
+    documents_dir.mkdir()
+    invoice = documents_dir / "invoice.pdf"
+    invoice.write_text("invoice", encoding="utf-8")
+    invoices_folder = documents_dir / "Invoices"
+    invoices_folder.mkdir()
+    hidden_folder = documents_dir / ".cache"
+    hidden_folder.mkdir()
+    (hidden_folder / "invoice-secret.txt").write_text("secret", encoding="utf-8")
+    adapter = LinuxFilesAdapter(
+        desktop_dir=desktop_dir,
+        run_command=lambda command: subprocess.CompletedProcess(command, 0, f"{documents_dir}\n", ""),
+    )
+
+    assert adapter.find_entries("documents", "invoice", "file") == [invoice]
+    assert adapter.find_entries("documents", "invoice", "folder") == [invoices_folder]
+    assert adapter.find_entries("documents", "invoice", "any") == [invoice, invoices_folder]
+
+
 def test_linux_files_adapter_opens_desktop_entry(tmp_path: Path) -> None:
     from operance.adapters.linux import LinuxFilesAdapter
 

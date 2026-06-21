@@ -29,6 +29,7 @@ Current supported command subset on that target:
 - narrow launch plus notification phrases such as `open firefox and notify me`
 - `focus <app name>` and confirmation-gated `quit <app name>`
 - `show recent files`
+- read-only known-folder discovery such as `list files in downloads`, `find file named <name>`, and `search documents for <name>`
 - Desktop folder or file create, delete, rename, and move commands with confirmation where needed
 - `list windows` and `switch to window <visible title>`
 - `what time is it`, `what is my battery level`, `wifi status`, `what is the volume`, and `is audio muted`

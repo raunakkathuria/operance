@@ -267,6 +267,41 @@ class ActionExecutor:
                 message=f"Found {len(files)} recent files",
             )
 
+        if tool == ToolName.FILES_LIST_FOLDER:
+            adapter = self._require_adapter(self.adapters.files, tool)
+            location = str(args["location"])
+            entries = adapter.list_location(location)
+            if not entries:
+                return ActionResultItem(
+                    tool=tool,
+                    status="success",
+                    message=f"{location} is empty",
+                )
+            return ActionResultItem(
+                tool=tool,
+                status="success",
+                message=f"{location} contains {len(entries)} {_entries_noun(len(entries))}: {_entry_names(entries)}",
+            )
+
+        if tool == ToolName.FILES_FIND:
+            adapter = self._require_adapter(self.adapters.files, tool)
+            location = str(args["location"])
+            query = str(args["query"])
+            kind = str(args["kind"])
+            entries = adapter.find_entries(location, query, kind)
+            if not entries:
+                return ActionResultItem(
+                    tool=tool,
+                    status="success",
+                    message=f"No matches found in {location} for {query}",
+                )
+            noun = _file_find_noun(kind, len(entries))
+            return ActionResultItem(
+                tool=tool,
+                status="success",
+                message=f"Found {len(entries)} {noun} in {location}: {_entry_names(entries)}",
+            )
+
         if tool == ToolName.FILES_OPEN:
             adapter = self._require_adapter(self.adapters.files, tool)
             location = str(args["location"])
@@ -394,6 +429,22 @@ class ActionExecutor:
 def _undo_created_folder(adapter, folder) -> str:
     adapter.remove_folder(folder)
     return f"Removed folder {folder.name} from desktop"
+
+
+def _entry_names(entries) -> str:
+    return "; ".join(entry.name for entry in entries[:10])
+
+
+def _entries_noun(count: int) -> str:
+    return "entry" if count == 1 else "entries"
+
+
+def _file_find_noun(kind: str, count: int) -> str:
+    if kind == "folder":
+        return "folder" if count == 1 else "folders"
+    if kind == "file":
+        return "file" if count == 1 else "files"
+    return "match" if count == 1 else "matches"
 
 
 def _undo_volume(adapter, previous_volume: int) -> str:

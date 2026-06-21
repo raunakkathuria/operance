@@ -46,6 +46,7 @@ Supported command families are intentionally conservative:
 - answer time, battery, Wi-Fi, volume, and mute status
 - set, mute, and unmute audio
 - show recent files
+- list or search known folders by file or folder name
 - create, rename, move, or delete Desktop entries with confirmation where needed
 - list windows or switch to a visible window
 

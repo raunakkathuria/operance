@@ -22,6 +22,8 @@ def test_default_action_registry_exposes_seed_command_specs() -> None:
     key_press_spec = registry.get(ToolName.KEYS_PRESS)
     disconnect_spec = registry.get(ToolName.NETWORK_DISCONNECT_CURRENT)
     connect_ssid_spec = registry.get(ToolName.NETWORK_CONNECT_KNOWN_SSID)
+    list_folder_spec = registry.get(ToolName.FILES_LIST_FOLDER)
+    find_files_spec = registry.get(ToolName.FILES_FIND)
     delete_file_spec = registry.get(ToolName.FILES_DELETE_FILE)
     rename_spec = registry.get(ToolName.FILES_RENAME)
 
@@ -210,6 +212,25 @@ def test_default_action_registry_exposes_seed_command_specs() -> None:
     assert connect_ssid_spec.risk_tier == RiskTier.TIER_2
     assert connect_ssid_spec.requires_confirmation is True
     assert connect_ssid_spec.undoable is False
+
+    assert list_folder_spec is not None
+    assert list_folder_spec.required_args == ("location",)
+    assert list_folder_spec.risk_tier == RiskTier.TIER_0
+    assert list_folder_spec.example_transcripts == (
+        "list files in downloads",
+        "show files in documents",
+        "what is in downloads",
+    )
+
+    assert find_files_spec is not None
+    assert find_files_spec.required_args == ("location", "query", "kind")
+    assert find_files_spec.risk_tier == RiskTier.TIER_0
+    assert find_files_spec.example_transcripts == (
+        "find file named notes.txt",
+        "find folder named projects",
+        "find file named report.pdf in downloads",
+        "search documents for invoice",
+    )
 
     assert delete_file_spec is not None
     assert delete_file_spec.required_args == ("location", "name")
@@ -554,3 +575,49 @@ def test_validator_rejects_unsafe_desktop_entry_names() -> None:
     assert result.valid is False
     assert result.normalized_plan is None
     assert result.errors == ["files.rename: source_name must be a simple desktop entry name"]
+
+
+def test_validator_rejects_unsafe_file_find_queries() -> None:
+    from operance.registry import build_default_action_registry
+    from operance.validator import PlanValidator
+
+    validator = PlanValidator(registry=build_default_action_registry())
+    plan = ActionPlan(
+        source=PlanSource.PLANNER,
+        original_text="find file",
+        actions=[
+            TypedAction(
+                tool=ToolName.FILES_FIND,
+                args={"location": "downloads", "query": "../secrets", "kind": "file"},
+            )
+        ],
+    )
+
+    result = validator.validate(plan)
+
+    assert result.valid is False
+    assert result.normalized_plan is None
+    assert result.errors == ["files.find: query must be a simple file or folder name fragment"]
+
+
+def test_validator_accepts_file_discovery_args() -> None:
+    from operance.registry import build_default_action_registry
+    from operance.validator import PlanValidator
+
+    validator = PlanValidator(registry=build_default_action_registry())
+    plan = ActionPlan(
+        source=PlanSource.PLANNER,
+        original_text="search downloads",
+        actions=[
+            TypedAction(
+                tool=ToolName.FILES_FIND,
+                args={"location": "downloads", "query": "invoice", "kind": "any"},
+            )
+        ],
+    )
+
+    result = validator.validate(plan)
+
+    assert result.valid is True
+    assert result.normalized_plan is not None
+    assert result.errors == []

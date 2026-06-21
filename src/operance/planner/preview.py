@@ -83,9 +83,19 @@ def _describe_action(tool: ToolName, args: dict[str, object]) -> str:
     if tool == ToolName.FILES_LIST_RECENT:
         return "list recent files"
 
+    if tool == ToolName.FILES_LIST_FOLDER:
+        return f"list files in {args['location']}"
+
+    if tool == ToolName.FILES_FIND:
+        kind = str(args.get("kind") or "any")
+        kind_text = "files or folders" if kind == "any" else kind
+        return f"find {kind_text} named {args['query']!r} in {args['location']}"
+
     if tool == ToolName.FILES_OPEN:
         if args.get("location") == "recent":
             return f"open recent file {args['name']!r}"
+        if "name" not in args:
+            return f"open {args['location']} folder"
         return f"open desktop entry {args['name']!r}"
 
     if tool == ToolName.FILES_CREATE_FOLDER:

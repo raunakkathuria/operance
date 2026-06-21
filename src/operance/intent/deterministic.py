@@ -555,6 +555,49 @@ class DeterministicIntentMatcher:
                 args={"modified_since": "today"},
             )
 
+        list_folder_match = (
+            re.fullmatch(r"(?:list|show) files in (desktop|downloads|documents|home)", normalized)
+            or re.fullmatch(r"(?:list|show) (desktop|downloads|documents|home) files", normalized)
+            or re.fullmatch(r"what(?: is|'s) in (desktop|downloads|documents|home)", normalized)
+        )
+        if list_folder_match:
+            return self._single_action_plan(
+                text,
+                ToolName.FILES_LIST_FOLDER,
+                args={"location": list_folder_match.group(1)},
+            )
+
+        find_named_match = re.fullmatch(
+            r"find (file|folder|item) named (.+?)(?: in (desktop|downloads|documents|home))?",
+            normalized,
+        )
+        if find_named_match:
+            kind_by_word = {"file": "file", "folder": "folder", "item": "any"}
+            return self._single_action_plan(
+                text,
+                ToolName.FILES_FIND,
+                args={
+                    "location": find_named_match.group(3) or "home",
+                    "query": find_named_match.group(2),
+                    "kind": kind_by_word[find_named_match.group(1)],
+                },
+            )
+
+        search_folder_match = re.fullmatch(
+            r"search (desktop|downloads|documents|home) for (.+)",
+            normalized,
+        )
+        if search_folder_match:
+            return self._single_action_plan(
+                text,
+                ToolName.FILES_FIND,
+                args={
+                    "location": search_folder_match.group(1),
+                    "query": search_folder_match.group(2),
+                    "kind": "any",
+                },
+            )
+
         open_recent_file_match = re.fullmatch(r"open recent file called (.+)", normalized)
         if open_recent_file_match:
             return self._single_action_plan(

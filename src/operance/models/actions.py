@@ -56,6 +56,8 @@ class ToolName(StrEnum):
     NETWORK_CONNECT_KNOWN_SSID = "network.connect_known_ssid"
     NOTIFICATIONS_SHOW = "notifications.show"
     FILES_LIST_RECENT = "files.list_recent"
+    FILES_LIST_FOLDER = "files.list_folder"
+    FILES_FIND = "files.find"
     FILES_OPEN = "files.open"
     FILES_CREATE_FOLDER = "files.create_folder"
     FILES_DELETE_FOLDER = "files.delete_folder"

@@ -119,6 +119,14 @@ def test_build_supported_command_catalog_can_filter_available_commands_only() ->
     assert catalog["catalog_filter"] == "available_only"
     assert "apps.launch" in commands
     assert "files.list_recent" in commands
+    assert "files.list_folder" in commands
+    assert commands["files.list_folder"]["usage_pattern"] == (
+        "list files in downloads | show files in documents | what is in downloads"
+    )
+    assert "files.find" in commands
+    assert commands["files.find"]["usage_pattern"] == (
+        "find file named <name> | find folder named <name> | search documents for <name>"
+    )
     assert "files.create_folder" in commands
     assert "files.delete_folder" in commands
     assert "files.delete_file" in commands

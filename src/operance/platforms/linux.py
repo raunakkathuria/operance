@@ -36,6 +36,8 @@ CURRENT_RELEASE_VERIFIED_TOOLS = frozenset(
         ToolName.FILES_CREATE_FOLDER,
         ToolName.FILES_DELETE_FILE,
         ToolName.FILES_DELETE_FOLDER,
+        ToolName.FILES_FIND,
+        ToolName.FILES_LIST_FOLDER,
         ToolName.FILES_LIST_RECENT,
         ToolName.FILES_MOVE,
         ToolName.FILES_OPEN,
@@ -492,6 +494,8 @@ class LinuxKdeWaylandPlatformProvider:
             ToolName.FILES_CREATE_FOLDER,
             ToolName.FILES_DELETE_FOLDER,
             ToolName.FILES_DELETE_FILE,
+            ToolName.FILES_FIND,
+            ToolName.FILES_LIST_FOLDER,
             ToolName.FILES_RENAME,
             ToolName.FILES_MOVE,
         }
@@ -589,6 +593,8 @@ class LinuxKdeWaylandPlatformProvider:
             ToolName.FILES_CREATE_FOLDER,
             ToolName.FILES_DELETE_FOLDER,
             ToolName.FILES_DELETE_FILE,
+            ToolName.FILES_FIND,
+            ToolName.FILES_LIST_FOLDER,
             ToolName.FILES_RENAME,
             ToolName.FILES_MOVE,
         }

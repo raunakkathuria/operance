@@ -177,12 +177,19 @@ Current accepted safe-command slice:
   <query>` while still mapping to a typed browser navigation action
 - known-folder requests accept both `open downloads` and `open folder
   downloads`
+- read-only file discovery accepts known-folder listing and filename search
+  phrases such as `list files in downloads`, `show files in documents`, `find
+  file named <name>`, `find folder named <name>`, and `search documents for
+  <name>` while staying inside typed `files.list_folder` and `files.find`
+  actions
 
 Non-goals:
 
 - every Linux shell command
 - raw terminal command execution
 - destructive file management without confirmation and audit
+- raw filesystem paths or file-content search from speech in the current
+  read-only discovery slice
 
 ### Milestone 3: Local AI Assist Mode
 

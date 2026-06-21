@@ -86,6 +86,30 @@ from operance.models.actions import ToolName
             "Found 2 recent files",
         ),
         (
+            "list files in downloads",
+            ToolName.FILES_LIST_FOLDER,
+            "success",
+            "downloads contains 2 entries: invoice.pdf; notes.txt",
+        ),
+        (
+            "find file named notes.txt",
+            ToolName.FILES_FIND,
+            "success",
+            "Found 1 file in home: notes.txt",
+        ),
+        (
+            "find folder named projects",
+            ToolName.FILES_FIND,
+            "success",
+            "Found 1 folder in home: projects",
+        ),
+        (
+            "search documents for missing",
+            ToolName.FILES_FIND,
+            "success",
+            "No matches found in documents for missing",
+        ),
+        (
             "open file on desktop called notes.txt",
             ToolName.FILES_OPEN,
             "success",
@@ -159,6 +183,15 @@ def test_executor_runs_seed_commands_against_mock_adapters(
         adapters.network.connected_ssid = "home"
     if expected_tool == ToolName.FILES_OPEN and "desktop called" in text:
         (tmp_path / "Desktop" / "notes.txt").write_text("notes", encoding="utf-8")
+    if expected_tool == ToolName.FILES_LIST_FOLDER:
+        downloads_dir = tmp_path / "Desktop" / "Downloads"
+        downloads_dir.mkdir()
+        (downloads_dir / "invoice.pdf").write_text("invoice", encoding="utf-8")
+        (downloads_dir / "notes.txt").write_text("notes", encoding="utf-8")
+    if expected_tool == ToolName.FILES_FIND:
+        (tmp_path / "Desktop" / "notes.txt").write_text("notes", encoding="utf-8")
+        (tmp_path / "Desktop" / "projects").mkdir()
+        (tmp_path / "Desktop" / "Documents").mkdir()
     if expected_tool == ToolName.FILES_RENAME:
         (tmp_path / "Desktop" / "projects").mkdir()
     if expected_tool == ToolName.FILES_MOVE:
