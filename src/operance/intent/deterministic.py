@@ -220,13 +220,38 @@ class DeterministicIntentMatcher:
                 requires_confirmation=True,
             )
 
-        if normalized in {"list windows", "show windows"}:
+        if normalized in {
+            "list windows",
+            "show windows",
+            "show open windows",
+            "list open windows",
+            "what windows are open",
+            "what apps are open",
+            "show open apps",
+            "list open apps",
+        }:
             return self._single_action_plan(
                 text,
                 ToolName.WINDOWS_LIST,
             )
 
-        window_switch_match = re.fullmatch(r"switch to window (.+)", normalized)
+        window_find_match = (
+            re.fullmatch(r"is (.+) open", normalized)
+            or re.fullmatch(r"is (.+) running", normalized)
+            or re.fullmatch(r"is window (.+) open", normalized)
+            or re.fullmatch(r"find window (.+)", normalized)
+            or re.fullmatch(r"show windows matching (.+)", normalized)
+        )
+        if window_find_match:
+            return self._single_action_plan(
+                text,
+                ToolName.WINDOWS_FIND,
+                args={"window": window_find_match.group(1)},
+            )
+
+        window_switch_match = re.fullmatch(r"switch to window (.+)", normalized) or re.fullmatch(
+            r"switch to (.+) window", normalized
+        )
         if window_switch_match:
             return self._single_action_plan(
                 text,

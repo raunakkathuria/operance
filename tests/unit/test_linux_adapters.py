@@ -743,6 +743,38 @@ def test_linux_windows_adapter_lists_deduplicated_window_titles() -> None:
     ]]
 
 
+def test_linux_windows_adapter_finds_matching_windows_without_switching() -> None:
+    from operance.adapters.linux import LinuxWindowsAdapter
+
+    commands: list[list[str]] = []
+
+    def run_command(command: list[str]) -> subprocess.CompletedProcess[str]:
+        commands.append(command)
+        return subprocess.CompletedProcess(
+            command,
+            0,
+            stdout="([('0_{abc}', 'GitHub — Mozilla Firefox', 'firefox', 100, 0.8, {'subtext': <'Activate running window on Desktop 1'>})],)\n",
+            stderr="",
+        )
+
+    adapter = LinuxWindowsAdapter(run_command=run_command)
+
+    assert adapter.find_windows("firefox") == ["GitHub — Mozilla Firefox"]
+    assert all("org.kde.krunner1.Run" not in command for command in commands)
+    assert commands[0][-2:] == ["org.kde.krunner1.Match", "firefox"]
+
+
+def test_linux_windows_adapter_returns_empty_find_results_for_no_matches() -> None:
+    from operance.adapters.linux import LinuxWindowsAdapter
+
+    def run_command(command: list[str]) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(command, 0, "(@a(sssida{sv}) [],)\n", "")
+
+    adapter = LinuxWindowsAdapter(run_command=run_command)
+
+    assert adapter.find_windows("missing") == []
+
+
 def test_linux_windows_adapter_parses_windows_runner_matches_with_icon_data() -> None:
     from operance.adapters.linux import LinuxWindowsAdapter
 

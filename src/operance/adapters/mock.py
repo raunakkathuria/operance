@@ -36,6 +36,10 @@ class MockWindowsAdapter:
     def list_windows(self) -> list[str]:
         return list(self.windows)
 
+    def find_windows(self, window: str) -> list[str]:
+        target = window.casefold()
+        return [title for title in self.windows if target in title.casefold()]
+
     def switch(self, window: str) -> str:
         target = window.casefold()
         for title in self.windows:

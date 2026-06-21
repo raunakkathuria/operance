@@ -27,6 +27,7 @@ class ToolName(StrEnum):
     APPS_FOCUS = "apps.focus"
     APPS_QUIT = "apps.quit"
     WINDOWS_LIST = "windows.list"
+    WINDOWS_FIND = "windows.find"
     WINDOWS_SWITCH = "windows.switch"
     WINDOWS_MINIMIZE = "windows.minimize"
     WINDOWS_MAXIMIZE = "windows.maximize"

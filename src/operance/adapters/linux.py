@@ -908,6 +908,10 @@ class LinuxWindowsAdapter:
         matches = self._runner_matches("")
         return [match.title for match in matches]
 
+    def find_windows(self, window: str) -> list[str]:
+        matches = self._runner_matches(window)
+        return [match.title for match in matches]
+
     def switch(self, window: str) -> str:
         matches = self._runner_matches(window)
         if not matches:
@@ -1731,6 +1735,9 @@ def _app_match_targets(app: str) -> tuple[str, ...]:
 
 
 def _parse_windows_runner_matches(raw_output: str) -> list[WindowsRunnerMatch]:
+    if _is_empty_windows_runner_output(raw_output):
+        return []
+
     prefix_matches = list(_WINDOWS_RUNNER_MATCH_PREFIX_RE.finditer(raw_output))
     if not prefix_matches:
         raise ValueError("unable to parse windows runner output")
@@ -1764,6 +1771,14 @@ def _parse_windows_runner_matches(raw_output: str) -> list[WindowsRunnerMatch]:
     if not parsed_matches:
         raise ValueError("windows runner output did not contain valid matches")
     return parsed_matches
+
+
+def _is_empty_windows_runner_output(raw_output: str) -> bool:
+    normalized = re.sub(r"\s+", " ", raw_output.strip())
+    return normalized in {
+        "([],)",
+        "(@a(sssida{sv}) [],)",
+    }
 
 
 def _literal_string(value: str) -> str:

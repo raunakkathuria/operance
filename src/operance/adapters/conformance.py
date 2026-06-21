@@ -62,6 +62,7 @@ ADAPTER_TOOL_CONTRACTS: dict[ToolName, AdapterToolContract] = {
     ToolName.APPS_LAUNCH: AdapterToolContract(ToolName.APPS_LAUNCH, "apps", ("launch",)),
     ToolName.APPS_FOCUS: AdapterToolContract(ToolName.APPS_FOCUS, "apps", ("focus",)),
     ToolName.APPS_QUIT: AdapterToolContract(ToolName.APPS_QUIT, "apps", ("quit",)),
+    ToolName.WINDOWS_FIND: AdapterToolContract(ToolName.WINDOWS_FIND, "windows", ("find_windows",)),
     ToolName.WINDOWS_LIST: AdapterToolContract(ToolName.WINDOWS_LIST, "windows", ("list_windows",)),
     ToolName.WINDOWS_SWITCH: AdapterToolContract(ToolName.WINDOWS_SWITCH, "windows", ("switch",)),
     ToolName.WINDOWS_MINIMIZE: AdapterToolContract(ToolName.WINDOWS_MINIMIZE, "windows", ("minimize",)),

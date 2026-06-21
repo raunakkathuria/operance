@@ -32,7 +32,7 @@ Current supported command subset on that target:
 - read-only known-folder discovery such as `list files in downloads`, `find file named <name>`, and `search documents for <name>`
 - read-only metadata commands such as `show details for <name>`, `how big is <name>`, and `show recent downloads`
 - Desktop folder or file create, delete, rename, and move commands with confirmation where needed
-- `list windows` and `switch to window <visible title>`
+- `list windows`, `what apps are open`, `is <app> open`, and `switch to window <visible title>`
 - `what time is it`, `what is my battery level`, `wifi status`, `what is the volume`, and `is audio muted`
 - `set volume to 50 percent`, `mute audio`, and `unmute audio`
 

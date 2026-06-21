@@ -111,6 +111,20 @@ def build_default_action_registry() -> ActionRegistry:
     )
     registry.register(
         ToolSpec(
+            ToolName.WINDOWS_FIND,
+            "Find open windows by title or app name",
+            ("window",),
+            input_schema=_object_schema({"window": {"type": "string"}}, required=("window",)),
+            example_transcripts=(
+                "is firefox open",
+                "find window firefox",
+                "show windows matching firefox",
+            ),
+            validate_args=_validate_window_query_args,
+        )
+    )
+    registry.register(
+        ToolSpec(
             ToolName.WINDOWS_SWITCH,
             "Switch to an open window",
             ("window",),
@@ -755,6 +769,15 @@ def _validate_window_boolean_state_args(args: dict[str, object]) -> list[str]:
     if not isinstance(enabled, bool):
         errors.append("enabled must be a boolean")
     return errors
+
+
+def _validate_window_query_args(args: dict[str, object]) -> list[str]:
+    window = args.get("window")
+    if not isinstance(window, str) or not window.strip():
+        return ["window must be a non-empty string"]
+    if any(character in window for character in ("\n", "\r", "\t")):
+        return ["window must not include control whitespace"]
+    return []
 
 
 def _validate_known_ssid(args: dict[str, object]) -> list[str]:

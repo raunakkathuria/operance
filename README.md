@@ -15,8 +15,8 @@ install, test, report issues, and help extend.
 
 Today, Operance can open apps and websites, focus or quit apps with confirmation,
 list recent files, list or search known folders by file name, show basic file
-metadata, manage Desktop files or folders with confirmation, list or switch
-windows, answer desktop-status questions, and control basic audio state.
+metadata, manage Desktop files or folders with confirmation, list, find, or
+switch windows, answer desktop-status questions, and control basic audio state.
 It also supports safe JSON desktop skill packs for adding exact phrase shortcuts
 that emit existing typed actions without changing the portable core.
 
@@ -87,6 +87,9 @@ find file named notes.txt
 search documents for invoice
 show details for notes.txt
 show recent downloads
+what apps are open
+is firefox open
+switch to firefox window
 what time is it
 wifi status
 what is the volume
@@ -280,7 +283,7 @@ Operance already has a coherent Linux-first public beta path: a typed and valida
 What works now:
 
 - Core runtime: typed action models, deterministic intent matching, validator and policy enforcement, local audit logging, bounded local planner fallback, and MCP-compatible control surfaces.
-- Verified command subset on Fedora KDE Wayland: `open browser`, `open the browser`, `open google.com`, `go to <website>`, `search google for <query>`, `search the web for <query>`, `open <app name>` for installed desktop apps, safe two-step launch phrases such as `open firefox and load localhost:3000` or `open firefox and notify me`, `focus <app name>`, confirmation-gated `quit <app name>`, `open downloads`, `open folder downloads`, `open documents`, `open desktop`, `show recent files`, read-only known-folder discovery such as `list files in downloads`, `show files in documents`, `find file named <name>`, `find folder named <name>`, and `search documents for <name>`, read-only metadata commands such as `show details for <name>`, `how big is <name>`, `when was <name> modified`, and `show recent downloads`, `create folder on desktop called <name>`, confirmation-gated desktop file or folder delete, rename, and move commands, `list windows`, `switch to window <title>`, `show a notification saying <message>`, `what time is it`, `time`, `what is my battery level`, `battery`, `wifi status`, `what is the volume`, `volume`, `is audio muted`, `muted`, `set volume to 50 percent`, `volume 50 percent`, `mute audio`, `mute`, `unmute audio`, and `unmute`.
+- Verified command subset on Fedora KDE Wayland: `open browser`, `open the browser`, `open google.com`, `go to <website>`, `search google for <query>`, `search the web for <query>`, `open <app name>` for installed desktop apps, safe two-step launch phrases such as `open firefox and load localhost:3000` or `open firefox and notify me`, `focus <app name>`, confirmation-gated `quit <app name>`, `open downloads`, `open folder downloads`, `open documents`, `open desktop`, `show recent files`, read-only known-folder discovery such as `list files in downloads`, `show files in documents`, `find file named <name>`, `find folder named <name>`, and `search documents for <name>`, read-only metadata commands such as `show details for <name>`, `how big is <name>`, `when was <name> modified`, and `show recent downloads`, `create folder on desktop called <name>`, confirmation-gated desktop file or folder delete, rename, and move commands, window awareness commands such as `list windows`, `what apps are open`, `is <app> open`, `find window <title>`, `switch to window <title>`, and `switch to <title> window`, `show a notification saying <message>`, `what time is it`, `time`, `what is my battery level`, `battery`, `wifi status`, `what is the volume`, `volume`, `is audio muted`, `muted`, `set volume to 50 percent`, `volume 50 percent`, `mute audio`, `mute`, `unmute audio`, and `unmute`.
 - Tray feedback: when a command is heard, the tray state changes through `Understanding command` and `Opening <target>` or `Executing command`, and the tooltip shows `Heard: ...` before the final result notification.
 - Command recovery: unclear commands now return concrete examples such as `open browser`, `open google.com`, `search google for linux automation`, and `what time is it`; known Firefox speech variants such as `fire fall` and `fire force` are conservatively mapped to `firefox` for launch, focus, and quit commands.
 - Command coach: the tray exposes `Try commands`, and the CLI exposes `operance --command-coach`, with guided click-to-talk examples, expected outcomes, and recovery tips for first-run testing.

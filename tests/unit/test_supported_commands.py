@@ -143,6 +143,11 @@ def test_build_supported_command_catalog_can_filter_available_commands_only() ->
     assert "notifications.show" in commands
     assert commands["notifications.show"]["usage_pattern"] == "show a notification saying <message>"
     assert "windows.list" in commands
+    assert commands["windows.list"]["usage_pattern"] == "list windows | what apps are open | show open windows"
+    assert "windows.find" in commands
+    assert commands["windows.find"]["usage_pattern"] == (
+        "is <app> open | find window <title> | show windows matching <title>"
+    )
     assert "windows.switch" in commands
     assert catalog["skills"]["summary"]["pack_count"] == 0
     assert "text.type" not in commands

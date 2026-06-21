@@ -185,6 +185,9 @@ Current accepted safe-command slice:
 - read-only file metadata accepts phrases such as `show details for <name>`,
   `how big is <name>`, `when was <name> modified`, and `show recent downloads`
   while reporting metadata only and never reading file contents
+- read-only window awareness accepts phrases such as `what apps are open`, `is
+  <app> open`, `find window <title>`, and `show windows matching <title>` while
+  staying inside typed `windows.list` and `windows.find` actions
 
 Non-goals:
 

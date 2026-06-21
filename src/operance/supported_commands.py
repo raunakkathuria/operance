@@ -269,9 +269,10 @@ def _help_command_priority(command: dict[str, object]) -> tuple[int, str]:
         ToolName.FILES_GET_INFO.value: 10,
         ToolName.FILES_LIST_RECENT_FOLDER.value: 11,
         ToolName.WINDOWS_LIST.value: 12,
-        ToolName.WINDOWS_SWITCH.value: 13,
-        ToolName.APPS_FOCUS.value: 14,
-        ToolName.APPS_QUIT.value: 15,
+        ToolName.WINDOWS_FIND.value: 13,
+        ToolName.WINDOWS_SWITCH.value: 14,
+        ToolName.APPS_FOCUS.value: 15,
+        ToolName.APPS_QUIT.value: 16,
     }
     return (priority.get(tool, 100), tool)
 
@@ -316,8 +317,9 @@ def _tool_usage_pattern(tool: ToolName) -> str | None:
         ),
         ToolName.APPS_FOCUS: "focus <app name>",
         ToolName.APPS_QUIT: "quit <app name>",
-        ToolName.WINDOWS_LIST: "list windows",
-        ToolName.WINDOWS_SWITCH: "switch to window <title>",
+        ToolName.WINDOWS_LIST: "list windows | what apps are open | show open windows",
+        ToolName.WINDOWS_FIND: "is <app> open | find window <title> | show windows matching <title>",
+        ToolName.WINDOWS_SWITCH: "switch to window <title> | switch to <title> window",
         ToolName.NOTIFICATIONS_SHOW: "show a notification saying <message>",
         ToolName.FILES_LIST_RECENT: "show recent files",
         ToolName.FILES_LIST_FOLDER: "list files in downloads | show files in documents | what is in downloads",

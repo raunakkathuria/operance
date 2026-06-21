@@ -462,6 +462,14 @@ def test_mcp_server_exposes_tool_input_schemas() -> None:
         "required": [],
         "additionalProperties": False,
     }
+    assert tools["windows.find"]["input_schema"] == {
+        "type": "object",
+        "properties": {
+            "window": {"type": "string"},
+        },
+        "required": ["window"],
+        "additionalProperties": False,
+    }
     assert tools["windows.switch"]["input_schema"] == {
         "type": "object",
         "properties": {

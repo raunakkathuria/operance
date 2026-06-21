@@ -48,6 +48,7 @@ CURRENT_RELEASE_VERIFIED_TOOLS = frozenset(
         ToolName.NOTIFICATIONS_SHOW,
         ToolName.POWER_BATTERY_STATUS,
         ToolName.TIME_NOW,
+        ToolName.WINDOWS_FIND,
         ToolName.WINDOWS_LIST,
         ToolName.WINDOWS_SWITCH,
     }
@@ -466,6 +467,7 @@ class LinuxKdeWaylandPlatformProvider:
         steps_by_name: Mapping[str, object],
     ) -> list[str]:
         window_tools = {
+            ToolName.WINDOWS_FIND,
             ToolName.WINDOWS_LIST,
             ToolName.WINDOWS_SWITCH,
             ToolName.WINDOWS_MINIMIZE,
@@ -567,6 +569,7 @@ class LinuxKdeWaylandPlatformProvider:
         steps_by_name: Mapping[str, object],
     ) -> str | None:
         window_tools = {
+            ToolName.WINDOWS_FIND,
             ToolName.WINDOWS_LIST,
             ToolName.WINDOWS_SWITCH,
             ToolName.WINDOWS_MINIMIZE,

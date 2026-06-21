@@ -49,7 +49,7 @@ Supported command families are intentionally conservative:
 - list or search known folders by file or folder name
 - show basic file/folder metadata and recent known-folder entries
 - create, rename, move, or delete Desktop entries with confirmation where needed
-- list windows or switch to a visible window
+- list windows, find whether an app/window is open, or switch to a visible window
 
 Use the command catalog for the exact current subset on a machine:
 

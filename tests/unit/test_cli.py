@@ -769,9 +769,13 @@ def test_cli_supported_commands_available_only_filters_blocked_entries(monkeypat
     assert commands["files.move"]["usage_pattern"] == "move folder on desktop called <name> to <folder>"
     assert commands["files.move"]["requires_confirmation"] is True
     assert "windows.list" in commands
+    assert commands["windows.list"]["usage_pattern"] == "list windows | what apps are open | show open windows"
+    assert "windows.find" in commands
+    assert commands["windows.find"]["usage_pattern"] == (
+        "is <app> open | find window <title> | show windows matching <title>"
+    )
     assert "windows.switch" in commands
-    assert commands["windows.list"]["usage_pattern"] == "list windows"
-    assert commands["windows.switch"]["usage_pattern"] == "switch to window <title>"
+    assert commands["windows.switch"]["usage_pattern"] == "switch to window <title> | switch to <title> window"
     assert "text.type" not in commands
 
 

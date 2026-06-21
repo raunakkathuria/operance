@@ -195,6 +195,25 @@ def test_plan_preview_renders_wifi_status_action() -> None:
     assert preview == "Planned action: check Wi-Fi status."
 
 
+def test_plan_preview_renders_window_find_action() -> None:
+    from operance.planner.preview import build_plan_preview
+
+    plan = ActionPlan(
+        source=PlanSource.PLANNER,
+        original_text="is firefox open",
+        actions=[
+            TypedAction(
+                tool=ToolName.WINDOWS_FIND,
+                args={"window": "firefox"},
+            )
+        ],
+    )
+
+    preview = build_plan_preview(plan)
+
+    assert preview == "Planned action: find windows matching 'firefox'."
+
+
 def test_plan_preview_renders_disconnect_current_wifi_action() -> None:
     from operance.planner.preview import build_plan_preview
 

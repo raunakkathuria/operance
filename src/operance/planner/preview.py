@@ -125,6 +125,9 @@ def _describe_action(tool: ToolName, args: dict[str, object]) -> str:
     if tool == ToolName.WINDOWS_LIST:
         return "list windows"
 
+    if tool == ToolName.WINDOWS_FIND:
+        return f"find windows matching {args['window']!r}"
+
     if tool == ToolName.WINDOWS_SWITCH:
         return f"switch to window {args['window']!r}"
 

@@ -67,6 +67,22 @@ class ActionExecutor:
                 message=f"Open windows: {'; '.join(windows)}",
             )
 
+        if tool == ToolName.WINDOWS_FIND:
+            adapter = self._require_adapter(self.adapters.windows, tool)
+            window = str(args["window"])
+            windows = adapter.find_windows(window)
+            if not windows:
+                return ActionResultItem(
+                    tool=tool,
+                    status="success",
+                    message=f"No open windows matched {window}",
+                )
+            return ActionResultItem(
+                tool=tool,
+                status="success",
+                message=f"Found {len(windows)} {_windows_noun(len(windows))}: {'; '.join(windows[:10])}",
+            )
+
         if tool == ToolName.WINDOWS_SWITCH:
             adapter = self._require_adapter(self.adapters.windows, tool)
             message = adapter.switch(str(args["window"]))
@@ -485,6 +501,10 @@ def _file_find_noun(kind: str, count: int) -> str:
     if kind == "file":
         return "file" if count == 1 else "files"
     return "match" if count == 1 else "matches"
+
+
+def _windows_noun(count: int) -> str:
+    return "window" if count == 1 else "windows"
 
 
 def _format_size(size_bytes: int) -> str:
