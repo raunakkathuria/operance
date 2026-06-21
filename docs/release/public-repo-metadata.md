@@ -53,9 +53,9 @@ Avoid adding Windows or macOS topics until those adapters actually exist in publ
 
 This repo is currently positioned as:
 
-- Fedora KDE Wayland developer release
-- source checkout first
-- RPM `mvp` runtime second
+- Fedora KDE Wayland public beta
+- packaged Fedora public beta path for users
+- source checkout path for contributors
 - tray plus click-to-talk first
 
 Keep the metadata aligned with that support contract.

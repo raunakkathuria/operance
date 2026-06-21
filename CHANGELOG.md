@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added `docs/specs/` as the canonical spec-to-PR planning layer, including the current beta product direction, milestone roadmap, release criteria, and agent/contributor guidance for spec-first changes.
+- Cleaned stale startup-era documentation so the initial prompt and original long-form plan are marked as historical context, while active README, release, Linux, and contributor docs point at the packaged Fedora public beta path and current specs.
 - Added always-on wake-only feedback so saying only `Operance` now records `I heard Operance, but no command followed.`, shows a tray warning, and returns the voice loop to wake waiting instead of staying stuck in command capture.
 - Improved one-utterance always-on commands by feeding the wake frame into STT, so phrases such as `Operance open browser` can be captured in the same utterance when STT returns the command.
 - Aligned source-checkout always-on tray testing with click-to-talk by starting a repo-local voice-loop child process from the source tray instead of controlling the packaged systemd service, while preserving systemd control for packaged installs.

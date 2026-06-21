@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-Source code lives under `src/operance/`. Keep portable core logic in modules such as `models/`, `intent/`, `planner/`, `policy.py`, `validator.py`, and `executor.py`. Platform readiness and setup policy belong in `src/operance/platforms/`; OS-native execution belongs in `src/operance/adapters/`, with `mock.py` used for developer-mode execution. Tests live in `tests/unit/`. Product and setup requirements are maintained in `docs/requirements/`, and the initial implementation brief is in `docs/prompt/initial.md`.
+Source code lives under `src/operance/`. Keep portable core logic in modules such as `models/`, `intent/`, `planner/`, `policy.py`, `validator.py`, and `executor.py`. Platform readiness and setup policy belong in `src/operance/platforms/`; OS-native execution belongs in `src/operance/adapters/`, with `mock.py` used for developer-mode execution. Tests live in `tests/unit/`. Current product and milestone specs live in `docs/specs/`. Linux setup and integration details live in `docs/requirements/`. The initial implementation brief in `docs/prompt/initial.md` is historical context, not the current source of truth.
 
 ## Build, Test, and Development Commands
 
@@ -41,7 +41,7 @@ Enforce these boundaries when making changes:
 - Shared core modules must not carry OS transport details such as Linux command arguments, Wayland protocol quirks, or platform-native key sequences.
 - Keep shared input definitions semantic; native input translation belongs in the adapter that executes it.
 - For an existing tool on a new OS, prefer provider or adapter changes only. Core changes are expected only when adding a genuinely new tool or changing shared safety semantics.
-- Keep the current public positioning honest: Linux first, Fedora KDE Wayland first, source checkout first, RPM `mvp` runtime second.
+- Keep the current public positioning honest: Linux first, Fedora KDE Wayland first, packaged Fedora public beta path for users, and source checkout for contributors.
 - New or widened adapter surfaces must pass `.venv/bin/python -m operance.cli --adapter-conformance`.
 - Planner changes must keep model output bounded to typed action schemas; local model smoke tests must validate and policy-check plans without bypassing confirmation gates.
 
@@ -56,6 +56,29 @@ Before implementing, identify the smallest runnable change that preserves the
 portable-core, provider, and adapter boundaries. During review, reject designs
 that add speculative abstraction, duplicate platform logic in the core, or
 generalize beyond the current tested requirement.
+
+## Spec-First Workflow
+
+Use `docs/specs/` as the canonical planning layer for product direction and
+milestone scope. Before implementing a non-trivial feature, either identify the
+existing spec section that governs the work or update/add a spec first.
+
+Every feature spec or spec update should state:
+
+- user problem
+- product behavior
+- supported scope
+- non-goals
+- architecture impact
+- safety model
+- test evidence
+- documentation impact
+
+Treat the spec as an acceptance contract for the PR. Implementation should not
+quietly exceed the spec; update the spec first if scope changes are necessary.
+Older startup documents under `docs/prompt/` and historical planning notes under
+`docs/requirements/` can inform context, but they must not override the current
+specs, README, architecture docs, or runnable behavior.
 
 ## Product UX Guardrails
 
@@ -103,6 +126,8 @@ Keep `README.md`, `docs/requirements/linux.md`, and `CHANGELOG.md` in sync with 
 
 Before calling a feature complete:
 
+- confirm the work follows or updates the relevant `docs/specs/` spec
+- confirm any requirement change is reflected in the spec before implementation
 - confirm the portable core remains decoupled from OS-native adapters
 - confirm platform readiness or setup behavior lives in platform providers, not shared core modules
 - confirm OS-native execution details stay in adapters

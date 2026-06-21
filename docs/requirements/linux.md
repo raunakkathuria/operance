@@ -42,13 +42,13 @@ Current architecture note:
 - the Linux execution path itself remains in `src/operance/adapters/linux.py`
 - new OS work should start by adding a provider and adapters, not by adding more Linux branching to shared core modules
 
-### Current public developer release state
+### Current public beta state
 
 The current public support contract is:
 
 - Fedora KDE Plasma on Wayland
-- source checkout as the primary supported path
-- installed RPM as a secondary `mvp` runtime validation path
+- packaged Fedora RPM plus `setup.sh` as the public beta path
+- source checkout as the contributor development path
 - tray plus click-to-talk as the default interaction model
 - wake word and the continuous voice loop as secondary diagnostics, not the primary release workflow
 - the supported Fedora RPM path vendors the tray UI and STT runtime dependencies needed for click-to-talk
@@ -79,13 +79,13 @@ Current supported command subset on that target:
 - `mute audio`
 - `unmute audio`
 
-If you want the fastest iteration loop, use the source checkout. Treat the RPM path as the packaged public handoff and run a human tray plus microphone smoke after the automated gate passes.
+If you want the fastest contributor iteration loop, use the source checkout. Treat the RPM path as the packaged public handoff and run a human tray plus microphone smoke after the automated gate passes.
 
 The release gate now also runs `./scripts/run_live_command_smoke.sh`, which executes live adapters against a temporary desktop fixture. That lets maintainers verify file-command behavior such as recent-file listing, folder creation, and confirmation-gated desktop file mutations without touching the real Desktop directory.
 
 Use [public-handoff.md](../release/public-handoff.md) for the outside-developer handoff and [fedora-checklist.md](../release/fedora-checklist.md) for the exact release gate.
 
-### Fast developer release bring-up
+### Fast contributor bring-up
 
 For the shortest current source-checkout path on the target Linux stack:
 

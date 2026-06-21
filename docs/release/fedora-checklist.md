@@ -47,7 +47,7 @@ Known remaining gaps before a broader public launch:
 
 That means the realistic public position today is:
 
-`Linux first`, `Fedora KDE first`, `developer release`, `local-first`, and
+`Linux first`, `Fedora KDE first`, `public beta`, `local-first`, and
 `click-to-talk before wake word`.
 
 ---
@@ -186,16 +186,16 @@ Attach that bundle to the bug report together with:
 
 ## 6. Release Decision Rule
 
-The current repo is ready for a Fedora developer release only when:
+The current repo is ready for a Fedora public beta release only when:
 
 1. the source-checkout gate passes
 2. the RPM gate passes on the target Fedora machine
 3. the known limitations above are documented honestly in the launch notes
 4. the expected tester workflow is explicit:
-   source checkout first, Fedora RPM `mvp` package second, and a human
-   tray-plus-microphone smoke before tagging a packaged release
+   packaged Fedora install for beta users, source checkout for contributors,
+   and a human tray-plus-microphone smoke before tagging a packaged release
 
-If the goal changes from `developer release` to a broader public desktop launch,
+If the goal changes from `public beta` to a broader public desktop launch,
 the next required feature is not another desktop command. It is tightening the
 installed tray plus click-to-talk UX and collecting enough Fedora feedback to
 know whether the packaged `mvp` runtime is stable enough for non-developer

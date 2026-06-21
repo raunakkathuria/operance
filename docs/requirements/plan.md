@@ -1,6 +1,14 @@
 # Project Technical Specification
 
-## Working title: Local-First Voice Runtime for KDE/Wayland
+Historical note: this was the initial long-form planning specification from
+early project formation. It remains useful background, but current product
+direction, milestone scope, and spec-to-PR rules now live in
+[`docs/specs/`](../specs/README.md), especially
+[`docs/specs/beta-product-direction.md`](../specs/beta-product-direction.md).
+When this document conflicts with the README, architecture docs, current specs,
+or runnable behavior, treat the current docs and code as authoritative.
+
+## Working title: Operance local-first desktop action runtime
 
 Status: Draft v1.0
 Type: Living technical specification
@@ -182,7 +190,7 @@ Paid offerings should be convenience and operations layers, not the core local p
 
 ### 7.1 Naming requirement
 
-Before public launch, perform a brand review and likely rename if necessary to avoid confusion with existing voice productivity brands.
+Historical context: the project was renamed to Operance before public beta.
 
 ### 7.2 Positioning line
 
@@ -276,7 +284,8 @@ See [linux.md](./linux.md) for the focused Linux machine requirements and handof
 
 ### 10.2 Native runtimes used but not rewritten
 
-- llama.cpp for local LLM serving
+- OpenAI-compatible local model servers such as Ollama or llama.cpp for
+  optional local planner inference
 - PipeWire as audio substrate
 - KDE / KWin / D-Bus services for desktop actions
 
@@ -1306,7 +1315,8 @@ Development workflow additions:
 
 Documentation sync rule:
 
-- keep this document as the source of truth for scope, milestone boundaries, stop lines, and status
+- keep current specs under `docs/specs/` as the source of truth for scope,
+  milestone boundaries, stop lines, and status
 - update this document in the same slice whenever scope, interfaces, workflow, or milestone status changes
 - update `README.md` in the same slice whenever runnable behavior, setup, or developer commands change
 - do not create a checkpoint commit until code, tests, and docs agree on the current state

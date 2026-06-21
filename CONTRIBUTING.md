@@ -55,9 +55,9 @@ You do not need to land a large code feature to help. Useful contribution shapes
 - fixing focused Linux runtime, tray, or click-to-talk defects
 - improving issue reports by attaching support bundles, exact commands, and machine details
 
-If you want to propose a larger feature, open an issue first and keep the initial patch on the smallest runnable slice.
+If you want to propose a larger feature, open an issue first and keep the initial patch on the smallest runnable slice. For product or architecture changes, read [docs/specs/README.md](docs/specs/README.md) first and update the relevant spec before implementation if the current scope or behavior changes.
 
-Read [docs/release/public-handoff.md](docs/release/public-handoff.md) before proposing work that broadens the public surface, and [docs/release/fedora-checklist.md](docs/release/fedora-checklist.md) before changing the current release gate.
+Read [docs/specs/beta-product-direction.md](docs/specs/beta-product-direction.md) before proposing work that changes the public beta contract, [docs/release/public-handoff.md](docs/release/public-handoff.md) before proposing work that broadens the public surface, and [docs/release/fedora-checklist.md](docs/release/fedora-checklist.md) before changing the current release gate.
 If you want to add a desktop command, read [docs/contributing/command-authoring.md](docs/contributing/command-authoring.md) first; it defines the typed-action, provider, adapter, test, and documentation path.
 
 ## Architecture boundary
@@ -109,6 +109,7 @@ python3 -m pip install -e ".[dev,voice]"
 
 Follow the repo workflow in `AGENTS.md` and keep changes small:
 
+- follow or update the relevant `docs/specs/` spec before implementing larger feature work
 - use TDD for non-trivial implementation work
 - make the smallest viable change that satisfies the current feature
 - keep docs in sync with behavior in the same change
@@ -151,6 +152,7 @@ Use these commands for quick local inspection:
 A good pull request for this repo should:
 
 - describe the user-visible behavior or developer workflow change
+- link the spec or spec section for larger product and architecture changes
 - list the exact verification commands you ran
 - note doc updates in `README.md`, `docs/requirements/linux.md`, and
   `CHANGELOG.md` when applicable

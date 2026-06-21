@@ -8,13 +8,13 @@ Audience: Maintainers, contributors
 
 ## 1. Position
 
-Operance is targeting a narrow Fedora KDE Wayland developer release. Release
+Operance is targeting a narrow Fedora KDE Wayland public beta. Release
 work should stay organized around coherent, validated batches instead of
 isolated polish fixes.
 
 For this project, release-ready means:
 
-- a new Fedora KDE Wayland developer can install, run, and validate the product
+- a new Fedora KDE Wayland beta user can install, run, and validate the product
   from documented commands
 - the default interaction path is tray plus click-to-talk
 - the supported command subset is intentionally narrow but reliable

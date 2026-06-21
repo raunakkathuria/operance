@@ -252,15 +252,15 @@ Anyone can contribute right now through one of these paths:
 - add tests and bug fixes that make tray plus click-to-talk more reliable
 - harden packaging, setup, doctor, and release-gate workflows
 
-This is still a founder-maintained developer release. Small, focused fixes and high-quality issue reports are more useful than broad rewrites.
+This is still a founder-maintained public beta. Small, focused fixes and high-quality issue reports are more useful than broad rewrites.
 
-Start with [CONTRIBUTING.md](CONTRIBUTING.md). If you want to add a safe phrase shortcut for existing behavior, read [docs/contributing/skill-packs.md](docs/contributing/skill-packs.md). If you want to add a new desktop command, read [docs/contributing/command-authoring.md](docs/contributing/command-authoring.md) before changing core modules. If you are reporting a problem instead of sending a patch, attach the output artifact from `.venv/bin/python -m operance.cli --support-bundle` whenever possible and paste the bundled `issue-report.md` draft into the issue body.
+Start with [CONTRIBUTING.md](CONTRIBUTING.md). For larger product or architecture changes, read [docs/specs/README.md](docs/specs/README.md) and the current [beta product direction](docs/specs/beta-product-direction.md) before coding. If you want to add a safe phrase shortcut for existing behavior, read [docs/contributing/skill-packs.md](docs/contributing/skill-packs.md). If you want to add a new desktop command, read [docs/contributing/command-authoring.md](docs/contributing/command-authoring.md) before changing core modules. If you are reporting a problem instead of sending a patch, attach the output artifact from `.venv/bin/python -m operance.cli --support-bundle` whenever possible and paste the bundled `issue-report.md` draft into the issue body.
 
-This repository already contains the Phase 0A foundation plus the later planner, MCP, Linux-adapter, tray, voice, and release-tooling slices needed for the current developer release. Keep `README.md` for the public stop line and use [CHANGELOG.md](CHANGELOG.md) when you need the feature-by-feature implementation history.
+This repository already contains the Phase 0A foundation plus the later planner, MCP, Linux-adapter, tray, voice, and release-tooling slices needed for the current public beta. Keep `README.md` for the public stop line and use [CHANGELOG.md](CHANGELOG.md) when you need the feature-by-feature implementation history.
 
 ## Current status
 
-Operance already has a coherent Linux-first developer release path: a typed and validated runtime, tray plus click-to-talk MVP flow, and Fedora packaging or support tooling. For the current public handoff, the supported command surface is intentionally narrower than the full implemented runtime. Use [CHANGELOG.md](CHANGELOG.md) for the feature-by-feature implementation history.
+Operance already has a coherent Linux-first public beta path: a typed and validated runtime, tray plus click-to-talk MVP flow, and Fedora packaging or support tooling. For the current public handoff, the supported command surface is intentionally narrower than the full implemented runtime. Use [CHANGELOG.md](CHANGELOG.md) for the feature-by-feature implementation history.
 
 What works now:
 
@@ -275,7 +275,7 @@ What works now:
 
 What is intentionally not implemented yet:
 
-This is still a developer release. The main remaining gaps are broader platform coverage and deeper Linux coverage, not the absence of a basic runnable product path. Broader implemented commands remain out of the supported verified subset until they are live-verified and graduate into `--supported-commands --supported-commands-available-only`.
+This is still a narrow public beta. The main remaining gaps are broader platform coverage and deeper Linux coverage, not the absence of a basic runnable product path. Broader implemented commands remain out of the supported verified subset until they are live-verified and graduate into `--supported-commands --supported-commands-available-only`.
 
 - Native package coverage beyond the current Fedora RPM `mvp` runtime path
 - A bundled Operance wake-word model and tuned default wake-word behavior
@@ -285,9 +285,12 @@ This is still a developer release. The main remaining gaps are broader platform 
 
 ## Development and Diagnostics
 
-README intentionally stays narrow for the public developer release. Use these docs for the deeper reference material instead of treating the README as a command inventory:
+README intentionally stays narrow for the public beta. Use these docs for the deeper reference material instead of treating the README as a command inventory:
 
 - [docs/requirements/linux.md](docs/requirements/linux.md) for Linux setup, packaging, systemd, planner, and optional voice diagnostics
+- [docs/specs/README.md](docs/specs/README.md) for the spec-to-PR workflow
+- [docs/specs/beta-product-direction.md](docs/specs/beta-product-direction.md)
+  for current product direction, beta contract, and milestone roadmap
 - [docs/release/public-handoff.md](docs/release/public-handoff.md) for the outside-developer handoff
 - [docs/release/public-beta.md](docs/release/public-beta.md) for public beta install, local AI planner, and feedback flow
 - [docs/release/fedora-checklist.md](docs/release/fedora-checklist.md) for the Fedora release gate
@@ -310,6 +313,8 @@ The repo now also includes a baseline public-project trust surface:
   portable-core versus platform-adapter boundary
 - [docs/architecture/adapter-authoring.md](docs/architecture/adapter-authoring.md)
   for the current provider, adapter, and conformance contract
+- [docs/specs/README.md](docs/specs/README.md) for the required spec-to-PR
+  workflow before larger product or architecture changes
 - [examples/adapter_sdk/README.md](examples/adapter_sdk/README.md) for
   executable minimal adapter and provider examples
 - [docs/contributing/command-authoring.md](docs/contributing/command-authoring.md)
@@ -742,13 +747,14 @@ python3 -m operance.cli --tray-run
 - `README.md` should describe only what is actually runnable in the repository right now.
 - `docs/requirements/linux.md` is the focused reference for preparing a real Linux/KDE machine for integration work and tracking live Linux integration status.
 - `CHANGELOG.md` tracks completed implementation slices in commit order.
-- `docs/requirements/plan.md` remains the long-form specification for scope and milestone boundaries, not the day-to-day status board.
+- `docs/specs/` contains the current product and milestone specs that should guide new PRs.
+- `docs/requirements/plan.md` is historical long-form planning context from the start of the project, not the day-to-day scope contract.
 - Any change to runtime behavior, interfaces, commands, or workflow rules must update the relevant docs in the same slice before commit.
 - The pre-commit checklist for each step is: failing test first, implementation, docs update, `.venv/bin/python -m pytest`, commit.
 
 ## CLI
 
-Most developers only need `--version`, `--about`, `--check-updates`, `--doctor`, `--public-beta-checklist`, `--getting-started`, `--command-coach`, `--local-ai-coach`, `--planner-setup-template`, `--planner-status`, `--planner-execute`, `--supported-commands --supported-commands-available-only`, `--skills`, `--skill-validate`, `--transcript`, `--mvp-launch`, `--support-bundle`, and `--issue-report`. In the current developer release, `--supported-commands --supported-commands-available-only` is intentionally conservative: it prints only the commands that are both environment-ready and release-verified for the Fedora KDE Wayland target. The rest of this section is the lower-level CLI reference surface.
+Most developers only need `--version`, `--about`, `--check-updates`, `--doctor`, `--public-beta-checklist`, `--getting-started`, `--command-coach`, `--local-ai-coach`, `--planner-setup-template`, `--planner-status`, `--planner-execute`, `--supported-commands --supported-commands-available-only`, `--skills`, `--skill-validate`, `--transcript`, `--mvp-launch`, `--support-bundle`, and `--issue-report`. In the current public beta, `--supported-commands --supported-commands-available-only` is intentionally conservative: it prints only the commands that are both environment-ready and release-verified for the Fedora KDE Wayland target. The rest of this section is the lower-level CLI reference surface.
 
 Print the effective config:
 

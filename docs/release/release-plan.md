@@ -8,15 +8,15 @@ Audience: Founder, maintainers
 
 ## 1. Immediate Goal
 
-Publish narrow Fedora KDE Wayland developer releases without over-claiming the
+Publish narrow Fedora KDE Wayland public beta releases without over-claiming the
 current product maturity.
 
 The public release line has already established:
 
 - public source repository
 - Fedora KDE Wayland first positioning
-- source checkout as the primary supported path
-- RPM as the secondary packaged `mvp` runtime path
+- packaged RPM plus `setup.sh` as the public beta path
+- source checkout as the contributor development path
 - reset-aware Fedora package validation
 - tray plus click-to-talk as the default interaction path
 
@@ -37,7 +37,7 @@ The public release line has already established:
 - do not add new phase-named release gates or current handoff docs
 - keep current workflow names purpose-based
 
-### Phase C: Fedora Developer Release
+### Phase C: Fedora Public Beta Release
 
 - keep the stop line in [release-readiness.md](./release-readiness.md)
 - run `./scripts/run_release_readiness_gate.sh` during normal release work
@@ -60,11 +60,12 @@ The public release line has already established:
 
 ## 3. What Counts As Good Enough For Release
 
-The repo is good enough for the current Fedora developer release when:
+The repo is good enough for the current Fedora public beta when:
 
 - the architecture boundary is honest and documented
 - the test suite passes
-- the source-checkout bring-up path is documented and stable
+- the packaged install path is documented and stable
+- the source-checkout contributor path is documented and stable
 - the Fedora gate passes on the target Fedora KDE Wayland machine
 - the packaged `mvp` RPM validates the installed tray plus STT runtime
 - a human click-to-talk smoke can open Firefox and a localhost URL
@@ -95,7 +96,7 @@ That work should focus on:
 
 ## 5. Explicit Non-goals For Release
 
-Do not treat these as blockers for the current Fedora developer release:
+Do not treat these as blockers for the current Fedora public beta:
 
 - Windows or macOS support
 - broad distro or desktop-environment support
