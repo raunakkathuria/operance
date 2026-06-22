@@ -149,6 +149,12 @@ def test_build_supported_command_catalog_can_filter_available_commands_only() ->
         "is <app> open | find window <title> | show windows matching <title>"
     )
     assert "windows.switch" in commands
+    assert "operance.help" in commands
+    assert commands["operance.help"]["usage_pattern"] == "what can I say | what commands can I use | help"
+    assert "operance.last_heard" in commands
+    assert "operance.listening_status" in commands
+    assert "operance.local_ai_status" in commands
+    assert "operance.last_failure" in commands
     assert catalog["skills"]["summary"]["pack_count"] == 0
     assert "text.type" not in commands
     assert catalog["summary"]["unverified_commands"] == 0

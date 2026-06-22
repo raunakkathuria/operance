@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added runtime self-status/help commands such as `what can I say`, `what did you hear`, `are you listening`, `is local AI ready`, and `why did that fail`, answered from portable daemon state and surfaced in the supported-command catalog without platform adapter execution.
 - Added read-only window/app awareness grammar with `windows.find`, including `what apps are open`, `show open windows`, `is <app> open`, `find window <title>`, `show windows matching <title>`, and `switch to <title> window`, using the existing KWin runner match path without switching for read-only checks.
 - Added read-only file metadata commands such as `show details for <name>`, `how big is <name>`, `when was <name> modified`, and `show recent downloads`, using typed `files.get_info` and `files.list_recent_folder` actions with adapter-owned stat calls, ambiguity handling, validation, planner/MCP schema coverage, and no file-content reads.
 - Added read-only known-folder discovery commands such as `list files in downloads`, `show files in documents`, `find file named <name>`, `find folder named <name>`, and `search documents for <name>`, backed by typed `files.list_folder` and `files.find` actions, adapter-owned known-folder resolution, hidden-path filtering, bounded search results, validation, MCP schema coverage, and supported-command promotion.

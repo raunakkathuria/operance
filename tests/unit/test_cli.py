@@ -776,6 +776,22 @@ def test_cli_supported_commands_available_only_filters_blocked_entries(monkeypat
     )
     assert "windows.switch" in commands
     assert commands["windows.switch"]["usage_pattern"] == "switch to window <title> | switch to <title> window"
+    assert "operance.help" in commands
+    assert commands["operance.help"]["usage_pattern"] == (
+        "what can I say | what commands can I use | help"
+    )
+    assert "operance.last_heard" in commands
+    assert commands["operance.last_heard"]["usage_pattern"] == (
+        "what did you hear | what was the last command"
+    )
+    assert "operance.listening_status" in commands
+    assert commands["operance.listening_status"]["usage_pattern"] == "are you listening | are you running"
+    assert "operance.local_ai_status" in commands
+    assert commands["operance.local_ai_status"]["usage_pattern"] == "is local AI ready | is planner ready"
+    assert "operance.last_failure" in commands
+    assert commands["operance.last_failure"]["usage_pattern"] == (
+        "why did that fail | why did it fail | what went wrong"
+    )
     assert "text.type" not in commands
 
 

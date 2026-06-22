@@ -7,6 +7,7 @@ from .doctor import build_environment_report
 from .models.actions import ToolName
 from .platforms import get_platform_provider
 from .registry import build_default_action_registry
+from .self_status import SELF_STATUS_COMMAND_SPECS
 from .skills import SkillLibrary, build_default_skill_library
 
 
@@ -60,6 +61,24 @@ def build_supported_command_catalog(
                     spec.name,
                     steps_by_name,
                 ),
+            }
+        )
+
+    for spec in SELF_STATUS_COMMAND_SPECS:
+        commands_by_domain.setdefault("operance", []).append(
+            {
+                "tool": spec.tool,
+                "description": spec.description,
+                "example_transcripts": list(spec.example_transcripts),
+                "usage_pattern": spec.usage_pattern,
+                "risk_tier": "tier_0",
+                "requires_confirmation": False,
+                "undoable": False,
+                "live_runtime_status": "available",
+                "live_runtime_blockers": [],
+                "release_verification_status": "verified",
+                "release_verification_target": provider.release_verification_target,
+                "live_runtime_suggested_command": None,
             }
         )
 
@@ -273,6 +292,11 @@ def _help_command_priority(command: dict[str, object]) -> tuple[int, str]:
         ToolName.WINDOWS_SWITCH.value: 14,
         ToolName.APPS_FOCUS.value: 15,
         ToolName.APPS_QUIT.value: 16,
+        "operance.help": 17,
+        "operance.last_heard": 18,
+        "operance.listening_status": 19,
+        "operance.local_ai_status": 20,
+        "operance.last_failure": 21,
     }
     return (priority.get(tool, 100), tool)
 
@@ -348,6 +372,7 @@ def _domain_label(domain: str) -> str:
         "keyboard": "Keyboard",
         "network": "Network",
         "notifications": "Notifications",
+        "operance": "Operance help",
         "power": "Power",
         "screen": "Screen",
         "text": "Text input",
@@ -366,6 +391,7 @@ def _domain_description(domain: str) -> str:
         "keyboard": "Keyboard input commands that depend on safe text-input backends.",
         "network": "Inspect local network state.",
         "notifications": "Show local desktop notifications.",
+        "operance": "Ask Operance what it heard, what you can say, and whether optional local AI is enabled.",
         "power": "Inspect battery and power state.",
         "screen": "Inspect or control screen state.",
         "text": "Type semantic text through the active platform adapter.",
