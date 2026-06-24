@@ -185,6 +185,9 @@ Current accepted safe-command slice:
 - read-only file metadata accepts phrases such as `show details for <name>`,
   `how big is <name>`, `when was <name> modified`, and `show recent downloads`
   while reporting metadata only and never reading file contents
+- contextual follow-ups accept phrases such as `open it`, `open the first one`,
+  `switch to it`, and `switch to the first window` after compatible file or
+  window awareness results while resolving only to existing typed actions
 - runtime self-status accepts phrases such as `what can I say`, `what did you
   hear`, `are you listening`, `is local AI ready`, and `why did that fail`
   while answering from portable daemon state instead of platform adapters

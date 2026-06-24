@@ -817,14 +817,12 @@ def _validate_file_open_args(args: dict[str, object]) -> list[str]:
         errors.append("location must be 'desktop', 'recent', 'downloads', 'documents', or 'home'")
 
     value = args.get("name")
-    if location in {"desktop", "recent"} and "name" in args and (
+    if location in {"desktop", "recent", "downloads", "documents", "home"} and "name" in args and (
         not isinstance(value, str) or not _is_simple_desktop_entry_name(value)
     ):
         errors.append("name must be a simple desktop entry name")
     if location == "recent" and "name" not in args:
         errors.append("name is required for recent files")
-    if location in {"downloads", "documents", "home"} and "name" in args:
-        errors.append("name is not supported for known folders")
 
     return errors
 

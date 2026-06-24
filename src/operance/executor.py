@@ -352,8 +352,8 @@ class ActionExecutor:
             if "name" not in args:
                 message = adapter.open_location(location)
                 return ActionResultItem(tool=tool, status="success", message=message)
-            if location == "desktop":
-                entry_path = adapter.desktop_dir / str(args["name"])
+            if location in {"desktop", "downloads", "documents", "home"}:
+                entry_path = _find_one_known_folder_entry(adapter, location, str(args["name"]))
                 message = adapter.open_path(entry_path)
                 return ActionResultItem(tool=tool, status="success", message=message)
             if location == "recent":
@@ -473,6 +473,18 @@ class ActionExecutor:
 def _undo_created_folder(adapter, folder) -> str:
     adapter.remove_folder(folder)
     return f"Removed folder {folder.name} from desktop"
+
+
+def _find_one_known_folder_entry(adapter, location: str, name: str):
+    matches = adapter.find_entries(location, name, "any")
+    exact_matches = [entry for entry in matches if entry.name.casefold() == name.casefold()]
+    candidates = exact_matches or matches
+    if not candidates:
+        raise ValueError(f"no matching item found in {location}: {name}")
+    if len(candidates) > 1:
+        names = "; ".join(entry.name for entry in candidates[:5])
+        raise ValueError(f"multiple matches found in {location}: {names}")
+    return candidates[0]
 
 
 def _entry_names(entries) -> str:

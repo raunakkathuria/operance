@@ -13,9 +13,10 @@ from .audit import AuditEntry, AuditStore
 from .config import AppConfig
 from .confirmation import build_confirmation_metadata
 from .executor import ActionExecutor
+from .followup import FollowupContext, FollowupReference, match_followup_command
 from .intent import DeterministicIntentMatcher
 from .logger import configure_logging
-from .models.actions import ActionPlan
+from .models.actions import ActionPlan, ToolName
 from .models.events import (
     ActionPlanEvent,
     ActionResultEvent,
@@ -74,6 +75,7 @@ class OperanceDaemon:
     planner_cooldown_until: float | None = field(default=None, init=False)
     last_undo_token: str | None = field(default=None, init=False)
     last_undo_tool: str | None = field(default=None, init=False)
+    followup_context: FollowupContext | None = field(default=None, init=False)
     pending_confirmation_plan: object | None = field(default=None, init=False)
     pending_confirmation_started_at: float | None = field(default=None, init=False)
 
@@ -341,10 +343,27 @@ class OperanceDaemon:
                     response_text,
                     response_status,
                 )
+            followup_match = match_followup_command(text, self.followup_context)
+            if followup_match is not None and followup_match.response is not None:
+                response_text, response_status = followup_match.response
+                return self._handle_self_status_response(
+                    text,
+                    total_started_at,
+                    event,
+                    response_text,
+                    response_status,
+                    source="context_followup",
+                    reason="context_followup_unresolved",
+                    audit_tool="operance.context_followup",
+                    transition_reason="resolving contextual follow-up",
+                    response_reason="contextual follow-up response generated",
+                )
             planning_started_at = perf_counter()
             self.state_machine.transition_to(RuntimeState.UNDERSTANDING, "planning transcript")
-            plan = self.intent_matcher.match(text)
-            if plan is None:
+            plan = followup_match.plan if followup_match is not None else self.intent_matcher.match(text)
+            if followup_match is not None and plan is not None:
+                self._set_routing_outcome(source=plan.source.value, reason="context_followup_match")
+            elif plan is None:
                 route_decision = self.planner_routing_policy.decide(
                     transcript=text,
                     deterministic_matched=False,
@@ -527,6 +546,11 @@ class OperanceDaemon:
                         "tool": result.results[0].tool.value if result.results else None,
                     },
                 )
+                self.followup_context = (
+                    self._build_followup_context(text, plan)
+                    if result.status == "success"
+                    else None
+                )
                 response_started_at = perf_counter()
                 response_text, response_status = self.response_builder.from_action_result(result)
                 response_event = ResponseEvent(
@@ -600,10 +624,16 @@ class OperanceDaemon:
         event: TranscriptEvent,
         response_text: str,
         response_status: str,
+        *,
+        source: str | None = "self_status",
+        reason: str | None = "self_status_command",
+        audit_tool: str = "operance.self_status",
+        transition_reason: str = "answering runtime self-status",
+        response_reason: str = "self-status response generated",
     ) -> TranscriptEvent:
         planning_started_at = perf_counter()
-        self.state_machine.transition_to(RuntimeState.UNDERSTANDING, "answering runtime self-status")
-        self._set_routing_outcome(source="self_status", reason="self_status_command")
+        self.state_machine.transition_to(RuntimeState.UNDERSTANDING, transition_reason)
+        self._set_routing_outcome(source=source, reason=reason)
         planning_duration_ms = (perf_counter() - planning_started_at) * 1000
         response_started_at = perf_counter()
         response_event = ResponseEvent(text=response_text, status=response_status)
@@ -618,7 +648,7 @@ class OperanceDaemon:
         self._append_audit_entry(
             transcript=transcript,
             status=response_status,
-            tool="operance.self_status",
+            tool=audit_tool,
             response_text=response_text,
         )
         response_duration_ms = (perf_counter() - response_started_at) * 1000
@@ -632,8 +662,81 @@ class OperanceDaemon:
                 response_duration_ms=response_duration_ms,
             )
         )
-        self.state_machine.transition_to(RuntimeState.RESPONDING, "self-status response generated")
+        self.state_machine.transition_to(RuntimeState.RESPONDING, response_reason)
         return event
+
+    def _build_followup_context(
+        self,
+        transcript: str,
+        plan: ActionPlan,
+    ) -> FollowupContext | None:
+        if len(plan.actions) != 1:
+            return None
+        action = plan.actions[0]
+        try:
+            references = self._followup_references_for_action(action.tool, action.args)
+        except ValueError:
+            return None
+        if references is None:
+            return None
+        return FollowupContext(
+            source_transcript=transcript,
+            references=tuple(references[:10]),
+        )
+
+    def _followup_references_for_action(
+        self,
+        tool: ToolName,
+        args: dict[str, object],
+    ) -> list[FollowupReference] | None:
+        if tool == ToolName.FILES_LIST_FOLDER:
+            adapter = self.adapters.files
+            if adapter is None:
+                return None
+            location = str(args["location"])
+            return [
+                _file_followup_reference(location, entry.name)
+                for entry in adapter.list_location(location)
+            ]
+        if tool == ToolName.FILES_FIND:
+            adapter = self.adapters.files
+            if adapter is None:
+                return None
+            location = str(args["location"])
+            return [
+                _file_followup_reference(location, entry.name)
+                for entry in adapter.find_entries(location, str(args["query"]), str(args["kind"]))
+            ]
+        if tool == ToolName.FILES_GET_INFO:
+            adapter = self.adapters.files
+            if adapter is None:
+                return None
+            location = str(args["location"])
+            info = adapter.describe_entry(location, str(args["query"]), str(args["kind"]))
+            return [_file_followup_reference(location, info.name)]
+        if tool == ToolName.FILES_LIST_RECENT_FOLDER:
+            adapter = self.adapters.files
+            if adapter is None:
+                return None
+            location = str(args["location"])
+            return [
+                _file_followup_reference(location, entry.name)
+                for entry in adapter.list_recent_in_location(location)
+            ]
+        if tool == ToolName.WINDOWS_LIST:
+            adapter = self.adapters.windows
+            if adapter is None:
+                return None
+            return [_window_followup_reference(window) for window in adapter.list_windows()]
+        if tool == ToolName.WINDOWS_FIND:
+            adapter = self.adapters.windows
+            if adapter is None:
+                return None
+            return [
+                _window_followup_reference(window)
+                for window in adapter.find_windows(str(args["window"]))
+            ]
+        return None
 
     def _handle_confirmation_reply(
         self,
@@ -909,6 +1012,24 @@ class OperanceDaemon:
         self.last_plan_source = source
         self.last_routing_reason = reason
         self.last_planner_error = planner_error
+
+
+def _file_followup_reference(location: str, name: str) -> FollowupReference:
+    return FollowupReference(
+        kind="file",
+        label=name,
+        tool=ToolName.FILES_OPEN,
+        args={"location": location, "name": name},
+    )
+
+
+def _window_followup_reference(window: str) -> FollowupReference:
+    return FollowupReference(
+        kind="window",
+        label=window,
+        tool=ToolName.WINDOWS_SWITCH,
+        args={"window": window},
+    )
 
 
 def _adapter_set_is_empty(adapters: AdapterSet) -> bool:
