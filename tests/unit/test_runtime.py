@@ -157,6 +157,95 @@ def test_daemon_emits_fallback_response_for_unknown_transcript(tmp_path: Path) -
     assert daemon.state_machine.current_state == RuntimeState.RESPONDING
 
 
+def test_daemon_answers_supported_command_help_without_planning(tmp_path: Path) -> None:
+    daemon = OperanceDaemon.build_default(
+        {
+            "OPERANCE_DATA_DIR": str(tmp_path / "data"),
+            "OPERANCE_DESKTOP_DIR": str(tmp_path / "Desktop"),
+        }
+    )
+    responses: list[ResponseEvent] = []
+    planned_events: list[ActionPlanEvent] = []
+    daemon.event_bus.subscribe(ResponseEvent, responses.append)
+    daemon.event_bus.subscribe(ActionPlanEvent, planned_events.append)
+
+    daemon.start()
+    daemon.emit_wake_detected("operance")
+    daemon.emit_transcript("what can I say", confidence=0.93, is_final=True)
+
+    assert planned_events == []
+    assert responses[-1].status == "success"
+    assert "open browser" in responses[-1].text
+    assert "list files in downloads" in responses[-1].text
+    snapshot = daemon.status_snapshot()
+    assert snapshot.last_plan_source == "self_status"
+    assert snapshot.last_routing_reason == "self_status_command"
+
+
+def test_daemon_reports_previous_transcript_for_what_did_you_hear(tmp_path: Path) -> None:
+    daemon = OperanceDaemon.build_default(
+        {
+            "OPERANCE_DATA_DIR": str(tmp_path / "data"),
+            "OPERANCE_DESKTOP_DIR": str(tmp_path / "Desktop"),
+        }
+    )
+    responses: list[ResponseEvent] = []
+    daemon.event_bus.subscribe(ResponseEvent, responses.append)
+
+    daemon.start()
+    daemon.emit_wake_detected("operance")
+    daemon.emit_transcript("open firefox", confidence=0.93, is_final=True)
+    daemon.complete_response_cycle()
+    daemon.emit_wake_detected("operance")
+    daemon.emit_transcript("what did you hear", confidence=0.93, is_final=True)
+
+    assert responses[-1].text == "Last command I heard: open firefox."
+    assert responses[-1].status == "success"
+
+
+def test_daemon_reports_previous_failure_details(tmp_path: Path) -> None:
+    daemon = OperanceDaemon.build_default(
+        {
+            "OPERANCE_DATA_DIR": str(tmp_path / "data"),
+            "OPERANCE_DESKTOP_DIR": str(tmp_path / "Desktop"),
+        }
+    )
+    responses: list[ResponseEvent] = []
+    daemon.event_bus.subscribe(ResponseEvent, responses.append)
+
+    daemon.start()
+    daemon.emit_wake_detected("operance")
+    daemon.emit_transcript("install updates", confidence=0.42, is_final=True)
+    daemon.complete_response_cycle()
+    daemon.emit_wake_detected("operance")
+    daemon.emit_transcript("why did that fail", confidence=0.93, is_final=True)
+
+    assert responses[-1].status == "success"
+    assert responses[-1].text.startswith("Last command status was unmatched:")
+    assert "I did not understand that command yet." in responses[-1].text
+
+
+def test_daemon_reports_local_ai_disabled_status(tmp_path: Path) -> None:
+    daemon = OperanceDaemon.build_default(
+        {
+            "OPERANCE_DATA_DIR": str(tmp_path / "data"),
+            "OPERANCE_DESKTOP_DIR": str(tmp_path / "Desktop"),
+        }
+    )
+    responses: list[ResponseEvent] = []
+    daemon.event_bus.subscribe(ResponseEvent, responses.append)
+
+    daemon.start()
+    daemon.emit_wake_detected("operance")
+    daemon.emit_transcript("is local AI ready", confidence=0.93, is_final=True)
+
+    assert responses[-1].status == "success"
+    assert responses[-1].text == (
+        "Local AI planner is optional and currently disabled. "
+        "Verified commands work without it."
+    )
+
+
 def test_daemon_routes_high_confidence_unknown_transcript_to_planner_when_enabled(tmp_path: Path) -> None:
     class StubPlannerClient:
         def __init__(self) -> None:

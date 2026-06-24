@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from .adapters.base import AdapterSet
+from .adapters.base import AdapterSet, FileEntryInfo
 from .models.actions import ActionPlan, ActionResult, ActionResultItem, ToolName
 from .undo import UndoManager
 
@@ -65,6 +65,22 @@ class ActionExecutor:
                 tool=tool,
                 status="success",
                 message=f"Open windows: {'; '.join(windows)}",
+            )
+
+        if tool == ToolName.WINDOWS_FIND:
+            adapter = self._require_adapter(self.adapters.windows, tool)
+            window = str(args["window"])
+            windows = adapter.find_windows(window)
+            if not windows:
+                return ActionResultItem(
+                    tool=tool,
+                    status="success",
+                    message=f"No open windows matched {window}",
+                )
+            return ActionResultItem(
+                tool=tool,
+                status="success",
+                message=f"Found {len(windows)} {_windows_noun(len(windows))}: {'; '.join(windows[:10])}",
             )
 
         if tool == ToolName.WINDOWS_SWITCH:
@@ -267,6 +283,69 @@ class ActionExecutor:
                 message=f"Found {len(files)} recent files",
             )
 
+        if tool == ToolName.FILES_LIST_FOLDER:
+            adapter = self._require_adapter(self.adapters.files, tool)
+            location = str(args["location"])
+            entries = adapter.list_location(location)
+            if not entries:
+                return ActionResultItem(
+                    tool=tool,
+                    status="success",
+                    message=f"{location} is empty",
+                )
+            return ActionResultItem(
+                tool=tool,
+                status="success",
+                message=f"{location} contains {len(entries)} {_entries_noun(len(entries))}: {_entry_names(entries)}",
+            )
+
+        if tool == ToolName.FILES_FIND:
+            adapter = self._require_adapter(self.adapters.files, tool)
+            location = str(args["location"])
+            query = str(args["query"])
+            kind = str(args["kind"])
+            entries = adapter.find_entries(location, query, kind)
+            if not entries:
+                return ActionResultItem(
+                    tool=tool,
+                    status="success",
+                    message=f"No matches found in {location} for {query}",
+                )
+            noun = _file_find_noun(kind, len(entries))
+            return ActionResultItem(
+                tool=tool,
+                status="success",
+                message=f"Found {len(entries)} {noun} in {location}: {_entry_names(entries)}",
+            )
+
+        if tool == ToolName.FILES_GET_INFO:
+            adapter = self._require_adapter(self.adapters.files, tool)
+            location = str(args["location"])
+            query = str(args["query"])
+            kind = str(args["kind"])
+            info = adapter.describe_entry(location, query, kind)
+            return ActionResultItem(
+                tool=tool,
+                status="success",
+                message=_entry_info_message(location, info),
+            )
+
+        if tool == ToolName.FILES_LIST_RECENT_FOLDER:
+            adapter = self._require_adapter(self.adapters.files, tool)
+            location = str(args["location"])
+            entries = adapter.list_recent_in_location(location)
+            if not entries:
+                return ActionResultItem(
+                    tool=tool,
+                    status="success",
+                    message=f"No recent entries found in {location}",
+                )
+            return ActionResultItem(
+                tool=tool,
+                status="success",
+                message=f"Recent {location} entries: {_entry_info_names(entries)}",
+            )
+
         if tool == ToolName.FILES_OPEN:
             adapter = self._require_adapter(self.adapters.files, tool)
             location = str(args["location"])
@@ -394,6 +473,52 @@ class ActionExecutor:
 def _undo_created_folder(adapter, folder) -> str:
     adapter.remove_folder(folder)
     return f"Removed folder {folder.name} from desktop"
+
+
+def _entry_names(entries) -> str:
+    return "; ".join(entry.name for entry in entries[:10])
+
+
+def _entry_info_names(entries: list[FileEntryInfo]) -> str:
+    return "; ".join(entry.name for entry in entries[:10])
+
+
+def _entry_info_message(location: str, info: FileEntryInfo) -> str:
+    details = [f"{info.name} in {location} is a {info.entry_type}"]
+    if info.size_bytes is not None:
+        details.append(_format_size(info.size_bytes))
+    details.append(f"modified {_format_modified_at(info.modified_at)}")
+    return ", ".join(details)
+
+
+def _entries_noun(count: int) -> str:
+    return "entry" if count == 1 else "entries"
+
+
+def _file_find_noun(kind: str, count: int) -> str:
+    if kind == "folder":
+        return "folder" if count == 1 else "folders"
+    if kind == "file":
+        return "file" if count == 1 else "files"
+    return "match" if count == 1 else "matches"
+
+
+def _windows_noun(count: int) -> str:
+    return "window" if count == 1 else "windows"
+
+
+def _format_size(size_bytes: int) -> str:
+    if size_bytes < 1024:
+        return f"{size_bytes} B"
+    kib = size_bytes / 1024
+    if kib < 1024:
+        return f"{kib:.1f} KiB"
+    mib = kib / 1024
+    return f"{mib:.1f} MiB"
+
+
+def _format_modified_at(modified_at) -> str:
+    return modified_at.isoformat(timespec="seconds")
 
 
 def _undo_volume(adapter, previous_volume: int) -> str:

@@ -743,6 +743,38 @@ def test_linux_windows_adapter_lists_deduplicated_window_titles() -> None:
     ]]
 
 
+def test_linux_windows_adapter_finds_matching_windows_without_switching() -> None:
+    from operance.adapters.linux import LinuxWindowsAdapter
+
+    commands: list[list[str]] = []
+
+    def run_command(command: list[str]) -> subprocess.CompletedProcess[str]:
+        commands.append(command)
+        return subprocess.CompletedProcess(
+            command,
+            0,
+            stdout="([('0_{abc}', 'GitHub — Mozilla Firefox', 'firefox', 100, 0.8, {'subtext': <'Activate running window on Desktop 1'>})],)\n",
+            stderr="",
+        )
+
+    adapter = LinuxWindowsAdapter(run_command=run_command)
+
+    assert adapter.find_windows("firefox") == ["GitHub — Mozilla Firefox"]
+    assert all("org.kde.krunner1.Run" not in command for command in commands)
+    assert commands[0][-2:] == ["org.kde.krunner1.Match", "firefox"]
+
+
+def test_linux_windows_adapter_returns_empty_find_results_for_no_matches() -> None:
+    from operance.adapters.linux import LinuxWindowsAdapter
+
+    def run_command(command: list[str]) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(command, 0, "(@a(sssida{sv}) [],)\n", "")
+
+    adapter = LinuxWindowsAdapter(run_command=run_command)
+
+    assert adapter.find_windows("missing") == []
+
+
 def test_linux_windows_adapter_parses_windows_runner_matches_with_icon_data() -> None:
     from operance.adapters.linux import LinuxWindowsAdapter
 
@@ -1410,6 +1442,121 @@ def test_linux_files_adapter_lists_recent_files_in_modified_order(tmp_path: Path
     adapter = LinuxFilesAdapter(desktop_dir=desktop_dir)
 
     assert adapter.list_recent() == [newer_file, older_file]
+
+
+def test_linux_files_adapter_lists_known_location_without_hidden_entries(tmp_path: Path) -> None:
+    from operance.adapters.linux import LinuxFilesAdapter
+
+    desktop_dir = tmp_path / "Desktop"
+    desktop_dir.mkdir()
+    downloads_dir = tmp_path / "Downloads"
+    downloads_dir.mkdir()
+    visible_file = downloads_dir / "invoice.pdf"
+    visible_folder = downloads_dir / "Projects"
+    hidden_file = downloads_dir / ".secret"
+    visible_file.write_text("invoice", encoding="utf-8")
+    visible_folder.mkdir()
+    hidden_file.write_text("secret", encoding="utf-8")
+    commands: list[list[str]] = []
+    adapter = LinuxFilesAdapter(
+        desktop_dir=desktop_dir,
+        run_command=lambda command: commands.append(command)
+        or subprocess.CompletedProcess(command, 0, f"{downloads_dir}\n", ""),
+    )
+
+    assert adapter.list_location("downloads") == [visible_file, visible_folder]
+    assert commands == [["/usr/bin/xdg-user-dir", "DOWNLOAD"]]
+
+
+def test_linux_files_adapter_finds_entries_by_name_and_kind(tmp_path: Path) -> None:
+    from operance.adapters.linux import LinuxFilesAdapter
+
+    desktop_dir = tmp_path / "Desktop"
+    desktop_dir.mkdir()
+    documents_dir = tmp_path / "Documents"
+    documents_dir.mkdir()
+    invoice = documents_dir / "invoice.pdf"
+    invoice.write_text("invoice", encoding="utf-8")
+    invoices_folder = documents_dir / "Invoices"
+    invoices_folder.mkdir()
+    hidden_folder = documents_dir / ".cache"
+    hidden_folder.mkdir()
+    (hidden_folder / "invoice-secret.txt").write_text("secret", encoding="utf-8")
+    adapter = LinuxFilesAdapter(
+        desktop_dir=desktop_dir,
+        run_command=lambda command: subprocess.CompletedProcess(command, 0, f"{documents_dir}\n", ""),
+    )
+
+    assert adapter.find_entries("documents", "invoice", "file") == [invoice]
+    assert adapter.find_entries("documents", "invoice", "folder") == [invoices_folder]
+    assert adapter.find_entries("documents", "invoice", "any") == [invoice, invoices_folder]
+
+
+def test_linux_files_adapter_describes_single_entry_metadata(tmp_path: Path) -> None:
+    from operance.adapters.linux import LinuxFilesAdapter
+
+    desktop_dir = tmp_path / "Desktop"
+    desktop_dir.mkdir()
+    downloads_dir = tmp_path / "Downloads"
+    downloads_dir.mkdir()
+    notes = downloads_dir / "notes.txt"
+    notes.write_text("notes", encoding="utf-8")
+    os.utime(notes, (1_700_000_000, 1_700_000_000))
+    adapter = LinuxFilesAdapter(
+        desktop_dir=desktop_dir,
+        run_command=lambda command: subprocess.CompletedProcess(command, 0, f"{downloads_dir}\n", ""),
+    )
+
+    info = adapter.describe_entry("downloads", "notes.txt", "file")
+
+    assert info.name == "notes.txt"
+    assert info.entry_type == "file"
+    assert info.size_bytes == 5
+    assert info.modified_at.isoformat(timespec="seconds") == "2023-11-14T22:13:20+00:00"
+
+
+def test_linux_files_adapter_rejects_ambiguous_metadata_matches(tmp_path: Path) -> None:
+    from operance.adapters.linux import LinuxFilesAdapter
+
+    desktop_dir = tmp_path / "Desktop"
+    desktop_dir.mkdir()
+    documents_dir = tmp_path / "Documents"
+    documents_dir.mkdir()
+    (documents_dir / "invoice.pdf").write_text("invoice", encoding="utf-8")
+    (documents_dir / "invoice-final.pdf").write_text("invoice", encoding="utf-8")
+    adapter = LinuxFilesAdapter(
+        desktop_dir=desktop_dir,
+        run_command=lambda command: subprocess.CompletedProcess(command, 0, f"{documents_dir}\n", ""),
+    )
+
+    with pytest.raises(ValueError, match="multiple matches found in documents"):
+        adapter.describe_entry("documents", "invoice", "file")
+
+
+def test_linux_files_adapter_lists_recent_entries_in_known_location(tmp_path: Path) -> None:
+    from operance.adapters.linux import LinuxFilesAdapter
+
+    desktop_dir = tmp_path / "Desktop"
+    desktop_dir.mkdir()
+    downloads_dir = tmp_path / "Downloads"
+    downloads_dir.mkdir()
+    older_file = downloads_dir / "older.txt"
+    newer_file = downloads_dir / "newer.txt"
+    hidden_file = downloads_dir / ".secret"
+    older_file.write_text("older", encoding="utf-8")
+    newer_file.write_text("newer", encoding="utf-8")
+    hidden_file.write_text("secret", encoding="utf-8")
+    os.utime(older_file, (1_700_000_000, 1_700_000_000))
+    os.utime(newer_file, (1_700_000_100, 1_700_000_100))
+    os.utime(hidden_file, (1_700_000_200, 1_700_000_200))
+    adapter = LinuxFilesAdapter(
+        desktop_dir=desktop_dir,
+        run_command=lambda command: subprocess.CompletedProcess(command, 0, f"{downloads_dir}\n", ""),
+    )
+
+    recent = adapter.list_recent_in_location("downloads")
+
+    assert [entry.name for entry in recent] == ["newer.txt", "older.txt"]
 
 
 def test_linux_files_adapter_opens_desktop_entry(tmp_path: Path) -> None:

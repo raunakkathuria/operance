@@ -177,12 +177,28 @@ Current accepted safe-command slice:
   <query>` while still mapping to a typed browser navigation action
 - known-folder requests accept both `open downloads` and `open folder
   downloads`
+- read-only file discovery accepts known-folder listing and filename search
+  phrases such as `list files in downloads`, `show files in documents`, `find
+  file named <name>`, `find folder named <name>`, and `search documents for
+  <name>` while staying inside typed `files.list_folder` and `files.find`
+  actions
+- read-only file metadata accepts phrases such as `show details for <name>`,
+  `how big is <name>`, `when was <name> modified`, and `show recent downloads`
+  while reporting metadata only and never reading file contents
+- runtime self-status accepts phrases such as `what can I say`, `what did you
+  hear`, `are you listening`, `is local AI ready`, and `why did that fail`
+  while answering from portable daemon state instead of platform adapters
+- read-only window awareness accepts phrases such as `what apps are open`, `is
+  <app> open`, `find window <title>`, and `show windows matching <title>` while
+  staying inside typed `windows.list` and `windows.find` actions
 
 Non-goals:
 
 - every Linux shell command
 - raw terminal command execution
 - destructive file management without confirmation and audit
+- raw filesystem paths or file-content search from speech in the current
+  read-only discovery slice
 
 ### Milestone 3: Local AI Assist Mode
 

@@ -119,6 +119,22 @@ def test_build_supported_command_catalog_can_filter_available_commands_only() ->
     assert catalog["catalog_filter"] == "available_only"
     assert "apps.launch" in commands
     assert "files.list_recent" in commands
+    assert "files.list_folder" in commands
+    assert commands["files.list_folder"]["usage_pattern"] == (
+        "list files in downloads | show files in documents | what is in downloads"
+    )
+    assert "files.find" in commands
+    assert commands["files.find"]["usage_pattern"] == (
+        "find file named <name> | find folder named <name> | search documents for <name>"
+    )
+    assert "files.get_info" in commands
+    assert commands["files.get_info"]["usage_pattern"] == (
+        "show details for <name> | how big is <name> | when was <name> modified"
+    )
+    assert "files.list_recent_folder" in commands
+    assert commands["files.list_recent_folder"]["usage_pattern"] == (
+        "show recent downloads | show recent files in downloads"
+    )
     assert "files.create_folder" in commands
     assert "files.delete_folder" in commands
     assert "files.delete_file" in commands
@@ -127,7 +143,18 @@ def test_build_supported_command_catalog_can_filter_available_commands_only() ->
     assert "notifications.show" in commands
     assert commands["notifications.show"]["usage_pattern"] == "show a notification saying <message>"
     assert "windows.list" in commands
+    assert commands["windows.list"]["usage_pattern"] == "list windows | what apps are open | show open windows"
+    assert "windows.find" in commands
+    assert commands["windows.find"]["usage_pattern"] == (
+        "is <app> open | find window <title> | show windows matching <title>"
+    )
     assert "windows.switch" in commands
+    assert "operance.help" in commands
+    assert commands["operance.help"]["usage_pattern"] == "what can I say | what commands can I use | help"
+    assert "operance.last_heard" in commands
+    assert "operance.listening_status" in commands
+    assert "operance.local_ai_status" in commands
+    assert "operance.last_failure" in commands
     assert catalog["skills"]["summary"]["pack_count"] == 0
     assert "text.type" not in commands
     assert catalog["summary"]["unverified_commands"] == 0

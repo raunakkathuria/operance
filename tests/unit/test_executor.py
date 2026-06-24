@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import pytest
@@ -35,7 +36,11 @@ from operance.models.actions import ToolName
         ("focus code", ToolName.APPS_FOCUS, "success", "Focused code"),
         ("quit firefox", ToolName.APPS_QUIT, "success", "Quit firefox"),
         ("list windows", ToolName.WINDOWS_LIST, "success", "Open windows: Firefox; Terminal"),
+        ("what apps are open", ToolName.WINDOWS_LIST, "success", "Open windows: Firefox; Terminal"),
+        ("is firefox open", ToolName.WINDOWS_FIND, "success", "Found 1 window: Firefox"),
+        ("is code open", ToolName.WINDOWS_FIND, "success", "No open windows matched code"),
         ("switch to window firefox", ToolName.WINDOWS_SWITCH, "success", "Switched to window Firefox"),
+        ("switch to firefox window", ToolName.WINDOWS_SWITCH, "success", "Switched to window Firefox"),
         ("minimize window firefox", ToolName.WINDOWS_MINIMIZE, "success", "Minimized window Firefox"),
         ("maximize window firefox", ToolName.WINDOWS_MAXIMIZE, "success", "Maximized window Firefox"),
         ("fullscreen window firefox", ToolName.WINDOWS_SET_FULLSCREEN, "success", "Enabled fullscreen for window Firefox"),
@@ -84,6 +89,42 @@ from operance.models.actions import ToolName
             ToolName.FILES_LIST_RECENT,
             "success",
             "Found 2 recent files",
+        ),
+        (
+            "list files in downloads",
+            ToolName.FILES_LIST_FOLDER,
+            "success",
+            "downloads contains 2 entries: invoice.pdf; notes.txt",
+        ),
+        (
+            "find file named notes.txt",
+            ToolName.FILES_FIND,
+            "success",
+            "Found 1 file in home: notes.txt",
+        ),
+        (
+            "find folder named projects",
+            ToolName.FILES_FIND,
+            "success",
+            "Found 1 folder in home: projects",
+        ),
+        (
+            "search documents for missing",
+            ToolName.FILES_FIND,
+            "success",
+            "No matches found in documents for missing",
+        ),
+        (
+            "show details for notes.txt",
+            ToolName.FILES_GET_INFO,
+            "success",
+            "notes.txt in home is a file, 5 B, modified 2023-11-14T22:13:20+00:00",
+        ),
+        (
+            "show recent downloads",
+            ToolName.FILES_LIST_RECENT_FOLDER,
+            "success",
+            "Recent downloads entries: newer.txt; older.txt",
         ),
         (
             "open file on desktop called notes.txt",
@@ -159,6 +200,28 @@ def test_executor_runs_seed_commands_against_mock_adapters(
         adapters.network.connected_ssid = "home"
     if expected_tool == ToolName.FILES_OPEN and "desktop called" in text:
         (tmp_path / "Desktop" / "notes.txt").write_text("notes", encoding="utf-8")
+    if expected_tool == ToolName.FILES_LIST_FOLDER:
+        downloads_dir = tmp_path / "Desktop" / "Downloads"
+        downloads_dir.mkdir()
+        (downloads_dir / "invoice.pdf").write_text("invoice", encoding="utf-8")
+        (downloads_dir / "notes.txt").write_text("notes", encoding="utf-8")
+    if expected_tool == ToolName.FILES_FIND:
+        (tmp_path / "Desktop" / "notes.txt").write_text("notes", encoding="utf-8")
+        (tmp_path / "Desktop" / "projects").mkdir()
+        (tmp_path / "Desktop" / "Documents").mkdir()
+    if expected_tool == ToolName.FILES_GET_INFO:
+        notes_path = tmp_path / "Desktop" / "notes.txt"
+        notes_path.write_text("notes", encoding="utf-8")
+        os.utime(notes_path, (1_700_000_000, 1_700_000_000))
+    if expected_tool == ToolName.FILES_LIST_RECENT_FOLDER:
+        downloads_dir = tmp_path / "Desktop" / "Downloads"
+        downloads_dir.mkdir()
+        older_file = downloads_dir / "older.txt"
+        newer_file = downloads_dir / "newer.txt"
+        older_file.write_text("older", encoding="utf-8")
+        newer_file.write_text("newer", encoding="utf-8")
+        os.utime(older_file, (1_700_000_000, 1_700_000_000))
+        os.utime(newer_file, (1_700_000_100, 1_700_000_100))
     if expected_tool == ToolName.FILES_RENAME:
         (tmp_path / "Desktop" / "projects").mkdir()
     if expected_tool == ToolName.FILES_MOVE:

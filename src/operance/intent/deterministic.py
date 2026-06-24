@@ -220,13 +220,38 @@ class DeterministicIntentMatcher:
                 requires_confirmation=True,
             )
 
-        if normalized in {"list windows", "show windows"}:
+        if normalized in {
+            "list windows",
+            "show windows",
+            "show open windows",
+            "list open windows",
+            "what windows are open",
+            "what apps are open",
+            "show open apps",
+            "list open apps",
+        }:
             return self._single_action_plan(
                 text,
                 ToolName.WINDOWS_LIST,
             )
 
-        window_switch_match = re.fullmatch(r"switch to window (.+)", normalized)
+        window_find_match = (
+            re.fullmatch(r"is (.+) open", normalized)
+            or re.fullmatch(r"is (.+) running", normalized)
+            or re.fullmatch(r"is window (.+) open", normalized)
+            or re.fullmatch(r"find window (.+)", normalized)
+            or re.fullmatch(r"show windows matching (.+)", normalized)
+        )
+        if window_find_match:
+            return self._single_action_plan(
+                text,
+                ToolName.WINDOWS_FIND,
+                args={"window": window_find_match.group(1)},
+            )
+
+        window_switch_match = re.fullmatch(r"switch to window (.+)", normalized) or re.fullmatch(
+            r"switch to (.+) window", normalized
+        )
         if window_switch_match:
             return self._single_action_plan(
                 text,
@@ -553,6 +578,106 @@ class DeterministicIntentMatcher:
                 text,
                 ToolName.FILES_LIST_RECENT,
                 args={"modified_since": "today"},
+            )
+
+        list_folder_match = (
+            re.fullmatch(r"(?:list|show) files in (desktop|downloads|documents|home)", normalized)
+            or re.fullmatch(r"(?:list|show) (desktop|downloads|documents|home) files", normalized)
+            or re.fullmatch(r"what(?: is|'s) in (desktop|downloads|documents|home)", normalized)
+        )
+        if list_folder_match:
+            return self._single_action_plan(
+                text,
+                ToolName.FILES_LIST_FOLDER,
+                args={"location": list_folder_match.group(1)},
+            )
+
+        find_named_match = re.fullmatch(
+            r"find (file|folder|item) named (.+?)(?: in (desktop|downloads|documents|home))?",
+            normalized,
+        )
+        if find_named_match:
+            kind_by_word = {"file": "file", "folder": "folder", "item": "any"}
+            return self._single_action_plan(
+                text,
+                ToolName.FILES_FIND,
+                args={
+                    "location": find_named_match.group(3) or "home",
+                    "query": find_named_match.group(2),
+                    "kind": kind_by_word[find_named_match.group(1)],
+                },
+            )
+
+        search_folder_match = re.fullmatch(
+            r"search (desktop|downloads|documents|home) for (.+)",
+            normalized,
+        )
+        if search_folder_match:
+            return self._single_action_plan(
+                text,
+                ToolName.FILES_FIND,
+                args={
+                    "location": search_folder_match.group(1),
+                    "query": search_folder_match.group(2),
+                    "kind": "any",
+                },
+            )
+
+        recent_folder_match = (
+            re.fullmatch(r"show recent files in (desktop|downloads|documents|home)", normalized)
+            or re.fullmatch(r"show recent (desktop|downloads|documents|home)(?: files| entries)?", normalized)
+            or re.fullmatch(r"recent (desktop|downloads|documents|home)", normalized)
+        )
+        if recent_folder_match:
+            return self._single_action_plan(
+                text,
+                ToolName.FILES_LIST_RECENT_FOLDER,
+                args={"location": recent_folder_match.group(1)},
+            )
+
+        details_match = (
+            re.fullmatch(r"(?:show|display) details for (.+?)(?: in (desktop|downloads|documents|home))?", normalized)
+            or re.fullmatch(r"file details for (.+?)(?: in (desktop|downloads|documents|home))?", normalized)
+        )
+        if details_match:
+            return self._single_action_plan(
+                text,
+                ToolName.FILES_GET_INFO,
+                args={
+                    "location": details_match.group(2) or "home",
+                    "query": details_match.group(1),
+                    "kind": "any",
+                },
+            )
+
+        file_size_match = re.fullmatch(
+            r"how big is (.+?)(?: in (desktop|downloads|documents|home))?",
+            normalized,
+        )
+        if file_size_match:
+            return self._single_action_plan(
+                text,
+                ToolName.FILES_GET_INFO,
+                args={
+                    "location": file_size_match.group(2) or "home",
+                    "query": file_size_match.group(1),
+                    "kind": "file",
+                },
+            )
+
+        modified_match = re.fullmatch(
+            r"when was (.+?) (?:last )?modified(?: in (desktop|downloads|documents|home))?",
+            normalized,
+        )
+        if modified_match:
+            return self._single_action_plan(
+                text,
+                ToolName.FILES_GET_INFO,
+                args={
+                    "location": modified_match.group(2) or "home",
+                    "query": modified_match.group(1),
+                    "kind": "any",
+                },
             )
 
         open_recent_file_match = re.fullmatch(r"open recent file called (.+)", normalized)

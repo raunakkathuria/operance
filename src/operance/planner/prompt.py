@@ -2,7 +2,14 @@
 
 from __future__ import annotations
 
+from ..models.actions import ToolName
 from ..registry import ToolSpec, build_default_action_registry
+
+_PROMPT_EXAMPLE_TOOLS = {
+    ToolName.APPS_LAUNCH,
+    ToolName.APPS_QUIT,
+    ToolName.WINDOWS_SWITCH,
+}
 
 
 def build_planner_messages(transcript: str) -> list[dict[str, str]]:
@@ -33,7 +40,7 @@ def build_planner_messages(transcript: str) -> list[dict[str, str]]:
 
 def _format_tool_prompt_line(spec: ToolSpec) -> str:
     example_transcript = ""
-    if spec.example_transcripts:
+    if spec.name in _PROMPT_EXAMPLE_TOOLS and spec.example_transcripts:
         example_transcript = f' | example="{spec.example_transcripts[0]}"'
 
     confirmation = "required" if spec.requires_confirmation else "not_required"

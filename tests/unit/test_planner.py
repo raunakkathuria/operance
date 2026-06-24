@@ -68,6 +68,101 @@ def test_plan_preview_renders_recent_file_open_action() -> None:
     assert preview == "Planned action: open recent file 'notes.txt'."
 
 
+def test_plan_preview_renders_folder_list_action() -> None:
+    from operance.planner.preview import build_plan_preview
+
+    plan = ActionPlan(
+        source=PlanSource.PLANNER,
+        original_text="list files in downloads",
+        actions=[
+            TypedAction(
+                tool=ToolName.FILES_LIST_FOLDER,
+                args={"location": "downloads"},
+            )
+        ],
+    )
+
+    preview = build_plan_preview(plan)
+
+    assert preview == "Planned action: list files in downloads."
+
+
+def test_plan_preview_renders_file_find_action() -> None:
+    from operance.planner.preview import build_plan_preview
+
+    plan = ActionPlan(
+        source=PlanSource.PLANNER,
+        original_text="search documents for invoice",
+        actions=[
+            TypedAction(
+                tool=ToolName.FILES_FIND,
+                args={"location": "documents", "query": "invoice", "kind": "any"},
+            )
+        ],
+    )
+
+    preview = build_plan_preview(plan)
+
+    assert preview == "Planned action: find files or folders named 'invoice' in documents."
+
+
+def test_plan_preview_renders_file_info_action() -> None:
+    from operance.planner.preview import build_plan_preview
+
+    plan = ActionPlan(
+        source=PlanSource.PLANNER,
+        original_text="show details for notes.txt",
+        actions=[
+            TypedAction(
+                tool=ToolName.FILES_GET_INFO,
+                args={"location": "home", "query": "notes.txt", "kind": "any"},
+            )
+        ],
+    )
+
+    preview = build_plan_preview(plan)
+
+    assert preview == "Planned action: show details for 'notes.txt' in home."
+
+
+def test_plan_preview_renders_recent_folder_action() -> None:
+    from operance.planner.preview import build_plan_preview
+
+    plan = ActionPlan(
+        source=PlanSource.PLANNER,
+        original_text="show recent downloads",
+        actions=[
+            TypedAction(
+                tool=ToolName.FILES_LIST_RECENT_FOLDER,
+                args={"location": "downloads"},
+            )
+        ],
+    )
+
+    preview = build_plan_preview(plan)
+
+    assert preview == "Planned action: list recent entries in downloads."
+
+
+def test_plan_preview_renders_known_folder_open_action() -> None:
+    from operance.planner.preview import build_plan_preview
+
+    plan = ActionPlan(
+        source=PlanSource.PLANNER,
+        original_text="open downloads",
+        actions=[
+            TypedAction(
+                tool=ToolName.FILES_OPEN,
+                args={"location": "downloads"},
+            )
+        ],
+    )
+
+    preview = build_plan_preview(plan)
+
+    assert preview == "Planned action: open downloads folder."
+
+
 def test_plan_preview_renders_quit_app_action() -> None:
     from operance.planner.preview import build_plan_preview
 
@@ -98,6 +193,25 @@ def test_plan_preview_renders_wifi_status_action() -> None:
     preview = build_plan_preview(plan)
 
     assert preview == "Planned action: check Wi-Fi status."
+
+
+def test_plan_preview_renders_window_find_action() -> None:
+    from operance.planner.preview import build_plan_preview
+
+    plan = ActionPlan(
+        source=PlanSource.PLANNER,
+        original_text="is firefox open",
+        actions=[
+            TypedAction(
+                tool=ToolName.WINDOWS_FIND,
+                args={"window": "firefox"},
+            )
+        ],
+    )
+
+    preview = build_plan_preview(plan)
+
+    assert preview == "Planned action: find windows matching 'firefox'."
 
 
 def test_plan_preview_renders_disconnect_current_wifi_action() -> None:

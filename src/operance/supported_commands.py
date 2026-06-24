@@ -7,6 +7,7 @@ from .doctor import build_environment_report
 from .models.actions import ToolName
 from .platforms import get_platform_provider
 from .registry import build_default_action_registry
+from .self_status import SELF_STATUS_COMMAND_SPECS
 from .skills import SkillLibrary, build_default_skill_library
 
 
@@ -60,6 +61,24 @@ def build_supported_command_catalog(
                     spec.name,
                     steps_by_name,
                 ),
+            }
+        )
+
+    for spec in SELF_STATUS_COMMAND_SPECS:
+        commands_by_domain.setdefault("operance", []).append(
+            {
+                "tool": spec.tool,
+                "description": spec.description,
+                "example_transcripts": list(spec.example_transcripts),
+                "usage_pattern": spec.usage_pattern,
+                "risk_tier": "tier_0",
+                "requires_confirmation": False,
+                "undoable": False,
+                "live_runtime_status": "available",
+                "live_runtime_blockers": [],
+                "release_verification_status": "verified",
+                "release_verification_target": provider.release_verification_target,
+                "live_runtime_suggested_command": None,
             }
         )
 
@@ -264,10 +283,20 @@ def _help_command_priority(command: dict[str, object]) -> tuple[int, str]:
         ToolName.AUDIO_SET_MUTED.value: 5,
         ToolName.AUDIO_SET_VOLUME.value: 6,
         ToolName.FILES_LIST_RECENT.value: 7,
-        ToolName.WINDOWS_LIST.value: 8,
-        ToolName.WINDOWS_SWITCH.value: 9,
-        ToolName.APPS_FOCUS.value: 10,
-        ToolName.APPS_QUIT.value: 11,
+        ToolName.FILES_LIST_FOLDER.value: 8,
+        ToolName.FILES_FIND.value: 9,
+        ToolName.FILES_GET_INFO.value: 10,
+        ToolName.FILES_LIST_RECENT_FOLDER.value: 11,
+        ToolName.WINDOWS_LIST.value: 12,
+        ToolName.WINDOWS_FIND.value: 13,
+        ToolName.WINDOWS_SWITCH.value: 14,
+        ToolName.APPS_FOCUS.value: 15,
+        ToolName.APPS_QUIT.value: 16,
+        "operance.help": 17,
+        "operance.last_heard": 18,
+        "operance.listening_status": 19,
+        "operance.local_ai_status": 20,
+        "operance.last_failure": 21,
     }
     return (priority.get(tool, 100), tool)
 
@@ -312,10 +341,15 @@ def _tool_usage_pattern(tool: ToolName) -> str | None:
         ),
         ToolName.APPS_FOCUS: "focus <app name>",
         ToolName.APPS_QUIT: "quit <app name>",
-        ToolName.WINDOWS_LIST: "list windows",
-        ToolName.WINDOWS_SWITCH: "switch to window <title>",
+        ToolName.WINDOWS_LIST: "list windows | what apps are open | show open windows",
+        ToolName.WINDOWS_FIND: "is <app> open | find window <title> | show windows matching <title>",
+        ToolName.WINDOWS_SWITCH: "switch to window <title> | switch to <title> window",
         ToolName.NOTIFICATIONS_SHOW: "show a notification saying <message>",
         ToolName.FILES_LIST_RECENT: "show recent files",
+        ToolName.FILES_LIST_FOLDER: "list files in downloads | show files in documents | what is in downloads",
+        ToolName.FILES_FIND: "find file named <name> | find folder named <name> | search documents for <name>",
+        ToolName.FILES_GET_INFO: "show details for <name> | how big is <name> | when was <name> modified",
+        ToolName.FILES_LIST_RECENT_FOLDER: "show recent downloads | show recent files in downloads",
         ToolName.FILES_CREATE_FOLDER: "create folder on desktop called <name>",
         ToolName.FILES_DELETE_FOLDER: "delete folder on desktop called <name>",
         ToolName.FILES_DELETE_FILE: "delete file on desktop called <name>",
@@ -338,6 +372,7 @@ def _domain_label(domain: str) -> str:
         "keyboard": "Keyboard",
         "network": "Network",
         "notifications": "Notifications",
+        "operance": "Operance help",
         "power": "Power",
         "screen": "Screen",
         "text": "Text input",
@@ -352,10 +387,11 @@ def _domain_description(domain: str) -> str:
         "apps": "Open apps, open URLs, focus apps, or quit apps with confirmation when needed.",
         "audio": "Inspect and control basic desktop audio state.",
         "clipboard": "Clipboard commands that depend on Wayland clipboard tooling.",
-        "files": "Work with Desktop files and folders through confirmation-gated actions when needed.",
+        "files": "Find, inspect, open, or manage safe known-folder files with confirmation when needed.",
         "keyboard": "Keyboard input commands that depend on safe text-input backends.",
         "network": "Inspect local network state.",
         "notifications": "Show local desktop notifications.",
+        "operance": "Ask Operance what it heard, what you can say, and whether optional local AI is enabled.",
         "power": "Inspect battery and power state.",
         "screen": "Inspect or control screen state.",
         "text": "Type semantic text through the active platform adapter.",

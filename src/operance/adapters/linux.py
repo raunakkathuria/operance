@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import ast
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 import json
 import os
 from pathlib import Path
@@ -17,7 +17,7 @@ import time
 from typing import Callable
 from uuid import uuid4
 
-from .base import AdapterSet
+from .base import AdapterSet, FileEntryInfo
 from ..key_presses import normalize_supported_key, supported_key_display_name
 from ..launch_targets import is_url_like_target, normalize_launch_target
 
@@ -131,6 +131,14 @@ def _process_name_candidates_for_launch(app: str, command: list[str]) -> list[st
         if candidate not in candidates:
             candidates.append(candidate)
     return candidates
+
+
+def _is_hidden_path(path: Path, root: Path) -> bool:
+    try:
+        relative_parts = path.relative_to(root).parts
+    except ValueError:
+        relative_parts = path.parts
+    return any(part.startswith(".") for part in relative_parts)
 
 
 def _normalize_app_lookup_text(value: str) -> str:
@@ -900,6 +908,10 @@ class LinuxWindowsAdapter:
         matches = self._runner_matches("")
         return [match.title for match in matches]
 
+    def find_windows(self, window: str) -> list[str]:
+        matches = self._runner_matches(window)
+        return [match.title for match in matches]
+
     def switch(self, window: str) -> str:
         matches = self._runner_matches(window)
         if not matches:
@@ -1463,6 +1475,7 @@ class LinuxNotificationsAdapter:
 class LinuxFilesAdapter:
     desktop_dir: Path
     max_recent_files: int = 10
+    max_search_results: int = 10
     run_command: RunCommand = _default_run_command
     resolve_executable: ResolveExecutable = _default_resolve_executable
 
@@ -1473,6 +1486,52 @@ class LinuxFilesAdapter:
 
         recent_files = [path for path in target_root.iterdir() if path.is_file()]
         return sorted(recent_files, key=lambda path: path.stat().st_mtime, reverse=True)[: self.max_recent_files]
+
+    def list_location(self, location: str) -> list[Path]:
+        path = self._resolve_known_location(location)
+        if not path.exists() or not path.is_dir():
+            return []
+        return sorted(
+            [entry for entry in path.iterdir() if not _is_hidden_path(entry, path)],
+            key=lambda entry: entry.name.casefold(),
+        )
+
+    def find_entries(self, location: str, query: str, kind: str) -> list[Path]:
+        root = self._resolve_known_location(location)
+        if not root.exists() or not root.is_dir():
+            return []
+        normalized_query = query.casefold()
+        matches: list[Path] = []
+        for entry in sorted(root.rglob("*"), key=lambda item: str(item).casefold()):
+            if _is_hidden_path(entry, root) or normalized_query not in entry.name.casefold():
+                continue
+            if kind == "file" and not entry.is_file():
+                continue
+            if kind == "folder" and not entry.is_dir():
+                continue
+            matches.append(entry)
+            if len(matches) >= self.max_search_results:
+                break
+        return matches
+
+    def describe_entry(self, location: str, query: str, kind: str) -> FileEntryInfo:
+        matches = self.find_entries(location, query, kind)
+        exact_matches = [entry for entry in matches if entry.name.casefold() == query.casefold()]
+        candidates = exact_matches or matches
+        if not candidates:
+            raise ValueError(f"no matching {kind} found in {location}: {query}")
+        if len(candidates) > 1:
+            names = "; ".join(entry.name for entry in candidates[:5])
+            raise ValueError(f"multiple matches found in {location}: {names}")
+        return _file_entry_info(candidates[0])
+
+    def list_recent_in_location(self, location: str) -> list[FileEntryInfo]:
+        root = self._resolve_known_location(location)
+        if not root.exists() or not root.is_dir():
+            return []
+        entries = [entry for entry in root.iterdir() if not _is_hidden_path(entry, root)]
+        recent_entries = sorted(entries, key=lambda path: path.stat().st_mtime, reverse=True)[: self.max_recent_files]
+        return [_file_entry_info(entry) for entry in recent_entries]
 
     def open_location(self, location: str) -> str:
         path = self._resolve_known_location(location)
@@ -1545,6 +1604,16 @@ class LinuxFilesAdapter:
         if target.exists():
             raise ValueError(f"destination entry already exists: {target.name}")
         return path.rename(target)
+
+
+def _file_entry_info(path: Path) -> FileEntryInfo:
+    stat_result = path.stat()
+    return FileEntryInfo(
+        name=path.name,
+        entry_type="folder" if path.is_dir() else "file",
+        size_bytes=None if path.is_dir() else stat_result.st_size,
+        modified_at=datetime.fromtimestamp(stat_result.st_mtime, tz=UTC),
+    )
 
 
 def build_linux_adapter_set(
@@ -1666,6 +1735,9 @@ def _app_match_targets(app: str) -> tuple[str, ...]:
 
 
 def _parse_windows_runner_matches(raw_output: str) -> list[WindowsRunnerMatch]:
+    if _is_empty_windows_runner_output(raw_output):
+        return []
+
     prefix_matches = list(_WINDOWS_RUNNER_MATCH_PREFIX_RE.finditer(raw_output))
     if not prefix_matches:
         raise ValueError("unable to parse windows runner output")
@@ -1699,6 +1771,14 @@ def _parse_windows_runner_matches(raw_output: str) -> list[WindowsRunnerMatch]:
     if not parsed_matches:
         raise ValueError("windows runner output did not contain valid matches")
     return parsed_matches
+
+
+def _is_empty_windows_runner_output(raw_output: str) -> bool:
+    normalized = re.sub(r"\s+", " ", raw_output.strip())
+    return normalized in {
+        "([],)",
+        "(@a(sssida{sv}) [],)",
+    }
 
 
 def _literal_string(value: str) -> str:

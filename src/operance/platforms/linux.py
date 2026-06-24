@@ -36,6 +36,10 @@ CURRENT_RELEASE_VERIFIED_TOOLS = frozenset(
         ToolName.FILES_CREATE_FOLDER,
         ToolName.FILES_DELETE_FILE,
         ToolName.FILES_DELETE_FOLDER,
+        ToolName.FILES_FIND,
+        ToolName.FILES_GET_INFO,
+        ToolName.FILES_LIST_FOLDER,
+        ToolName.FILES_LIST_RECENT_FOLDER,
         ToolName.FILES_LIST_RECENT,
         ToolName.FILES_MOVE,
         ToolName.FILES_OPEN,
@@ -44,6 +48,7 @@ CURRENT_RELEASE_VERIFIED_TOOLS = frozenset(
         ToolName.NOTIFICATIONS_SHOW,
         ToolName.POWER_BATTERY_STATUS,
         ToolName.TIME_NOW,
+        ToolName.WINDOWS_FIND,
         ToolName.WINDOWS_LIST,
         ToolName.WINDOWS_SWITCH,
     }
@@ -462,6 +467,7 @@ class LinuxKdeWaylandPlatformProvider:
         steps_by_name: Mapping[str, object],
     ) -> list[str]:
         window_tools = {
+            ToolName.WINDOWS_FIND,
             ToolName.WINDOWS_LIST,
             ToolName.WINDOWS_SWITCH,
             ToolName.WINDOWS_MINIMIZE,
@@ -492,6 +498,10 @@ class LinuxKdeWaylandPlatformProvider:
             ToolName.FILES_CREATE_FOLDER,
             ToolName.FILES_DELETE_FOLDER,
             ToolName.FILES_DELETE_FILE,
+            ToolName.FILES_FIND,
+            ToolName.FILES_GET_INFO,
+            ToolName.FILES_LIST_FOLDER,
+            ToolName.FILES_LIST_RECENT_FOLDER,
             ToolName.FILES_RENAME,
             ToolName.FILES_MOVE,
         }
@@ -559,6 +569,7 @@ class LinuxKdeWaylandPlatformProvider:
         steps_by_name: Mapping[str, object],
     ) -> str | None:
         window_tools = {
+            ToolName.WINDOWS_FIND,
             ToolName.WINDOWS_LIST,
             ToolName.WINDOWS_SWITCH,
             ToolName.WINDOWS_MINIMIZE,
@@ -589,6 +600,10 @@ class LinuxKdeWaylandPlatformProvider:
             ToolName.FILES_CREATE_FOLDER,
             ToolName.FILES_DELETE_FOLDER,
             ToolName.FILES_DELETE_FILE,
+            ToolName.FILES_FIND,
+            ToolName.FILES_GET_INFO,
+            ToolName.FILES_LIST_FOLDER,
+            ToolName.FILES_LIST_RECENT_FOLDER,
             ToolName.FILES_RENAME,
             ToolName.FILES_MOVE,
         }

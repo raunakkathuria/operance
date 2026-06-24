@@ -742,6 +742,22 @@ def test_cli_supported_commands_available_only_filters_blocked_entries(monkeypat
     assert "audio.set_muted" in commands
     assert "files.list_recent" in commands
     assert commands["files.list_recent"]["usage_pattern"] == "show recent files"
+    assert "files.list_folder" in commands
+    assert commands["files.list_folder"]["usage_pattern"] == (
+        "list files in downloads | show files in documents | what is in downloads"
+    )
+    assert "files.find" in commands
+    assert commands["files.find"]["usage_pattern"] == (
+        "find file named <name> | find folder named <name> | search documents for <name>"
+    )
+    assert "files.get_info" in commands
+    assert commands["files.get_info"]["usage_pattern"] == (
+        "show details for <name> | how big is <name> | when was <name> modified"
+    )
+    assert "files.list_recent_folder" in commands
+    assert commands["files.list_recent_folder"]["usage_pattern"] == (
+        "show recent downloads | show recent files in downloads"
+    )
     assert "files.create_folder" in commands
     assert commands["files.create_folder"]["usage_pattern"] == "create folder on desktop called <name>"
     assert commands["files.delete_folder"]["usage_pattern"] == "delete folder on desktop called <name>"
@@ -753,9 +769,29 @@ def test_cli_supported_commands_available_only_filters_blocked_entries(monkeypat
     assert commands["files.move"]["usage_pattern"] == "move folder on desktop called <name> to <folder>"
     assert commands["files.move"]["requires_confirmation"] is True
     assert "windows.list" in commands
+    assert commands["windows.list"]["usage_pattern"] == "list windows | what apps are open | show open windows"
+    assert "windows.find" in commands
+    assert commands["windows.find"]["usage_pattern"] == (
+        "is <app> open | find window <title> | show windows matching <title>"
+    )
     assert "windows.switch" in commands
-    assert commands["windows.list"]["usage_pattern"] == "list windows"
-    assert commands["windows.switch"]["usage_pattern"] == "switch to window <title>"
+    assert commands["windows.switch"]["usage_pattern"] == "switch to window <title> | switch to <title> window"
+    assert "operance.help" in commands
+    assert commands["operance.help"]["usage_pattern"] == (
+        "what can I say | what commands can I use | help"
+    )
+    assert "operance.last_heard" in commands
+    assert commands["operance.last_heard"]["usage_pattern"] == (
+        "what did you hear | what was the last command"
+    )
+    assert "operance.listening_status" in commands
+    assert commands["operance.listening_status"]["usage_pattern"] == "are you listening | are you running"
+    assert "operance.local_ai_status" in commands
+    assert commands["operance.local_ai_status"]["usage_pattern"] == "is local AI ready | is planner ready"
+    assert "operance.last_failure" in commands
+    assert commands["operance.last_failure"]["usage_pattern"] == (
+        "why did that fail | why did it fail | what went wrong"
+    )
     assert "text.type" not in commands
 
 

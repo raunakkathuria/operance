@@ -14,7 +14,8 @@ click-to-talk workflow. It is ready for outside developers and early adopters to
 install, test, report issues, and help extend.
 
 Today, Operance can open apps and websites, focus or quit apps with confirmation,
-list recent files, manage Desktop files or folders with confirmation, list or
+list recent files, list or search known folders by file name, show basic file
+metadata, manage Desktop files or folders with confirmation, list, find, or
 switch windows, answer desktop-status questions, and control basic audio state.
 It also supports safe JSON desktop skill packs for adding exact phrase shortcuts
 that emit existing typed actions without changing the portable core.
@@ -81,6 +82,19 @@ search the web for linux automation
 open firefox
 open downloads
 open folder downloads
+list files in downloads
+find file named notes.txt
+search documents for invoice
+show details for notes.txt
+show recent downloads
+what can I say
+what did you hear
+are you listening
+is local AI ready
+why did that fail
+what apps are open
+is firefox open
+switch to firefox window
 what time is it
 wifi status
 what is the volume
@@ -158,6 +172,8 @@ OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "wifi st
 OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "open firefox"
 OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "open localhost:3000"
 OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "show recent files"
+OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "what can I say"
+OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "is local AI ready"
 OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "list windows"
 OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "switch to window firefox"
 OPERANCE_DEVELOPER_MODE=0 .venv/bin/python -m operance.cli --transcript "set volume to 50 percent"
@@ -274,9 +290,10 @@ Operance already has a coherent Linux-first public beta path: a typed and valida
 What works now:
 
 - Core runtime: typed action models, deterministic intent matching, validator and policy enforcement, local audit logging, bounded local planner fallback, and MCP-compatible control surfaces.
-- Verified command subset on Fedora KDE Wayland: `open browser`, `open the browser`, `open google.com`, `go to <website>`, `search google for <query>`, `search the web for <query>`, `open <app name>` for installed desktop apps, safe two-step launch phrases such as `open firefox and load localhost:3000` or `open firefox and notify me`, `focus <app name>`, confirmation-gated `quit <app name>`, `open downloads`, `open folder downloads`, `open documents`, `open desktop`, `show recent files`, `create folder on desktop called <name>`, confirmation-gated desktop file or folder delete, rename, and move commands, `list windows`, `switch to window <title>`, `show a notification saying <message>`, `what time is it`, `time`, `what is my battery level`, `battery`, `wifi status`, `what is the volume`, `volume`, `is audio muted`, `muted`, `set volume to 50 percent`, `volume 50 percent`, `mute audio`, `mute`, `unmute audio`, and `unmute`.
+- Verified command subset on Fedora KDE Wayland: `open browser`, `open the browser`, `open google.com`, `go to <website>`, `search google for <query>`, `search the web for <query>`, `open <app name>` for installed desktop apps, safe two-step launch phrases such as `open firefox and load localhost:3000` or `open firefox and notify me`, `focus <app name>`, confirmation-gated `quit <app name>`, `open downloads`, `open folder downloads`, `open documents`, `open desktop`, `show recent files`, read-only known-folder discovery such as `list files in downloads`, `show files in documents`, `find file named <name>`, `find folder named <name>`, and `search documents for <name>`, read-only metadata commands such as `show details for <name>`, `how big is <name>`, `when was <name> modified`, and `show recent downloads`, runtime self-status questions such as `what can I say`, `what did you hear`, `are you listening`, `is local AI ready`, and `why did that fail`, `create folder on desktop called <name>`, confirmation-gated desktop file or folder delete, rename, and move commands, window awareness commands such as `list windows`, `what apps are open`, `is <app> open`, `find window <title>`, `switch to window <title>`, and `switch to <title> window`, `show a notification saying <message>`, `what time is it`, `time`, `what is my battery level`, `battery`, `wifi status`, `what is the volume`, `volume`, `is audio muted`, `muted`, `set volume to 50 percent`, `volume 50 percent`, `mute audio`, `mute`, `unmute audio`, and `unmute`.
 - Tray feedback: when a command is heard, the tray state changes through `Understanding command` and `Opening <target>` or `Executing command`, and the tooltip shows `Heard: ...` before the final result notification.
 - Command recovery: unclear commands now return concrete examples such as `open browser`, `open google.com`, `search google for linux automation`, and `what time is it`; known Firefox speech variants such as `fire fall` and `fire force` are conservatively mapped to `firefox` for launch, focus, and quit commands.
+- Runtime self-status: users can ask `what can I say`, `what did you hear`, `are you listening`, `is local AI ready`, and `why did that fail` without leaving the tray or opening diagnostic CLI output.
 - Command coach: the tray exposes `Try commands`, and the CLI exposes `operance --command-coach`, with guided click-to-talk examples, expected outcomes, and recovery tips for first-run testing.
 - Voice and tray MVP: tray app, bounded click-to-talk, tray-managed always-on voice-loop controls, confirmation flows, last-interaction reporting, optional wake-word, STT, spoken response text, and TTS probe paths, plus repo-local background voice-loop support.
 - Diagnostics and support: version/about provenance, explicit release-channel checks, doctor, setup actions, installed readiness checks, runnable-command catalog, runtime status resources, support snapshot, support bundle, audit inspection, and source-checkout smoke scripts.

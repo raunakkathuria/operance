@@ -111,6 +111,20 @@ def build_default_action_registry() -> ActionRegistry:
     )
     registry.register(
         ToolSpec(
+            ToolName.WINDOWS_FIND,
+            "Find open windows by title or app name",
+            ("window",),
+            input_schema=_object_schema({"window": {"type": "string"}}, required=("window",)),
+            example_transcripts=(
+                "is firefox open",
+                "find window firefox",
+                "show windows matching firefox",
+            ),
+            validate_args=_validate_window_query_args,
+        )
+    )
+    registry.register(
+        ToolSpec(
             ToolName.WINDOWS_SWITCH,
             "Switch to an open window",
             ("window",),
@@ -445,6 +459,99 @@ def build_default_action_registry() -> ActionRegistry:
     )
     registry.register(
         ToolSpec(
+            ToolName.FILES_LIST_FOLDER,
+            "List entries in a known folder",
+            ("location",),
+            input_schema=_object_schema(
+                {
+                    "location": {
+                        "type": "string",
+                        "enum": ["desktop", "downloads", "documents", "home"],
+                    },
+                },
+                required=("location",),
+            ),
+            example_transcripts=(
+                "list files in downloads",
+                "show files in documents",
+                "what is in downloads",
+            ),
+            validate_args=_validate_known_folder_args,
+        )
+    )
+    registry.register(
+        ToolSpec(
+            ToolName.FILES_FIND,
+            "Find files or folders by name in a known folder",
+            ("location", "query", "kind"),
+            input_schema=_object_schema(
+                {
+                    "location": {
+                        "type": "string",
+                        "enum": ["desktop", "downloads", "documents", "home"],
+                    },
+                    "query": {"type": "string"},
+                    "kind": {"type": "string", "enum": ["file", "folder", "any"]},
+                },
+                required=("location", "query", "kind"),
+            ),
+            example_transcripts=(
+                "find file named notes.txt",
+                "find folder named projects",
+                "find file named report.pdf in downloads",
+                "search documents for invoice",
+            ),
+            validate_args=_validate_file_find_args,
+        )
+    )
+    registry.register(
+        ToolSpec(
+            ToolName.FILES_GET_INFO,
+            "Show metadata for a file or folder in a known folder",
+            ("location", "query", "kind"),
+            input_schema=_object_schema(
+                {
+                    "location": {
+                        "type": "string",
+                        "enum": ["desktop", "downloads", "documents", "home"],
+                    },
+                    "query": {"type": "string"},
+                    "kind": {"type": "string", "enum": ["file", "folder", "any"]},
+                },
+                required=("location", "query", "kind"),
+            ),
+            example_transcripts=(
+                "show details for notes.txt",
+                "how big is notes.txt in downloads",
+                "when was notes.txt modified",
+            ),
+            validate_args=_validate_file_find_args,
+        )
+    )
+    registry.register(
+        ToolSpec(
+            ToolName.FILES_LIST_RECENT_FOLDER,
+            "List recent entries in a known folder",
+            ("location",),
+            input_schema=_object_schema(
+                {
+                    "location": {
+                        "type": "string",
+                        "enum": ["desktop", "downloads", "documents", "home"],
+                    },
+                },
+                required=("location",),
+            ),
+            example_transcripts=(
+                "show recent downloads",
+                "show recent files in downloads",
+                "recent documents",
+            ),
+            validate_args=_validate_known_folder_args,
+        )
+    )
+    registry.register(
+        ToolSpec(
             ToolName.FILES_OPEN,
             "Open a known folder, desktop entry, or recent file",
             ("location",),
@@ -664,6 +771,15 @@ def _validate_window_boolean_state_args(args: dict[str, object]) -> list[str]:
     return errors
 
 
+def _validate_window_query_args(args: dict[str, object]) -> list[str]:
+    window = args.get("window")
+    if not isinstance(window, str) or not window.strip():
+        return ["window must be a non-empty string"]
+    if any(character in window for character in ("\n", "\r", "\t")):
+        return ["window must not include control whitespace"]
+    return []
+
+
 def _validate_known_ssid(args: dict[str, object]) -> list[str]:
     value = args.get("ssid")
     if not isinstance(value, str) or not value.strip():
@@ -713,6 +829,26 @@ def _validate_file_open_args(args: dict[str, object]) -> list[str]:
     return errors
 
 
+def _validate_known_folder_args(args: dict[str, object]) -> list[str]:
+    if args.get("location") not in {"desktop", "downloads", "documents", "home"}:
+        return ["location must be 'desktop', 'downloads', 'documents', or 'home'"]
+    return []
+
+
+def _validate_file_find_args(args: dict[str, object]) -> list[str]:
+    errors = _validate_known_folder_args(args)
+
+    query = args.get("query")
+    if not isinstance(query, str) or not _is_simple_file_query(query):
+        errors.append("query must be a simple file or folder name fragment")
+
+    kind = args.get("kind")
+    if kind not in {"file", "folder", "any"}:
+        errors.append("kind must be 'file', 'folder', or 'any'")
+
+    return errors
+
+
 def _validate_file_rename_args(args: dict[str, object]) -> list[str]:
     errors = _validate_desktop_entry_args(
         args,
@@ -740,6 +876,17 @@ def _is_simple_desktop_entry_name(value: str) -> bool:
     if stripped in {".", ".."}:
         return False
     return "/" not in stripped and "\\" not in stripped
+
+
+def _is_simple_file_query(value: str) -> bool:
+    stripped = value.strip()
+    if not stripped or stripped != value:
+        return False
+    if stripped in {".", ".."}:
+        return False
+    if any(character in stripped for character in ("/", "\\", "\n", "\r", "\t")):
+        return False
+    return True
 
 
 def _object_schema(

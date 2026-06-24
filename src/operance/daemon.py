@@ -40,6 +40,7 @@ from .responder import ResponseBuilder
 from .runtime.event_bus import InMemoryEventBus
 from .runtime.metrics import CommandMetrics, MetricsCollector
 from .runtime.state_machine import RuntimeStateMachine
+from .self_status import SelfStatusContext, build_self_status_response
 from .skills import build_skill_library_from_paths
 from .status import StatusSnapshot
 from .validator import PlanValidator
@@ -278,6 +279,11 @@ class OperanceDaemon:
         confidence: float = 1.0,
         is_final: bool = True,
     ) -> TranscriptEvent:
+        state_before_transcript = self.state_machine.current_state
+        previous_transcript = self.last_transcript
+        previous_response = self.last_response
+        previous_command_status = self.last_command_status
+
         if self.state_machine.current_state in {RuntimeState.IDLE, RuntimeState.WAKE_DETECTED}:
             self.state_machine.transition_to(RuntimeState.LISTENING, "capturing transcript")
 
@@ -313,6 +319,28 @@ class OperanceDaemon:
                         )
                 else:
                     return self._handle_confirmation_reply(text, total_started_at, event)
+            self_status_response = build_self_status_response(
+                text,
+                context=SelfStatusContext(
+                    current_state=state_before_transcript,
+                    previous_transcript=previous_transcript,
+                    previous_response=previous_response,
+                    previous_command_status=previous_command_status,
+                    planner_enabled=self.config.planner.enabled,
+                    planner_model=self.config.planner.model,
+                    planner_cooldown_remaining_seconds=self.planner_cooldown_remaining_seconds(),
+                    last_planner_error=self.last_planner_error,
+                ),
+            )
+            if self_status_response is not None:
+                response_text, response_status = self_status_response
+                return self._handle_self_status_response(
+                    text,
+                    total_started_at,
+                    event,
+                    response_text,
+                    response_status,
+                )
             planning_started_at = perf_counter()
             self.state_machine.transition_to(RuntimeState.UNDERSTANDING, "planning transcript")
             plan = self.intent_matcher.match(text)
@@ -563,6 +591,48 @@ class OperanceDaemon:
                 )
                 self.state_machine.transition_to(RuntimeState.RESPONDING, "no deterministic match")
 
+        return event
+
+    def _handle_self_status_response(
+        self,
+        transcript: str,
+        total_started_at: float,
+        event: TranscriptEvent,
+        response_text: str,
+        response_status: str,
+    ) -> TranscriptEvent:
+        planning_started_at = perf_counter()
+        self.state_machine.transition_to(RuntimeState.UNDERSTANDING, "answering runtime self-status")
+        self._set_routing_outcome(source="self_status", reason="self_status_command")
+        planning_duration_ms = (perf_counter() - planning_started_at) * 1000
+        response_started_at = perf_counter()
+        response_event = ResponseEvent(text=response_text, status=response_status)
+        self.event_bus.publish(response_event)
+        self.logger.info(
+            "response_generated",
+            extra={"status": response_status, "text": response_text},
+        )
+        self.last_response = response_text
+        self.last_command_status = response_status
+        self._append_planner_context(transcript, response_text)
+        self._append_audit_entry(
+            transcript=transcript,
+            status=response_status,
+            tool="operance.self_status",
+            response_text=response_text,
+        )
+        response_duration_ms = (perf_counter() - response_started_at) * 1000
+        self.metrics.record(
+            CommandMetrics(
+                transcript=transcript,
+                matched=True,
+                total_duration_ms=(perf_counter() - total_started_at) * 1000,
+                planning_duration_ms=planning_duration_ms,
+                execution_duration_ms=None,
+                response_duration_ms=response_duration_ms,
+            )
+        )
+        self.state_machine.transition_to(RuntimeState.RESPONDING, "self-status response generated")
         return event
 
     def _handle_confirmation_reply(
