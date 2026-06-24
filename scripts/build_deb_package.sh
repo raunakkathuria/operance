@@ -55,6 +55,15 @@ run_step() {
     fi
 }
 
+absolute_path() {
+    local path="${1%/}"
+    if [[ "${path}" == /* ]]; then
+        printf '%s\n' "${path}"
+    else
+        printf '%s\n' "${repo_root}/${path}"
+    fi
+}
+
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --staging-dir)
@@ -130,8 +139,8 @@ if [[ -z "${version}" ]]; then
     fail "could not determine version from pyproject.toml"
 fi
 
-staging_dir="${staging_dir%/}"
-output_dir="${output_dir%/}"
+staging_dir="$(absolute_path "${staging_dir}")"
+output_dir="$(absolute_path "${output_dir}")"
 control_dir="${staging_dir}/DEBIAN"
 config_dir="${staging_dir}/etc/operance"
 entrypoint_path="${staging_dir}${entrypoint}"

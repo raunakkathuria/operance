@@ -48,6 +48,32 @@ def test_rpm_package_script_dry_run_prints_expected_steps() -> None:
     assert result.stderr == ""
 
 
+def test_rpm_package_script_normalizes_relative_spec_dir_for_rpmbuild() -> None:
+    spec_dir = REPO_ROOT / "dist" / "relative-rpm-spec"
+    output_dir = REPO_ROOT / "dist" / "relative-rpm-out"
+
+    result = _run_rpm_script(
+        "--dry-run",
+        "--spec-dir",
+        "dist/relative-rpm-spec",
+        "--output-dir",
+        "dist/relative-rpm-out",
+        "--version",
+        "1.2.3",
+    )
+
+    assert result.stdout.splitlines() == [
+        f"+ mkdir -p {spec_dir}/SOURCES",
+        f"+ render packaging/rpm/operance.spec.in -> {spec_dir}/operance.spec",
+        f"+ ./scripts/render_packaged_assets.sh --output-dir {spec_dir}/SOURCES/packaged-assets --entrypoint /usr/bin/operance --bundle-profile base --package-version 1.2.3",
+        f"+ tar -czf {spec_dir}/SOURCES/operance-packaged-assets-1.2.3.tar.gz -C {spec_dir}/SOURCES packaged-assets",
+        f"+ rpmbuild --define _topdir {spec_dir} -bb {spec_dir}/operance.spec",
+        f"+ mkdir -p {output_dir}",
+        f"+ cp {spec_dir}/RPMS/noarch/operance-1.2.3-*.noarch.rpm {output_dir}/operance-1.2.3-1.noarch.rpm",
+    ]
+    assert result.stderr == ""
+
+
 def test_rpm_package_script_forwards_bundle_profile_options() -> None:
     result = _run_rpm_script(
         "--dry-run",
