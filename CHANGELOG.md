@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Restored the click-to-talk `Listening` tray popup to the normal readable notification duration instead of the short retry-notification timeout.
 - Fixed RPM/package artifact builds with relative output roots such as `--root-dir dist/package-artifacts` by normalizing build directories before passing them to `rpmbuild`.
 - Added contextual follow-up commands such as `open it`, `open the first one`, `switch to it`, and `switch to the first window`, resolving previous file or window awareness results into existing typed actions while preserving validator, policy, and adapter boundaries.
 - Added runtime self-status/help commands such as `what can I say`, `what did you hear`, `are you listening`, `is local AI ready`, and `why did that fail`, answered from portable daemon state and surfaced in the supported-command catalog without platform adapter execution.

@@ -1305,14 +1305,7 @@ def run_tray_app(env: Mapping[str, str] | None = None) -> int:
             click_to_talk_launch_gate.end()
             raise
         refresh()
-        notification = build_click_to_talk_started_notification()
-        _show_tray_message(
-            tray,
-            notification.title,
-            notification.message,
-            _resolve_notification_icon(QSystemTrayIcon, notification.level),
-            timeout_ms=_TRAY_NOTIFICATION_SHORT_MS,
-        )
+        _show_click_to_talk_started_message(tray, QSystemTrayIcon)
 
     def show_supported_commands() -> None:
         try:
@@ -2213,6 +2206,17 @@ def _show_tray_message(
         show_message(title, message, icon, timeout_ms)
     except TypeError:
         show_message(title, message, icon)
+
+
+def _show_click_to_talk_started_message(tray: object, qsystemtrayicon: Any) -> None:
+    notification = build_click_to_talk_started_notification()
+    _show_tray_message(
+        tray,
+        notification.title,
+        notification.message,
+        _resolve_notification_icon(qsystemtrayicon, notification.level),
+        timeout_ms=_TRAY_NOTIFICATION_DEFAULT_MS,
+    )
 
 
 def _click_to_talk_response_status(result: dict[str, object]) -> str | None:
