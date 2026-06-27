@@ -1,16 +1,21 @@
+/* Operance now consumes the shared design system (design-system.css, loaded
+   before this file, with <html data-theme="dark">). This site's legacy var
+   names are aliased onto the shared role tokens below — values are identical
+   to the originals, so there is no visual change; operance just speaks the
+   same token contract as the other products now. See iclone/design-system/. */
 :root {
-  --bg: #0a0c0f;
-  --surface: #111417;
-  --surface2: #161b22;
-  --border: #1e2329;
-  --border2: #2a2f38;
-  --accent: #00e5b4;
-  --accent-dim: rgba(0, 229, 180, 0.08);
-  --accent-glow: rgba(0, 229, 180, 0.28);
-  --accent2: #ff5f40;
-  --text: #e8eaf0;
-  --muted: #606876;
-  --subdued: #9aa2b4;
+  --bg:          var(--color-bg);
+  --surface:     var(--color-surface);
+  --surface2:    var(--color-surface-2);
+  --border:      var(--color-border);
+  --border2:     var(--color-border-strong);
+  --accent:      var(--color-primary);
+  --accent-dim:  var(--color-primary-tint);
+  --accent-glow: var(--color-primary-ring);
+  --accent2:     #ff5f40; /* operance-specific secondary (orange); not part of the shared palette */
+  --text:        var(--color-text);
+  --muted:       var(--color-text-muted);
+  --subdued:     var(--color-text-subtle);
   color-scheme: dark;
 }
 

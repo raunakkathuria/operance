@@ -8,6 +8,7 @@ import re
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SITE_INDEX = REPO_ROOT / "site" / "index.html"
 SITE_STYLES = REPO_ROOT / "site" / "styles.css"
+SITE_DESIGN_SYSTEM = REPO_ROOT / "site" / "design-system.css"
 GITHUB_DOC_BASE = "https://github.com/raunakkathuria/operance/blob/main/"
 
 
@@ -54,15 +55,22 @@ def _parse_site() -> SiteParser:
 def test_static_website_reuses_operance_brand_asset_and_palette() -> None:
     parser = _parse_site()
     styles = SITE_STYLES.read_text(encoding="utf-8")
+    design_system = SITE_DESIGN_SYSTEM.read_text(encoding="utf-8")
 
     assert "../assets/icons/operance.svg" in parser.images
     assert "/favicon.ico" in parser.icons
     assert "styles.css" in parser.stylesheets
+    # The shared design system bundle is linked and owns the brand palette.
+    assert "design-system.css" in parser.stylesheets
     assert "fonts.googleapis.com" not in SITE_INDEX.read_text(encoding="utf-8")
     assert "fonts.googleapis.com" not in styles
-    assert "#00e5b4" in styles
-    assert "#0a0c0f" in styles
-    assert "#ff5f40" in styles
+    assert "fonts.googleapis.com" not in design_system
+    # Brand palette now lives in the shared design system (dark theme); styles.css
+    # consumes it through role tokens rather than hard-coded hex values.
+    assert "#00e5b4" in design_system  # brand teal (dark primary)
+    assert "#0a0c0f" in design_system  # base background
+    assert "var(--color-primary)" in styles  # styles.css uses the role token
+    assert "#ff5f40" in styles  # operance-specific secondary accent stays local
 
 
 def test_static_website_is_product_first_and_mentions_current_scope() -> None:

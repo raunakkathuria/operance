@@ -9,7 +9,10 @@ output_dir="${repo_root}/dist/pages"
 rm -rf "${output_dir}"
 mkdir -p "${output_dir}/assets/icons"
 
-cp "${repo_root}/site/index.html" "${repo_root}/site/styles.css" "${output_dir}/"
+cp "${repo_root}/site/index.html" \
+   "${repo_root}/site/design-system.css" \
+   "${repo_root}/site/styles.css" \
+   "${output_dir}/"
 cp "${repo_root}/assets/icons/operance.svg" "${output_dir}/assets/icons/operance.svg"
 cp "${repo_root}/assets/icons/favicon.ico" "${output_dir}/favicon.ico"
 
