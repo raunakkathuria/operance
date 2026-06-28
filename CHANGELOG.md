@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added command interpretation feedback for typed actions and contextual follow-ups, surfacing `Understood: ...` in status, tray last-interaction details, and transcript JSON, while making missing or ambiguous `it`/`first one` follow-ups return concrete recovery guidance instead of guessing.
 - Restored the click-to-talk `Listening` tray popup to the normal readable notification duration instead of the short retry-notification timeout.
 - Fixed RPM/package artifact builds with relative output roots such as `--root-dir dist/package-artifacts` by normalizing build directories before passing them to `rpmbuild`.
 - Added contextual follow-up commands such as `open it`, `open the first one`, `switch to it`, and `switch to the first window`, resolving previous file or window awareness results into existing typed actions while preserving validator, policy, and adapter boundaries.

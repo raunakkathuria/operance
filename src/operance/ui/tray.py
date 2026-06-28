@@ -145,6 +145,7 @@ class TraySnapshot:
     voice_loop_last_response: str | None
     last_command_transcript: str | None
     last_command_preview: str | None
+    last_command_interpretation: str | None
     last_interaction: TrayInteractionReport | None
     pending_confirmation_prompt: str | None
     confirmation_dialog: TrayConfirmationDialog | None
@@ -178,6 +179,7 @@ class TraySnapshot:
             "voice_loop_last_response": self.voice_loop_last_response,
             "last_command_transcript": self.last_command_transcript,
             "last_command_preview": self.last_command_preview,
+            "last_command_interpretation": self.last_command_interpretation,
             "last_interaction": (
                 None if self.last_interaction is None else self.last_interaction.to_dict()
             ),
@@ -646,6 +648,7 @@ def build_tray_snapshot(
         voice_loop_last_response=voice_loop_last_response,
         last_command_transcript=last_command_transcript,
         last_command_preview=last_command_preview,
+        last_command_interpretation=status.last_command_interpretation,
         last_interaction=last_interaction,
         pending_confirmation_prompt=pending_confirmation_prompt,
         confirmation_dialog=confirmation_dialog,
@@ -1733,6 +1736,8 @@ def _build_last_interaction_report(
     details: list[str] = []
     if status.last_transcript:
         details.append(f"Heard: {status.last_transcript}")
+    if status.last_command_interpretation:
+        details.append(f"Understood: {status.last_command_interpretation}")
     if status.last_command_status:
         details.append(f"Status: {status.last_command_status}")
 
