@@ -792,6 +792,14 @@ def test_cli_supported_commands_available_only_filters_blocked_entries(monkeypat
     assert commands["operance.last_failure"]["usage_pattern"] == (
         "why did that fail | why did it fail | what went wrong"
     )
+    assert "operance.followup_open" in commands
+    assert commands["operance.followup_open"]["usage_pattern"] == (
+        "open it | open the first one | open the last result"
+    )
+    assert "operance.followup_switch" in commands
+    assert commands["operance.followup_switch"]["usage_pattern"] == (
+        "switch to it | switch to the first window | switch to the last window"
+    )
     assert "text.type" not in commands
 
 

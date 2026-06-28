@@ -54,6 +54,15 @@ run_step() {
     fi
 }
 
+absolute_path() {
+    local path="${1%/}"
+    if [[ "${path}" == /* ]]; then
+        printf '%s\n' "${path}"
+    else
+        printf '%s\n' "${repo_root}/${path}"
+    fi
+}
+
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --root-dir)
@@ -123,7 +132,7 @@ if [[ "${build_deb}" -eq 0 && "${build_rpm}" -eq 0 ]]; then
     build_rpm=1
 fi
 
-root_dir="${root_dir%/}"
+root_dir="$(absolute_path "${root_dir}")"
 
 if [[ "${build_deb}" -eq 1 ]]; then
     deb_staging_dir="${root_dir}/deb/operance"

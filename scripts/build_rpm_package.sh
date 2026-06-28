@@ -57,6 +57,15 @@ run_step() {
     fi
 }
 
+absolute_path() {
+    local path="${1%/}"
+    if [[ "${path}" == /* ]]; then
+        printf '%s\n' "${path}"
+    else
+        printf '%s\n' "${repo_root}/${path}"
+    fi
+}
+
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --spec-dir)
@@ -133,11 +142,12 @@ if [[ -z "${version}" ]]; then
     fail "could not determine version from pyproject.toml"
 fi
 
-spec_dir="${spec_dir%/}"
+spec_dir="$(absolute_path "${spec_dir}")"
 if [[ "${output_dir_set}" -eq 0 ]]; then
     output_dir="${spec_dir}"
+else
+    output_dir="$(absolute_path "${output_dir}")"
 fi
-output_dir="${output_dir%/}"
 sources_dir="${spec_dir}/SOURCES"
 assets_dir="${sources_dir}/packaged-assets"
 spec_path="${spec_dir}/operance.spec"

@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from operance.intent import DeterministicIntentMatcher
-from operance.models.actions import ToolName
+from operance.models.actions import ActionPlan, PlanSource, ToolName, TypedAction
 
 
 @pytest.mark.parametrize(
@@ -617,3 +617,30 @@ def test_executor_moves_existing_desktop_entry_and_can_undo(tmp_path: Path) -> N
     assert undo_result == "Moved desktop entry projects to Desktop"
     assert source.exists() is True
     assert moved.exists() is False
+
+
+def test_executor_opens_named_entry_in_known_folder(tmp_path: Path) -> None:
+    from operance.adapters.mock import build_mock_adapter_set
+    from operance.executor import ActionExecutor
+
+    desktop_dir = tmp_path / "Desktop"
+    downloads = desktop_dir / "Downloads"
+    downloads.mkdir(parents=True)
+    (downloads / "invoice.pdf").write_text("invoice", encoding="utf-8")
+    adapters = build_mock_adapter_set(desktop_dir=desktop_dir)
+    executor = ActionExecutor(adapters=adapters)
+    plan = ActionPlan(
+        source=PlanSource.DETERMINISTIC,
+        original_text="open the first one",
+        actions=[
+            TypedAction(
+                tool=ToolName.FILES_OPEN,
+                args={"location": "downloads", "name": "invoice.pdf"},
+            )
+        ],
+    )
+
+    result = executor.execute(plan)
+
+    assert result.status == "success"
+    assert result.results[0].message == "Opened desktop entry invoice.pdf"

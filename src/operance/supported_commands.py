@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from .command_guidance import COMMAND_RECOVERY_EXAMPLES
 from .doctor import build_environment_report
+from .followup import FOLLOWUP_COMMAND_SPECS
 from .models.actions import ToolName
 from .platforms import get_platform_provider
 from .registry import build_default_action_registry
@@ -65,6 +66,24 @@ def build_supported_command_catalog(
         )
 
     for spec in SELF_STATUS_COMMAND_SPECS:
+        commands_by_domain.setdefault("operance", []).append(
+            {
+                "tool": spec.tool,
+                "description": spec.description,
+                "example_transcripts": list(spec.example_transcripts),
+                "usage_pattern": spec.usage_pattern,
+                "risk_tier": "tier_0",
+                "requires_confirmation": False,
+                "undoable": False,
+                "live_runtime_status": "available",
+                "live_runtime_blockers": [],
+                "release_verification_status": "verified",
+                "release_verification_target": provider.release_verification_target,
+                "live_runtime_suggested_command": None,
+            }
+        )
+
+    for spec in FOLLOWUP_COMMAND_SPECS:
         commands_by_domain.setdefault("operance", []).append(
             {
                 "tool": spec.tool,
@@ -297,6 +316,8 @@ def _help_command_priority(command: dict[str, object]) -> tuple[int, str]:
         "operance.listening_status": 19,
         "operance.local_ai_status": 20,
         "operance.last_failure": 21,
+        "operance.followup_open": 22,
+        "operance.followup_switch": 23,
     }
     return (priority.get(tool, 100), tool)
 

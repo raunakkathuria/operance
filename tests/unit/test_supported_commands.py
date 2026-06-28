@@ -155,6 +155,14 @@ def test_build_supported_command_catalog_can_filter_available_commands_only() ->
     assert "operance.listening_status" in commands
     assert "operance.local_ai_status" in commands
     assert "operance.last_failure" in commands
+    assert "operance.followup_open" in commands
+    assert commands["operance.followup_open"]["usage_pattern"] == (
+        "open it | open the first one | open the last result"
+    )
+    assert "operance.followup_switch" in commands
+    assert commands["operance.followup_switch"]["usage_pattern"] == (
+        "switch to it | switch to the first window | switch to the last window"
+    )
     assert catalog["skills"]["summary"]["pack_count"] == 0
     assert "text.type" not in commands
     assert catalog["summary"]["unverified_commands"] == 0

@@ -63,6 +63,24 @@ def test_package_artifact_bundle_script_forwards_bundle_profile_options() -> Non
     assert result.stderr == ""
 
 
+def test_package_artifact_bundle_script_normalizes_relative_root_dir() -> None:
+    root_dir = REPO_ROOT / "dist" / "relative-package-builds"
+
+    result = _run_bundle_script(
+        "--dry-run",
+        "--rpm",
+        "--root-dir",
+        "dist/relative-package-builds",
+        "--version",
+        "1.2.3",
+    )
+
+    assert result.stdout.splitlines() == [
+        f"+ ./scripts/build_rpm_package.sh --spec-dir {root_dir}/rpm --output-dir {root_dir}/rpm --bundle-profile base --version 1.2.3 --dry-run",
+    ]
+    assert result.stderr == ""
+
+
 def test_package_artifact_bundle_script_can_build_both_formats_with_fake_tooling(
     tmp_path: Path,
 ) -> None:

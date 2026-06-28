@@ -653,6 +653,52 @@ def test_validator_accepts_file_discovery_args() -> None:
     assert result.errors == []
 
 
+def test_validator_accepts_named_known_folder_file_open_args() -> None:
+    from operance.registry import build_default_action_registry
+    from operance.validator import PlanValidator
+
+    validator = PlanValidator(registry=build_default_action_registry())
+    plan = ActionPlan(
+        source=PlanSource.DETERMINISTIC,
+        original_text="open the first one",
+        actions=[
+            TypedAction(
+                tool=ToolName.FILES_OPEN,
+                args={"location": "downloads", "name": "invoice.pdf"},
+            )
+        ],
+    )
+
+    result = validator.validate(plan)
+
+    assert result.valid is True
+    assert result.normalized_plan is not None
+    assert result.errors == []
+
+
+def test_validator_rejects_unsafe_named_known_folder_file_open_args() -> None:
+    from operance.registry import build_default_action_registry
+    from operance.validator import PlanValidator
+
+    validator = PlanValidator(registry=build_default_action_registry())
+    plan = ActionPlan(
+        source=PlanSource.DETERMINISTIC,
+        original_text="open the first one",
+        actions=[
+            TypedAction(
+                tool=ToolName.FILES_OPEN,
+                args={"location": "downloads", "name": "../invoice.pdf"},
+            )
+        ],
+    )
+
+    result = validator.validate(plan)
+
+    assert result.valid is False
+    assert result.normalized_plan is None
+    assert result.errors == ["files.open: name must be a simple desktop entry name"]
+
+
 def test_validator_rejects_unsafe_file_metadata_queries() -> None:
     from operance.registry import build_default_action_registry
     from operance.validator import PlanValidator

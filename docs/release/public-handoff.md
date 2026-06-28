@@ -31,6 +31,7 @@ Current supported command subset on that target:
 - `show recent files`
 - read-only known-folder discovery such as `list files in downloads`, `find file named <name>`, and `search documents for <name>`
 - read-only metadata commands such as `show details for <name>`, `how big is <name>`, and `show recent downloads`
+- contextual follow-ups such as `open it`, `open the first one`, `switch to it`, and `switch to the first window` after compatible file or window awareness results
 - runtime self-status questions such as `what can I say`, `what did you hear`, `are you listening`, `is local AI ready`, and `why did that fail`
 - Desktop folder or file create, delete, rename, and move commands with confirmation where needed
 - `list windows`, `what apps are open`, `is <app> open`, and `switch to window <visible title>`

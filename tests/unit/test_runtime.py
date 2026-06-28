@@ -246,6 +246,136 @@ def test_daemon_reports_local_ai_disabled_status(tmp_path: Path) -> None:
     )
 
 
+def test_daemon_opens_first_file_result_from_followup_context(tmp_path: Path) -> None:
+    desktop_dir = tmp_path / "Desktop"
+    downloads = desktop_dir / "Downloads"
+    downloads.mkdir(parents=True)
+    (downloads / "alpha.txt").write_text("alpha")
+    (downloads / "beta.txt").write_text("beta")
+    daemon = OperanceDaemon.build_default(
+        {
+            "OPERANCE_DATA_DIR": str(tmp_path / "data"),
+            "OPERANCE_DESKTOP_DIR": str(desktop_dir),
+        }
+    )
+    responses: list[ResponseEvent] = []
+    planned_events: list[ActionPlanEvent] = []
+    daemon.event_bus.subscribe(ResponseEvent, responses.append)
+    daemon.event_bus.subscribe(ActionPlanEvent, planned_events.append)
+
+    daemon.start()
+    daemon.emit_wake_detected("operance")
+    daemon.emit_transcript("list files in downloads", confidence=0.93, is_final=True)
+    daemon.complete_response_cycle()
+    daemon.emit_wake_detected("operance")
+    daemon.emit_transcript("open the first one", confidence=0.93, is_final=True)
+
+    assert responses[-2].text == "downloads contains 2 entries: alpha.txt; beta.txt"
+    assert responses[-1].text == "Opened desktop entry alpha.txt"
+    assert planned_events[-1].plan.actions[0].tool == ToolName.FILES_OPEN
+    assert planned_events[-1].plan.actions[0].args == {"location": "downloads", "name": "alpha.txt"}
+    snapshot = daemon.status_snapshot()
+    assert snapshot.last_routing_reason == "context_followup_match"
+
+
+def test_daemon_opens_single_metadata_result_from_followup_context(tmp_path: Path) -> None:
+    desktop_dir = tmp_path / "Desktop"
+    downloads = desktop_dir / "Downloads"
+    downloads.mkdir(parents=True)
+    (downloads / "notes.txt").write_text("notes")
+    daemon = OperanceDaemon.build_default(
+        {
+            "OPERANCE_DATA_DIR": str(tmp_path / "data"),
+            "OPERANCE_DESKTOP_DIR": str(desktop_dir),
+        }
+    )
+    responses: list[ResponseEvent] = []
+    daemon.event_bus.subscribe(ResponseEvent, responses.append)
+
+    daemon.start()
+    daemon.emit_wake_detected("operance")
+    daemon.emit_transcript("show details for notes.txt in downloads", confidence=0.93, is_final=True)
+    daemon.complete_response_cycle()
+    daemon.emit_wake_detected("operance")
+    daemon.emit_transcript("open it", confidence=0.93, is_final=True)
+
+    assert responses[-1].text == "Opened desktop entry notes.txt"
+
+
+def test_daemon_switches_to_window_from_followup_context(tmp_path: Path) -> None:
+    daemon = OperanceDaemon.build_default(
+        {
+            "OPERANCE_DATA_DIR": str(tmp_path / "data"),
+            "OPERANCE_DESKTOP_DIR": str(tmp_path / "Desktop"),
+        }
+    )
+    responses: list[ResponseEvent] = []
+    planned_events: list[ActionPlanEvent] = []
+    daemon.event_bus.subscribe(ResponseEvent, responses.append)
+    daemon.event_bus.subscribe(ActionPlanEvent, planned_events.append)
+
+    daemon.start()
+    daemon.emit_wake_detected("operance")
+    daemon.emit_transcript("is firefox open", confidence=0.93, is_final=True)
+    daemon.complete_response_cycle()
+    daemon.emit_wake_detected("operance")
+    daemon.emit_transcript("switch to it", confidence=0.93, is_final=True)
+
+    assert responses[-2].text == "Found 1 window: Firefox"
+    assert responses[-1].text == "Switched to window Firefox"
+    assert planned_events[-1].plan.actions[0].tool == ToolName.WINDOWS_SWITCH
+    assert planned_events[-1].plan.actions[0].args == {"window": "Firefox"}
+
+
+def test_daemon_rejects_followup_without_previous_context(tmp_path: Path) -> None:
+    daemon = OperanceDaemon.build_default(
+        {
+            "OPERANCE_DATA_DIR": str(tmp_path / "data"),
+            "OPERANCE_DESKTOP_DIR": str(tmp_path / "Desktop"),
+        }
+    )
+    responses: list[ResponseEvent] = []
+    planned_events: list[ActionPlanEvent] = []
+    daemon.event_bus.subscribe(ResponseEvent, responses.append)
+    daemon.event_bus.subscribe(ActionPlanEvent, planned_events.append)
+
+    daemon.start()
+    daemon.emit_wake_detected("operance")
+    daemon.emit_transcript("open it", confidence=0.93, is_final=True)
+
+    assert responses[-1].text == "I do not have an actionable previous result."
+    assert responses[-1].status == "unmatched"
+    assert planned_events == []
+
+
+def test_daemon_clears_followup_context_after_non_awareness_command(tmp_path: Path) -> None:
+    desktop_dir = tmp_path / "Desktop"
+    downloads = desktop_dir / "Downloads"
+    downloads.mkdir(parents=True)
+    (downloads / "alpha.txt").write_text("alpha")
+    daemon = OperanceDaemon.build_default(
+        {
+            "OPERANCE_DATA_DIR": str(tmp_path / "data"),
+            "OPERANCE_DESKTOP_DIR": str(desktop_dir),
+        }
+    )
+    responses: list[ResponseEvent] = []
+    daemon.event_bus.subscribe(ResponseEvent, responses.append)
+
+    daemon.start()
+    daemon.emit_wake_detected("operance")
+    daemon.emit_transcript("list files in downloads", confidence=0.93, is_final=True)
+    daemon.complete_response_cycle()
+    daemon.emit_wake_detected("operance")
+    daemon.emit_transcript("what time is it", confidence=0.93, is_final=True)
+    daemon.complete_response_cycle()
+    daemon.emit_wake_detected("operance")
+    daemon.emit_transcript("open it", confidence=0.93, is_final=True)
+
+    assert responses[-1].text == "I do not have an actionable previous result."
+    assert responses[-1].status == "unmatched"
+
+
 def test_daemon_routes_high_confidence_unknown_transcript_to_planner_when_enabled(tmp_path: Path) -> None:
     class StubPlannerClient:
         def __init__(self) -> None:

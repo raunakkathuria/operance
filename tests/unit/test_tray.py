@@ -596,6 +596,36 @@ def test_tray_notification_timeouts_are_long_enough_to_read() -> None:
     assert _TRAY_NOTIFICATION_SHORT_MS >= 3000
 
 
+def test_click_to_talk_started_message_uses_normal_readable_timeout() -> None:
+    from operance.ui.tray import (
+        _TRAY_NOTIFICATION_DEFAULT_MS,
+        _show_click_to_talk_started_message,
+    )
+
+    calls: list[tuple[object, ...]] = []
+
+    class FakeTray:
+        def showMessage(self, *args):
+            calls.append(args)
+
+    class FakeSystemTrayIcon:
+        class MessageIcon:
+            Information = "info"
+            Warning = "warning"
+            Critical = "critical"
+
+    _show_click_to_talk_started_message(FakeTray(), FakeSystemTrayIcon)
+
+    assert calls == [
+        (
+            "Listening",
+            "Speak a command now. Operance will stop listening automatically.",
+            "info",
+            _TRAY_NOTIFICATION_DEFAULT_MS,
+        )
+    ]
+
+
 def test_build_spoken_response_text_is_exported_from_ui() -> None:
     from operance.ui import build_spoken_response_text
 
