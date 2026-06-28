@@ -35,6 +35,7 @@ def _process_transcript_with_daemon(daemon: OperanceDaemon, transcript: str) -> 
         "transcript": transcript,
         "response": response.text,
         "status": response.status,
+        "interpretation": daemon.last_command_interpretation,
         "plan_id": response.plan_id,
         "simulated": daemon.config.runtime.developer_mode,
     }

@@ -21,6 +21,7 @@ def _status_snapshot(**overrides: object) -> StatusSnapshot:
         "last_transcript": None,
         "last_response": None,
         "last_command_status": None,
+        "last_command_interpretation": None,
         "last_plan_source": None,
         "last_routing_reason": None,
         "last_planner_error": None,
@@ -875,6 +876,32 @@ def test_build_tray_snapshot_surfaces_last_transcript_and_response_in_tooltip() 
 
     assert payload["last_command_transcript"] == "open firefox"
     assert payload["last_command_preview"] == "Launched firefox"
+
+
+def test_build_tray_snapshot_surfaces_command_interpretation_in_last_interaction() -> None:
+    from operance.ui import build_tray_snapshot
+
+    snapshot = build_tray_snapshot(
+        _status_snapshot(
+            current_state=RuntimeState.RESPONDING,
+            last_transcript="open the first one",
+            last_response="Opened desktop entry alpha.txt",
+            last_command_status="success",
+            last_command_interpretation="Open downloads item: alpha.txt",
+            completed_commands=1,
+            p95_latency_ms=88.0,
+        )
+    )
+
+    assert snapshot.to_dict()["last_interaction"] == {
+        "details": [
+            "Heard: open the first one",
+            "Understood: Open downloads item: alpha.txt",
+            "Status: success",
+        ],
+        "summary": "Opened desktop entry alpha.txt",
+        "title": "Last interaction",
+    }
 
 
 @pytest.mark.parametrize(
