@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added a PRD-first planning workflow with `docs/specs/product-prd.md`, a goal-spec GitHub issue template, and stricter PR/agent checks so non-trivial Operance work is tied to product intent, acceptance criteria, documentation impact, and release evidence before implementation.
 - Added command interpretation feedback for typed actions and contextual follow-ups, surfacing `Understood: ...` in status, tray last-interaction details, and transcript JSON, while making missing or ambiguous `it`/`first one` follow-ups return concrete recovery guidance instead of guessing.
 - Restored the click-to-talk `Listening` tray popup to the normal readable notification duration instead of the short retry-notification timeout.
 - Fixed RPM/package artifact builds with relative output roots such as `--root-dir dist/package-artifacts` by normalizing build directories before passing them to `rpmbuild`.

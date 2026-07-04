@@ -3,6 +3,11 @@
 Status: Current planning spec
 Audience: maintainers, contributors, AI coding agents
 
+This milestone spec translates the product intent in
+[`product-prd.md`](product-prd.md) into the current beta contract, roadmap, and
+release criteria. If product intent changes, update the PRD first and then
+update this milestone spec.
+
 ## Product Vision
 
 Operance is a local-first AI desktop action layer that lets users control their
@@ -109,12 +114,14 @@ portable orchestration behavior.
 
 Before implementation:
 
-1. Identify or create the relevant spec in `docs/specs/`.
-2. State the user problem and product behavior in plain language.
-3. Mark supported scope and non-goals.
-4. Identify architecture areas touched.
-5. Define safety and confirmation requirements.
-6. Define the test and manual evidence needed before merge.
+1. Confirm the change aligns with `docs/specs/product-prd.md`.
+2. Identify the relevant milestone spec section or create a goal-spec GitHub
+   issue for non-trivial work.
+3. State the user problem and product behavior in plain language.
+4. Mark supported scope and non-goals.
+5. Identify architecture areas touched.
+6. Define safety and confirmation requirements.
+7. Define the test and manual evidence needed before merge.
 
 During implementation:
 
@@ -123,6 +130,8 @@ During implementation:
 3. Avoid speculative abstractions.
 4. Keep platform details behind providers or adapters.
 5. Keep tray changes end-user focused.
+6. If implementation scope changes, update the linked spec or goal issue before
+   treating the PR as complete.
 
 Before merge:
 
@@ -132,6 +141,9 @@ Before merge:
    release docs when behavior changes.
 4. Update `CHANGELOG.md` for completed implementation slices.
 5. Document deferred work explicitly.
+
+Small typo fixes, release chores, and narrow follow-up corrections may skip a
+goal-spec issue when the PR explicitly says why no issue is needed.
 
 ## Milestone Roadmap
 

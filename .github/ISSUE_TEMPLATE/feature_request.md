@@ -34,3 +34,9 @@ Note any confirmation, undo, planner, adapter, provider, or desktop-integration 
 
 Describe the tests, CLI probes, or Linux smoke checks that should prove the
 feature works.
+
+## Maintainer triage
+
+For non-trivial accepted work, convert this request into a goal-spec issue
+before implementation. The goal-spec issue should link the PRD or milestone
+section, define non-goals, and list acceptance evidence.

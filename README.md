@@ -281,7 +281,7 @@ Anyone can contribute right now through one of these paths:
 
 This is still a founder-maintained public beta. Small, focused fixes and high-quality issue reports are more useful than broad rewrites.
 
-Start with [CONTRIBUTING.md](CONTRIBUTING.md). For larger product or architecture changes, read [docs/specs/README.md](docs/specs/README.md) and the current [beta product direction](docs/specs/beta-product-direction.md) before coding. If you want to add a safe phrase shortcut for existing behavior, read [docs/contributing/skill-packs.md](docs/contributing/skill-packs.md). If you want to add a new desktop command, read [docs/contributing/command-authoring.md](docs/contributing/command-authoring.md) before changing core modules. If you are reporting a problem instead of sending a patch, attach the output artifact from `.venv/bin/python -m operance.cli --support-bundle` whenever possible and paste the bundled `issue-report.md` draft into the issue body.
+Start with [CONTRIBUTING.md](CONTRIBUTING.md). For larger product or architecture changes, read [docs/specs/README.md](docs/specs/README.md), the product PRD in [docs/specs/product-prd.md](docs/specs/product-prd.md), and the current [beta product direction](docs/specs/beta-product-direction.md) before coding. Non-trivial work should start from a goal-spec GitHub issue so scope, safety, tests, and docs are agreed before implementation. If you want to add a safe phrase shortcut for existing behavior, read [docs/contributing/skill-packs.md](docs/contributing/skill-packs.md). If you want to add a new desktop command, read [docs/contributing/command-authoring.md](docs/contributing/command-authoring.md) before changing core modules. If you are reporting a problem instead of sending a patch, attach the output artifact from `.venv/bin/python -m operance.cli --support-bundle` whenever possible and paste the bundled `issue-report.md` draft into the issue body.
 
 This repository already contains the Phase 0A foundation plus the later planner, MCP, Linux-adapter, tray, voice, and release-tooling slices needed for the current public beta. Keep `README.md` for the public stop line and use [CHANGELOG.md](CHANGELOG.md) when you need the feature-by-feature implementation history.
 
@@ -318,8 +318,10 @@ README intentionally stays narrow for the public beta. Use these docs for the de
 
 - [docs/requirements/linux.md](docs/requirements/linux.md) for Linux setup, packaging, systemd, planner, and optional voice diagnostics
 - [docs/specs/README.md](docs/specs/README.md) for the spec-to-PR workflow
+- [docs/specs/product-prd.md](docs/specs/product-prd.md) for durable product
+  intent, target users, non-goals, and success metrics
 - [docs/specs/beta-product-direction.md](docs/specs/beta-product-direction.md)
-  for current product direction, beta contract, and milestone roadmap
+  for the current beta contract and milestone roadmap
 - [docs/release/public-handoff.md](docs/release/public-handoff.md) for the outside-developer handoff
 - [docs/release/public-beta.md](docs/release/public-beta.md) for public beta install, local AI planner, and feedback flow
 - [docs/release/fedora-checklist.md](docs/release/fedora-checklist.md) for the Fedora release gate
@@ -776,7 +778,7 @@ python3 -m operance.cli --tray-run
 - `README.md` should describe only what is actually runnable in the repository right now.
 - `docs/requirements/linux.md` is the focused reference for preparing a real Linux/KDE machine for integration work and tracking live Linux integration status.
 - `CHANGELOG.md` tracks completed implementation slices in commit order.
-- `docs/specs/` contains the current product and milestone specs that should guide new PRs.
+- `docs/specs/` contains the product PRD and milestone specs that should guide new PRs.
 - `docs/requirements/plan.md` is historical long-form planning context from the start of the project, not the day-to-day scope contract.
 - Any change to runtime behavior, interfaces, commands, or workflow rules must update the relevant docs in the same slice before commit.
 - The pre-commit checklist for each step is: failing test first, implementation, docs update, `.venv/bin/python -m pytest`, commit.

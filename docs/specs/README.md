@@ -5,20 +5,30 @@ This directory is the source of truth for product and milestone specs.
 Use these specs before implementation. Operance should move from idea to
 release through this loop:
 
-1. Write or update the relevant spec.
-2. Define the supported user behavior and non-goals.
-3. Check architecture impact before touching code.
-4. Implement the smallest runnable change.
-5. Verify with tests and at least one real user-facing command path.
-6. Update public docs and changelog in the same PR.
+1. Check the product PRD for product intent.
+2. Write or update the relevant milestone spec or goal-spec issue.
+3. Define the supported user behavior and non-goals.
+4. Check architecture impact before touching code.
+5. Implement the smallest runnable change.
+6. Verify with tests and at least one real user-facing command path.
+7. Update specs, public docs, and changelog in the same PR when behavior
+   changes.
 
 Specs are not meant to become large design documents. They should be short
 enough to read before a PR review and concrete enough to decide whether the PR
 is complete.
 
+## Spec Layers
+
+- Product PRD: durable product intent, user promises, non-goals, and success
+  metrics.
+- Milestone specs: current roadmap, accepted slices, and release criteria.
+- Goal-spec issues: execution contracts for non-trivial feature, UX,
+  architecture, packaging, release, or public-doc changes.
+
 ## Required Sections
 
-Every feature or milestone spec should include:
+Every milestone spec or goal-spec issue should include:
 
 - User problem: the user friction being removed.
 - Product behavior: what the user sees, says, clicks, or expects.
@@ -42,9 +52,13 @@ Every feature or milestone spec should include:
   filenames.
 - Do not bypass typed action validation, policy, confirmation, or adapter
   execution with model output or shell commands.
+- Do not let implementation drift beyond the linked spec or goal issue. Update
+  the spec or issue first when scope changes.
 
 ## Current Canonical Specs
 
-- [beta-product-direction.md](beta-product-direction.md): product direction,
-  current beta contract, spec-to-PR workflow, and milestone roadmap.
-
+- [product-prd.md](product-prd.md): durable product direction, current product
+  promises, target users, non-goals, technical considerations, and success
+  metrics.
+- [beta-product-direction.md](beta-product-direction.md): current beta
+  contract, spec-to-PR workflow, milestone roadmap, and release criteria.
