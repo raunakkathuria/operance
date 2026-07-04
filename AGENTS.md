@@ -164,6 +164,8 @@ Before calling a feature complete:
 - when a feature adds a diagnostic or readiness command, also test the real
   runtime command path it is preparing users to run, or document exactly why
   that live path could not be exercised yet
+- run `python3 scripts/check_spec_sync.py --base origin/main` for
+  behavior-changing work and explain any warning in the PR
 
 When using Codex or other coding agents on this repo, treat these as enforcement rules:
 
