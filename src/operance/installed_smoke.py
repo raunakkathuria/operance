@@ -44,6 +44,7 @@ class InstalledSmokeResult:
     manual_checks: list[str]
     build: dict[str, object]
     evidence: dict[str, object] = field(default_factory=dict)
+    next_action: dict[str, object] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -51,6 +52,7 @@ class InstalledSmokeResult:
             "checks": [check.to_dict() for check in self.checks],
             "evidence": dict(self.evidence),
             "manual_checks": list(self.manual_checks),
+            "next_action": dict(self.next_action),
             "next_steps": list(self.next_steps),
             "status": self.status,
         }
@@ -87,6 +89,7 @@ def build_installed_smoke_result(
     return InstalledSmokeResult(
         status=status,
         checks=checks,
+        next_action=_next_action(status, checks),
         next_steps=_next_steps(checks),
         manual_checks=[
             "Click the tray icon and say: open firefox",
@@ -367,3 +370,40 @@ def _next_steps(checks: list[InstalledSmokeCheck]) -> list[str]:
     else:
         commands.append("systemctl --user status operance-tray.service --no-pager")
     return commands
+
+
+def _next_action(status: str, checks: list[InstalledSmokeCheck]) -> dict[str, object]:
+    if status == "ok":
+        return {
+            "label": "Run the first voice command",
+            "status": "ready",
+            "instruction": "Click the tray icon once, then say: open browser",
+            "command": None,
+        }
+
+    tray_active_check = next(
+        (
+            check
+            for check in checks
+            if check.name == "tray_user_service_active_state" and check.status == "warn"
+        ),
+        None,
+    )
+    if tray_active_check is not None:
+        return {
+            "label": "Start the tray service",
+            "status": "warn",
+            "instruction": "Start Operance, then click the tray icon and say: open browser",
+            "command": tray_active_check.suggested_command,
+        }
+
+    first_problem = next(
+        (check for check in checks if check.status in {"failed", "warn"} and check.suggested_command),
+        None,
+    )
+    return {
+        "label": "Fix installed package readiness",
+        "status": status,
+        "instruction": "Follow the first readiness suggestion, then rerun operance --installed-smoke.",
+        "command": first_problem.suggested_command if first_problem is not None else "operance --installed-smoke",
+    }

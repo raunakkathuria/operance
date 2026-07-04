@@ -316,6 +316,103 @@ def test_live_voice_session_times_out_wake_without_command(tmp_path: Path) -> No
     assert snapshot.last_response_text == "I heard Operance, but no command followed."
 
 
+def test_live_voice_session_suppresses_repeated_wake_after_no_command_timeout(tmp_path: Path) -> None:
+    from operance.audio.capture import AudioFrame
+    from operance.voice import run_live_voice_session
+    from operance.wakeword import WakeWordDetection
+
+    class FakeCaptureSource:
+        def frames(self, *, max_frames: int | None = None):
+            frame_total = max_frames if max_frames is not None else 140
+            for _ in range(frame_total):
+                yield AudioFrame(sample_rate_hz=16000, channels=1, sample_count=4, pcm_s16le=b"\x00\x00" * 4)
+
+    class NoisyWakeWordDetector:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def process_frame(self, frame) -> WakeWordDetection | None:
+            self.calls += 1
+            return WakeWordDetection(phrase="operance", confidence=0.88)
+
+    class SilentSpeechTranscriber:
+        def process_frame(self, frame):
+            return None
+
+        def finish(self) -> list[object]:
+            return []
+
+        def close(self) -> None:
+            return None
+
+    detector = NoisyWakeWordDetector()
+    result = run_live_voice_session(
+        FakeCaptureSource(),
+        detector,
+        lambda: SilentSpeechTranscriber(),
+        max_frames=140,
+        env={
+            "OPERANCE_DATA_DIR": str(tmp_path / "data"),
+            "OPERANCE_DESKTOP_DIR": str(tmp_path / "Desktop"),
+        },
+    )
+
+    assert len(result["wake_detections"]) == 1
+    assert result["wake_detections"][0]["frame_index"] == 1
+    assert detector.calls == 1
+    assert result["completed_commands"] == 0
+    assert result["final_state"] == RuntimeState.IDLE.value
+
+
+def test_live_voice_session_suppresses_repeated_wake_after_wake_only_transcript(tmp_path: Path) -> None:
+    from operance.audio.capture import AudioFrame
+    from operance.stt import TranscriptSegment
+    from operance.voice import run_live_voice_session
+    from operance.wakeword import WakeWordDetection
+
+    class FakeCaptureSource:
+        def frames(self, *, max_frames: int | None = None):
+            frame_total = max_frames if max_frames is not None else 20
+            for _ in range(frame_total):
+                yield AudioFrame(sample_rate_hz=16000, channels=1, sample_count=4, pcm_s16le=b"\x00\x00" * 4)
+
+    class NoisyWakeWordDetector:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def process_frame(self, frame) -> WakeWordDetection | None:
+            self.calls += 1
+            return WakeWordDetection(phrase="operance", confidence=0.88)
+
+    class WakeOnlySpeechTranscriber:
+        def process_frame(self, frame):
+            return TranscriptSegment(text="Operance", confidence=0.93, is_final=True)
+
+        def finish(self) -> list[object]:
+            return []
+
+        def close(self) -> None:
+            return None
+
+    detector = NoisyWakeWordDetector()
+    result = run_live_voice_session(
+        FakeCaptureSource(),
+        detector,
+        lambda: WakeOnlySpeechTranscriber(),
+        max_frames=20,
+        env={
+            "OPERANCE_DATA_DIR": str(tmp_path / "data"),
+            "OPERANCE_DESKTOP_DIR": str(tmp_path / "Desktop"),
+        },
+    )
+
+    assert len(result["wake_detections"]) == 1
+    assert result["transcripts"][0]["text"] == "Operance"
+    assert detector.calls == 1
+    assert result["completed_commands"] == 0
+    assert result["final_state"] == RuntimeState.IDLE.value
+
+
 def test_live_voice_session_can_confirm_pending_command_without_second_wake(tmp_path: Path) -> None:
     from operance.audio.capture import AudioFrame
     from operance.stt import TranscriptSegment

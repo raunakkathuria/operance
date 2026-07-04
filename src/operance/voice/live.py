@@ -19,6 +19,7 @@ from .runtime import VoiceLoopRuntimeStatusWriter
 
 DEFAULT_CLICK_TO_TALK_MAX_FRAMES = 40
 DEFAULT_ALWAYS_ON_COMMAND_TIMEOUT_FRAMES = 120
+DEFAULT_ALWAYS_ON_NO_COMMAND_COOLDOWN_FRAMES = 80
 _NO_COMMAND_AFTER_WAKE_RESPONSE = "I heard Operance, but no command followed."
 
 _LIVE_COMMAND_START_RE = re.compile(
@@ -214,6 +215,7 @@ def _run_voice_capture_loop(
     transcripts: list[dict[str, object]] = []
     active_transcriber: SpeechTranscriber | None = None
     command_listen_started_frame: int | None = None
+    wake_suppressed_until_frame: int | None = None
     processed_frames = 0
     stopped_reason = "capture_ended"
 
@@ -277,6 +279,8 @@ def _run_voice_capture_loop(
 
                 if active_transcriber is None:
                     if daemon.state_machine.current_state != RuntimeState.AWAITING_CONFIRMATION:
+                        if _wake_detection_suppressed(wake_suppressed_until_frame, frame_index):
+                            continue
                         detection = wakeword_detector.process_frame(frame)
                         if detection is None:
                             continue
@@ -343,6 +347,7 @@ def _run_voice_capture_loop(
                                 frame_index,
                                 completed_commands=len(daemon.metrics.completed_commands),
                             )
+                            wake_suppressed_until_frame = _no_command_cooldown_until(frame_index)
                         active_transcriber.close()
                         active_transcriber = None
                         command_listen_started_frame = None
@@ -361,6 +366,7 @@ def _run_voice_capture_loop(
                     active_transcriber = None
                     command_listen_started_frame = None
                     if handled_final:
+                        wake_suppressed_until_frame = None
                         _complete_voice_response_cycle(daemon)
                         status_writer.update(
                             processed_frames=frame_index,
@@ -369,6 +375,8 @@ def _run_voice_capture_loop(
                             awaiting_confirmation=daemon.pending_confirmation_plan is not None,
                             completed_commands=len(daemon.metrics.completed_commands),
                         )
+                    else:
+                        wake_suppressed_until_frame = _no_command_cooldown_until(frame_index)
                     if stop_after_commands is not None and len(daemon.metrics.completed_commands) >= stop_after_commands:
                         stopped_reason = "command_limit"
                         break
@@ -391,6 +399,7 @@ def _run_voice_capture_loop(
                 )
                 if segment.is_final:
                     if handled_final:
+                        wake_suppressed_until_frame = None
                         _complete_voice_response_cycle(daemon)
                         status_writer.update(
                             processed_frames=processed_frames,
@@ -399,6 +408,8 @@ def _run_voice_capture_loop(
                             awaiting_confirmation=daemon.pending_confirmation_plan is not None,
                             completed_commands=len(daemon.metrics.completed_commands),
                         )
+                    else:
+                        wake_suppressed_until_frame = _no_command_cooldown_until(processed_frames)
                     if stop_after_commands is not None and len(daemon.metrics.completed_commands) >= stop_after_commands:
                         stopped_reason = "command_limit"
                         break
@@ -490,6 +501,14 @@ def _command_window_expired(started_frame: int | None, frame_index: int) -> bool
     if started_frame is None:
         return False
     return frame_index - started_frame >= DEFAULT_ALWAYS_ON_COMMAND_TIMEOUT_FRAMES
+
+
+def _wake_detection_suppressed(suppressed_until_frame: int | None, frame_index: int) -> bool:
+    return suppressed_until_frame is not None and frame_index <= suppressed_until_frame
+
+
+def _no_command_cooldown_until(frame_index: int) -> int:
+    return frame_index + DEFAULT_ALWAYS_ON_NO_COMMAND_COOLDOWN_FRAMES
 
 
 def _record_no_command_after_wake(

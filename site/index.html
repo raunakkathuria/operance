@@ -164,7 +164,9 @@
             <p>
               Download <code>setup.sh</code> from the current GitHub release,
               point it at the same release asset URL, then verify the installed
-              runtime and command catalog.
+              runtime and command catalog. The checklist tells you the next
+              action; when ready, click the tray icon once and say
+              <code>open browser</code>.
             </p>
           </div>
           <pre><code>curl -fsSLO https://github.com/raunakkathuria/operance/releases/download/&lt;release-tag&gt;/setup.sh
@@ -182,7 +184,8 @@ operance --supported-commands --supported-commands-available-only</code></pre>
             Public beta testing should produce useful reports, not vague
             screenshots. Operance includes one checklist for the install path,
             one 10-minute feedback guide, and one redacted issue draft for
-            failures.
+            failures. If readiness fails, capture support before changing the
+            machine.
           </p>
           <div class="feedback-steps">
             <div><span>1</span><strong>Verify</strong><small><code>operance --public-beta-checklist</code></small></div>

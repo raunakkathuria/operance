@@ -20,6 +20,12 @@ def test_public_beta_checklist_reports_ready_packaged_path() -> None:
 
     assert payload["status"] == "ready"
     assert payload["summary"] == "Packaged beta is ready for tray click-to-talk testing."
+    assert payload["next_action"] == {
+        "label": "Run the first voice command",
+        "status": "ready",
+        "instruction": "Click the tray icon once, then say: open browser",
+        "command": None,
+    }
     assert payload["target"] == "Fedora KDE Plasma Wayland public beta"
     assert payload["checklist"][0] == {
         "label": "Install packaged beta",
@@ -55,6 +61,12 @@ def test_public_beta_checklist_points_source_checkouts_to_release_assets() -> No
 
     assert payload["status"] == "source_checkout"
     assert payload["summary"] == "This is a source checkout; public beta testers should use the packaged RPM path."
+    assert payload["next_action"] == {
+        "label": "Install the packaged beta",
+        "status": "recommended",
+        "instruction": "Use the setup command from the current GitHub release assets.",
+        "command": "bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm",
+    }
     assert payload["checklist"][0]["status"] == "recommended"
     assert payload["checklist"][0]["command"] == "bash ./setup.sh --package ./operance-0.1.0-1.noarch.rpm"
     assert payload["checklist"][1] == {

@@ -164,6 +164,13 @@ def build_getting_started_report(
     return {
         "status": status,
         "headline": headline,
+        "next_action": _next_action(
+            status=status,
+            packaged_install=packaged_install,
+            installed_ready=installed_ready,
+            ready_for_activation=ready_for_activation,
+            primary_command=primary_command,
+        ),
         "product_summary": (
             "Operance turns natural language into safe typed desktop actions through "
             "a portable core and OS-specific adapters."
@@ -291,6 +298,36 @@ def _installed_readiness_activation_status(installed_readiness: dict[str, object
     if status in {"warn", "failed"}:
         return str(status)
     return "unknown"
+
+
+def _next_action(
+    *,
+    status: str,
+    packaged_install: bool,
+    installed_ready: bool,
+    ready_for_activation: bool,
+    primary_command: str,
+) -> dict[str, object]:
+    if packaged_install and installed_ready:
+        return {
+            "label": "Run the first voice command",
+            "status": "ready",
+            "instruction": "Click the tray icon once, then say: open browser",
+            "command": None,
+        }
+    if ready_for_activation:
+        return {
+            "label": "Start Operance",
+            "status": "ready",
+            "instruction": "Launch Operance, then use click-to-talk for the first command.",
+            "command": primary_command,
+        }
+    return {
+        "label": "Finish setup",
+        "status": status,
+        "instruction": "Run the setup check, then come back to the tray for click-to-talk.",
+        "command": primary_command,
+    }
 
 
 def _command_prefix(identity: dict[str, object]) -> str:

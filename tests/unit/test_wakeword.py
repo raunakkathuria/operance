@@ -174,6 +174,7 @@ def test_build_default_wakeword_detector_falls_back_to_energy_without_model_path
     detector = build_default_wakeword_detector(phrase="operance", threshold=0.5)
 
     assert isinstance(detector, EnergyWakeWordDetector)
+    assert detector.activation_frames == 4
 
 
 def test_find_existing_wakeword_model_path_ignores_unrelated_path(tmp_path, monkeypatch) -> None:

@@ -73,6 +73,11 @@ operance --public-beta-checklist
 operance --beta-feedback
 ```
 
+The installed-smoke and public-beta checklist payloads include a `next_action`
+field. Use that as the first user step: a ready install should tell the tester
+to click the tray icon once and say `open browser`; a degraded install should
+point at the first readiness command to run.
+
 If you already downloaded the RPM from the same release, use the local package
 path:
 
@@ -116,6 +121,9 @@ the 10-minute beta feedback guide, issue reporting, recent interaction details,
 release update checks, and optional always-on listening controls. Raw support snapshots, planner readiness,
 and installed-smoke diagnostics remain available from CLI commands when a
 developer or maintainer needs deeper output.
+
+When setup/status is ready, it leads with the same next action as the CLI:
+click the tray icon once and say `open browser`.
 
 If anything fails, collect one support bundle before changing the machine:
 
