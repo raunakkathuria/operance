@@ -15,12 +15,13 @@ from ..spoken_response import build_spoken_response_text
 from ..stt import SpeechTranscriber
 from ..tts import SpeechSynthesizer
 from ..wakeword import WakeWordDetector
+from ..wakeword.openwakeword import OpenWakeWordDetector
 from .runtime import VoiceLoopRuntimeStatusWriter
 
 DEFAULT_CLICK_TO_TALK_MAX_FRAMES = 40
 DEFAULT_ALWAYS_ON_COMMAND_TIMEOUT_FRAMES = 120
 DEFAULT_ALWAYS_ON_NO_COMMAND_COOLDOWN_FRAMES = 80
-_NO_COMMAND_AFTER_WAKE_RESPONSE = "I heard Operance, but no command followed."
+_NO_COMMAND_AFTER_SOUND_TRIGGER_RESPONSE = "Sound trigger detected, but no command followed."
 
 _LIVE_COMMAND_START_RE = re.compile(
     r"\b(?:please\s+)?(?:"
@@ -215,7 +216,9 @@ def _run_voice_capture_loop(
     transcripts: list[dict[str, object]] = []
     active_transcriber: SpeechTranscriber | None = None
     command_listen_started_frame: int | None = None
+    current_wake_phrase: str | None = None
     wake_suppressed_until_frame: int | None = None
+    wake_trigger_mode = _wake_trigger_mode_for_detector(wakeword_detector)
     processed_frames = 0
     stopped_reason = "capture_ended"
 
@@ -264,6 +267,7 @@ def _run_voice_capture_loop(
         loop_state="waiting_for_wake",
         daemon_state=daemon.state_machine.current_state.value,
         awaiting_confirmation=False,
+        wake_trigger_mode=wake_trigger_mode,
     )
     try:
         try:
@@ -290,6 +294,7 @@ def _run_voice_capture_loop(
                         wake_detections.append(detection_payload)
                         active_transcriber = build_transcriber()
                         command_listen_started_frame = frame_index
+                        current_wake_phrase = detection.phrase
                         status_writer.update(
                             processed_frames=frame_index,
                             wake_detections=len(wake_detections),
@@ -299,16 +304,19 @@ def _run_voice_capture_loop(
                             daemon_state=daemon.state_machine.current_state.value,
                             awaiting_confirmation=False,
                             completed_commands=len(daemon.metrics.completed_commands),
+                            wake_trigger_mode=wake_trigger_mode,
                         )
                     else:
                         active_transcriber = build_transcriber()
                         command_listen_started_frame = frame_index
+                        current_wake_phrase = None
                         status_writer.update(
                             processed_frames=frame_index,
                             loop_state=_voice_loop_phase(daemon, active_transcriber=active_transcriber),
                             daemon_state=daemon.state_machine.current_state.value,
                             awaiting_confirmation=True,
                             completed_commands=len(daemon.metrics.completed_commands),
+                            wake_trigger_mode=wake_trigger_mode,
                         )
 
                 segment = active_transcriber.process_frame(frame)
@@ -328,6 +336,8 @@ def _run_voice_capture_loop(
                                 frame_index,
                                 active_transcriber=active_transcriber,
                                 completed_commands=len(daemon.metrics.completed_commands),
+                                wake_trigger_mode=wake_trigger_mode,
+                                wake_phrase=current_wake_phrase,
                             )
                             if final_segment.is_final:
                                 if handled_final:
@@ -346,11 +356,14 @@ def _run_voice_capture_loop(
                                 status_writer,
                                 frame_index,
                                 completed_commands=len(daemon.metrics.completed_commands),
+                                wake_trigger_mode=wake_trigger_mode,
+                                wake_phrase=current_wake_phrase,
                             )
                             wake_suppressed_until_frame = _no_command_cooldown_until(frame_index)
                         active_transcriber.close()
                         active_transcriber = None
                         command_listen_started_frame = None
+                        current_wake_phrase = None
                     continue
                 segment = _prepare_live_transcript_segment(segment, frame_index, transcripts)
                 handled_final = _handle_live_transcript_segment(
@@ -360,11 +373,14 @@ def _run_voice_capture_loop(
                     frame_index,
                     active_transcriber=active_transcriber,
                     completed_commands=len(daemon.metrics.completed_commands),
+                    wake_trigger_mode=wake_trigger_mode,
+                    wake_phrase=current_wake_phrase,
                 )
                 if segment.is_final:
                     active_transcriber.close()
                     active_transcriber = None
                     command_listen_started_frame = None
+                    current_wake_phrase = None
                     if handled_final:
                         wake_suppressed_until_frame = None
                         _complete_voice_response_cycle(daemon)
@@ -396,6 +412,8 @@ def _run_voice_capture_loop(
                     processed_frames,
                     active_transcriber=active_transcriber,
                     completed_commands=len(daemon.metrics.completed_commands),
+                    wake_trigger_mode=wake_trigger_mode,
+                    wake_phrase=current_wake_phrase,
                 )
                 if segment.is_final:
                     if handled_final:
@@ -415,6 +433,7 @@ def _run_voice_capture_loop(
                         break
             active_transcriber.close()
             active_transcriber = None
+            current_wake_phrase = None
     finally:
         if active_transcriber is not None:
             active_transcriber.close()
@@ -458,6 +477,8 @@ def _handle_live_transcript_segment(
     *,
     active_transcriber: SpeechTranscriber,
     completed_commands: int,
+    wake_trigger_mode: str,
+    wake_phrase: str | None,
 ) -> bool:
     if segment.is_final and _is_wake_only_transcript(segment.text):
         _record_no_command_after_wake(
@@ -467,6 +488,8 @@ def _handle_live_transcript_segment(
             transcript_text=segment.text,
             transcript_final=True,
             completed_commands=completed_commands,
+            wake_trigger_mode=wake_trigger_mode,
+            wake_phrase=wake_phrase,
         )
         return False
 
@@ -519,19 +542,37 @@ def _record_no_command_after_wake(
     transcript_text: str | None = None,
     transcript_final: bool = False,
     completed_commands: int,
+    wake_trigger_mode: str,
+    wake_phrase: str | None,
 ) -> None:
     daemon.cancel_wake_listening(source="voice_loop")
     status_writer.update(
         processed_frames=frame_index,
         last_transcript_text=transcript_text,
         last_transcript_final=transcript_final,
-        last_response_text=_NO_COMMAND_AFTER_WAKE_RESPONSE,
+        last_response_text=_no_command_after_wake_response(
+            wake_trigger_mode=wake_trigger_mode,
+            wake_phrase=wake_phrase,
+        ),
         last_response_status="no_command",
         loop_state=_voice_loop_phase(daemon, active_transcriber=None),
         daemon_state=daemon.state_machine.current_state.value,
         awaiting_confirmation=daemon.pending_confirmation_plan is not None,
         completed_commands=completed_commands,
+        wake_trigger_mode=wake_trigger_mode,
     )
+
+
+def _wake_trigger_mode_for_detector(wakeword_detector: WakeWordDetector) -> str:
+    if isinstance(wakeword_detector, OpenWakeWordDetector):
+        return "wake_word"
+    return "sound_trigger"
+
+
+def _no_command_after_wake_response(*, wake_trigger_mode: str, wake_phrase: str | None) -> str:
+    if wake_trigger_mode == "wake_word" and wake_phrase:
+        return f"I heard {wake_phrase}, but no command followed."
+    return _NO_COMMAND_AFTER_SOUND_TRIGGER_RESPONSE
 
 
 def _trim_leading_wake_residue(segment):

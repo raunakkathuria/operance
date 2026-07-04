@@ -85,6 +85,11 @@ Older startup documents under `docs/prompt/` and historical planning notes under
 `docs/requirements/` can inform context, but they must not override the current
 specs, README, architecture docs, or runnable behavior.
 
+Do not merge unrelated product goals into an active feature PR. If a new product
+behavior, public positioning change, or support-contract change emerges during
+testing, document it as a separate goal-spec issue unless it is required to make
+the current PR truthful or releasable.
+
 Tiny typo fixes, release chores, and narrow follow-up corrections may skip a
 goal-spec issue only when the PR explicitly explains why no issue is needed.
 

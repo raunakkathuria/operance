@@ -73,6 +73,7 @@ def _voice_loop_status_snapshot(**overrides: object) -> VoiceLoopRuntimeStatusSn
         "last_transcript_final": True,
         "last_response_text": "Volume is 30%",
         "last_response_status": "success",
+        "wake_trigger_mode": "sound_trigger",
         "stopped_reason": None,
     }
     payload.update(overrides)
@@ -198,7 +199,7 @@ def test_build_tray_snapshot_includes_voice_loop_runtime_projection() -> None:
     assert payload["voice_loop_state"] == "waiting_for_wake"
     assert payload["voice_loop_heartbeat_fresh"] is True
     assert payload["voice_loop_message"] == "Voice-loop runtime heartbeat is fresh."
-    assert payload["voice_loop_activity"] == "Waiting for wake word"
+    assert payload["voice_loop_activity"] == "Waiting for sound trigger"
     assert payload["voice_loop_last_transcript"] == "what is the volume"
     assert payload["voice_loop_last_response"] == "Volume is 30%"
     assert payload["last_command_transcript"] is None
@@ -206,11 +207,11 @@ def test_build_tray_snapshot_includes_voice_loop_runtime_projection() -> None:
     assert payload["can_start_voice_loop_service"] is False
     assert payload["can_stop_voice_loop_service"] is True
     assert payload["can_restart_voice_loop_service"] is False
-    assert payload["voice_loop_control_label"] == "Stop always-on listening"
+    assert payload["voice_loop_control_label"] == "Stop experimental always-on"
     assert payload["tooltip"] == "Operance: Idle | Left-click to talk"
 
 
-def test_build_tray_snapshot_acknowledges_always_on_wake_word() -> None:
+def test_build_tray_snapshot_acknowledges_experimental_always_on_sound_trigger() -> None:
     from operance.ui import build_tray_snapshot
 
     snapshot = build_tray_snapshot(
@@ -233,7 +234,35 @@ def test_build_tray_snapshot_acknowledges_always_on_wake_word() -> None:
     assert payload["notification"] == {
         "event_id": "voice_loop_listening:3:operance",
         "level": "info",
-        "message": "Wake word heard. Say your command now.",
+        "message": "Sound trigger detected. Say your command now.",
+        "title": "I'm listening",
+    }
+
+
+def test_build_tray_snapshot_acknowledges_model_backed_wake_phrase() -> None:
+    from operance.ui import build_tray_snapshot
+
+    snapshot = build_tray_snapshot(
+        _status_snapshot(),
+        voice_loop_status=_voice_loop_status_snapshot(
+            loop_state="listening_for_command",
+            wake_detections=3,
+            last_wake_phrase="Hey Ops",
+            wake_trigger_mode="wake_word",
+            last_transcript_text=None,
+            last_transcript_final=None,
+            last_response_text=None,
+            last_response_status=None,
+        ),
+    )
+
+    payload = snapshot.to_dict()
+
+    assert payload["voice_loop_activity"] == "Listening for command"
+    assert payload["notification"] == {
+        "event_id": "voice_loop_listening:3:Hey Ops",
+        "level": "info",
+        "message": "Wake phrase heard. Say your command now.",
         "title": "I'm listening",
     }
 
@@ -275,7 +304,7 @@ def test_build_tray_snapshot_reports_always_on_no_command_feedback() -> None:
             last_wake_phrase="operance",
             last_transcript_text=None,
             last_transcript_final=False,
-            last_response_text="I heard Operance, but no command followed.",
+            last_response_text="Sound trigger detected, but no command followed.",
             last_response_status="no_command",
         ),
     )
@@ -283,9 +312,9 @@ def test_build_tray_snapshot_reports_always_on_no_command_feedback() -> None:
     payload = snapshot.to_dict()
 
     assert payload["notification"] == {
-        "event_id": "voice_loop_response:4:no_command:I heard Operance, but no command followed.",
+        "event_id": "voice_loop_response:4:no_command:Sound trigger detected, but no command followed.",
         "level": "warning",
-        "message": "I heard Operance, but no command followed.",
+        "message": "Sound trigger detected, but no command followed.",
         "title": "Operance",
     }
 
@@ -361,7 +390,7 @@ def test_build_tray_snapshot_can_start_stopped_voice_loop_without_restart() -> N
     assert payload["can_start_voice_loop_service"] is True
     assert payload["can_stop_voice_loop_service"] is False
     assert payload["can_restart_voice_loop_service"] is False
-    assert payload["voice_loop_control_label"] == "Start always-on listening"
+    assert payload["voice_loop_control_label"] == "Start experimental always-on"
 
 
 def test_build_tray_snapshot_can_show_stop_from_voice_loop_service_override() -> None:
@@ -383,7 +412,7 @@ def test_build_tray_snapshot_can_show_stop_from_voice_loop_service_override() ->
     assert payload["can_start_voice_loop_service"] is False
     assert payload["can_stop_voice_loop_service"] is True
     assert payload["can_restart_voice_loop_service"] is False
-    assert payload["voice_loop_control_label"] == "Stop always-on listening"
+    assert payload["voice_loop_control_label"] == "Stop experimental always-on"
 
 
 def test_build_tray_startup_notification_prefers_click_to_talk_hint() -> None:

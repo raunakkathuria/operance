@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Separated model-backed wake-word mode from the built-in experimental sound-trigger fallback in runtime status, tray labels, and no-command feedback, so fallback always-on listening no longer claims that a wake phrase was heard; `Hey Ops` is documented as the preferred future public wake phrase once model-backed detection is available.
+- Added an agent workflow guardrail requiring new product behavior, public positioning, or support-contract changes discovered during testing to become separate goal-spec issues unless needed to make the current PR truthful or releasable.
 - Reduced repeated always-on false wake popups by making the energy fallback require a longer sustained activation and by suppressing immediate re-detection after a wake event times out without a command.
 - Added product-facing `next_action` guidance to installed smoke, public beta checklist, and tray setup/status so first-time beta users see one clear next step, such as clicking the tray icon and saying `open browser` when the packaged install is ready.
 - Added a PRD-first planning workflow with `docs/specs/product-prd.md`, a goal-spec GitHub issue template, and stricter PR/agent checks so non-trivial Operance work is tied to product intent, acceptance criteria, documentation impact, and release evidence before implementation.

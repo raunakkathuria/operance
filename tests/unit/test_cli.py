@@ -1236,6 +1236,7 @@ def test_cli_tray_snapshot_prints_projected_status(monkeypatch, capsys) -> None:
         message = "Voice-loop runtime heartbeat is fresh."
         last_transcript_text = "open firefox"
         last_response_text = "Launched firefox"
+        wake_trigger_mode = "sound_trigger"
 
     monkeypatch.setattr(
         "operance.cli.build_voice_loop_runtime_status_snapshot",
@@ -1255,7 +1256,7 @@ def test_cli_tray_snapshot_prints_projected_status(monkeypatch, capsys) -> None:
     assert payload["voice_loop_state"] == "waiting_for_wake"
     assert payload["voice_loop_heartbeat_fresh"] is True
     assert payload["voice_loop_message"] == "Voice-loop runtime heartbeat is fresh."
-    assert payload["voice_loop_activity"] == "Waiting for wake word"
+    assert payload["voice_loop_activity"] == "Waiting for sound trigger"
     assert payload["voice_loop_last_transcript"] == "open firefox"
     assert payload["voice_loop_last_response"] == "Launched firefox"
     assert payload["last_command_preview"] is None

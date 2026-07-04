@@ -19,10 +19,11 @@ def test_readme_embeds_architecture_svg_assets() -> None:
 def test_readme_documents_always_on_listening_voice_pattern() -> None:
     readme = README.read_text(encoding="utf-8")
 
-    assert "Always-on listening is wake-word gated." in readme
+    assert "Always-on listening is optional and experimental unless a model-backed wake-word asset is configured." in readme
     assert "Operance\n<short pause>\nopen browser" in readme
     assert "You can also try one continuous phrase such as `Operance open browser`" in readme
-    assert "If you only say `Operance` and no command follows" in readme
+    assert "Sound trigger detected, but no command followed." in readme
+    assert "`Hey Ops`" in readme
     assert "Click-to-talk remains the recommended beta path" in readme
 
 

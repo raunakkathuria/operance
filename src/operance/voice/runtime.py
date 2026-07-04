@@ -38,6 +38,7 @@ class VoiceLoopRuntimeStatusSnapshot(SerializableModel):
     wake_detections: int = 0
     completed_commands: int = 0
     awaiting_confirmation: bool = False
+    wake_trigger_mode: str = "sound_trigger"
     last_wake_phrase: str | None = None
     last_wake_confidence: float | None = None
     last_transcript_text: str | None = None
@@ -75,6 +76,7 @@ class VoiceLoopRuntimeStatusWriter:
             "stopped_reason": None,
             "updated_at": started_at,
             "wake_detections": 0,
+            "wake_trigger_mode": "sound_trigger",
         }
         self._last_heartbeat_frame = 0
         self._write()
@@ -218,6 +220,7 @@ def build_voice_loop_runtime_status_snapshot(
         wake_detections=_int_value(payload.get("wake_detections")),
         completed_commands=_int_value(payload.get("completed_commands")),
         awaiting_confirmation=bool(payload.get("awaiting_confirmation", False)),
+        wake_trigger_mode=_string_value(payload.get("wake_trigger_mode")) or "sound_trigger",
         last_wake_phrase=_string_value(payload.get("last_wake_phrase")),
         last_wake_confidence=_float_value(payload.get("last_wake_confidence")),
         last_transcript_text=_string_value(payload.get("last_transcript_text")),
