@@ -413,7 +413,19 @@ class DeterministicIntentMatcher:
                 requires_confirmation=True,
             )
 
-        if normalized in {"what time is it", "tell me the time", "current time", "time"}:
+        if normalized in {
+            "what time is it",
+            "what is the time",
+            "what is the current time",
+            "whats the time",
+            "what's the time",
+            "tell me the time",
+            "tell me what time it is",
+            "show me the time",
+            "show me the current time",
+            "current time",
+            "time",
+        }:
             return self._single_action_plan(text, ToolName.TIME_NOW)
 
         if normalized in {"what is my battery level", "battery status", "battery level", "battery"}:

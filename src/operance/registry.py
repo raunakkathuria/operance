@@ -269,7 +269,11 @@ def build_default_action_registry() -> ActionRegistry:
         )
     )
     registry.register(
-        ToolSpec(ToolName.TIME_NOW, "Get the current time", example_transcripts=("what time is it", "time"))
+        ToolSpec(
+            ToolName.TIME_NOW,
+            "Get the current time",
+            example_transcripts=("what time is it", "what is the time", "show me the time", "time"),
+        )
     )
     registry.register(
         ToolSpec(

@@ -2294,18 +2294,17 @@ def _drain_click_to_talk_results(
         if not isinstance(response, dict):
             continue
         status = response.get("status")
-        if snapshot.notification is None or status == "no_transcript":
-            _show_tray_message(
-                tray,
-                "Operance",
-                _format_click_to_talk_notification_message(report),
-                _resolve_notification_icon(qsystemtrayicon, _result_level(str(status))),
-                timeout_ms=(
-                    _TRAY_NOTIFICATION_SHORT_MS
-                    if status == "no_transcript"
-                    else _TRAY_NOTIFICATION_DEFAULT_MS
-                ),
-            )
+        _show_tray_message(
+            tray,
+            "Operance",
+            _format_click_to_talk_notification_message(report),
+            _resolve_notification_icon(qsystemtrayicon, _result_level(str(status))),
+            timeout_ms=(
+                _TRAY_NOTIFICATION_SHORT_MS
+                if status == "no_transcript"
+                else _TRAY_NOTIFICATION_DEFAULT_MS
+            ),
+        )
 
 
 def _result_level(status: str) -> str:

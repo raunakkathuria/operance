@@ -721,6 +721,74 @@ def test_show_tray_message_falls_back_without_timeout() -> None:
     assert calls == [("Title", "Body", "info")]
 
 
+def test_click_to_talk_result_notification_overrides_existing_snapshot_notification() -> None:
+    from queue import SimpleQueue
+
+    from operance.ui import build_tray_snapshot
+    from operance.ui.tray import _TRAY_NOTIFICATION_DEFAULT_MS, _drain_click_to_talk_results
+
+    snapshot = build_tray_snapshot(
+        _status_snapshot(),
+        voice_loop_status=_voice_loop_status_snapshot(
+            loop_state="listening_for_command",
+            wake_detections=3,
+            last_transcript_text=None,
+            last_transcript_final=None,
+            last_response_text=None,
+            last_response_status=None,
+        ),
+    )
+    assert snapshot.notification is not None
+
+    result_queue: SimpleQueue[tuple[str, object]] = SimpleQueue()
+    result_queue.put(
+        (
+            "result",
+            {
+                "response": {"status": "success", "text": "It is 00:30"},
+                "transcripts": [
+                    {
+                        "text": "what is the time",
+                        "confidence": 1.0,
+                        "is_final": True,
+                    }
+                ],
+                "completed_commands": 1,
+                "final_state": "IDLE",
+                "stopped_reason": "final_transcript",
+            },
+        )
+    )
+
+    calls: list[tuple[object, ...]] = []
+
+    class FakeTray:
+        def showMessage(self, *args):
+            calls.append(args)
+
+    class FakeSystemTrayIcon:
+        class MessageIcon:
+            Information = "info"
+            Warning = "warning"
+            Critical = "critical"
+
+    _drain_click_to_talk_results(
+        FakeTray(),
+        FakeSystemTrayIcon,
+        snapshot,
+        result_queue,
+    )
+
+    assert calls == [
+        (
+            "Operance",
+            "Heard: what is the time\nIt is 00:30",
+            "info",
+            _TRAY_NOTIFICATION_DEFAULT_MS,
+        )
+    ]
+
+
 def test_run_tray_app_menu_keeps_end_user_facing_actions() -> None:
     import inspect
 
