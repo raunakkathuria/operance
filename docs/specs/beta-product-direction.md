@@ -157,6 +157,7 @@ Scope:
 - reliable click-to-talk path
 - wake-word feedback and bounded always-on behavior
 - understandable first-run setup/status
+- one clear next action after install, readiness, or setup/status checks
 - support bundle and issue-report flow
 - release evidence for packaged installs
 

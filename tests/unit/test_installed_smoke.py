@@ -69,6 +69,12 @@ def test_installed_smoke_passes_for_packaged_active_tray_service(monkeypatch, tm
     payload = result.to_dict()
 
     assert result.status == "ok"
+    assert payload["next_action"] == {
+        "label": "Run the first voice command",
+        "status": "ready",
+        "instruction": "Click the tray icon once, then say: open browser",
+        "command": None,
+    }
     assert payload["next_steps"] == ["systemctl --user status operance-tray.service --no-pager"]
     assert payload["evidence"]["developer_mode"] is False
     assert payload["evidence"]["install_mode"] == "packaged"
@@ -99,6 +105,9 @@ def test_installed_smoke_fails_for_developer_mode_and_missing_runtime(tmp_path: 
     payload = result.to_dict()
 
     assert result.status == "failed"
+    assert payload["next_action"]["label"] == "Fix installed package readiness"
+    assert payload["next_action"]["status"] == "failed"
+    assert payload["next_action"]["command"] == "Use the packaged operance command or set OPERANCE_DEVELOPER_MODE=0."
     assert {check["name"]: check["status"] for check in payload["checks"]}["installed_live_mode"] == "failed"
     assert {check["name"]: check["status"] for check in payload["checks"]}["stt_backend_available"] == "failed"
     assert "operance --support-bundle" in payload["next_steps"]
@@ -135,6 +144,12 @@ def test_installed_smoke_warns_when_tray_service_is_inactive(monkeypatch, tmp_pa
     )
 
     assert result.status == "warn"
+    assert result.to_dict()["next_action"] == {
+        "label": "Start the tray service",
+        "status": "warn",
+        "instruction": "Start Operance, then click the tray icon and say: open browser",
+        "command": "systemctl --user enable --now operance-tray.service",
+    }
     assert "systemctl --user enable --now operance-tray.service" in result.to_dict()["next_steps"]
 
 

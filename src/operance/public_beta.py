@@ -27,6 +27,13 @@ def build_public_beta_checklist(
             installed_status=installed_status,
             available_commands=available_commands,
         ),
+        "next_action": _next_action(
+            packaged=packaged,
+            ready=ready,
+            installed_status=installed_status,
+            command_prefix=command_prefix,
+            install_command=install_command,
+        ),
         "target": "Fedora KDE Plasma Wayland public beta",
         "install_mode": install_mode,
         "version": _string_value(identity.get("version")),
@@ -203,6 +210,36 @@ def _next_steps(
         "Use the setup command from the current GitHub release assets.",
         f"Run {install_command}.",
     ]
+
+
+def _next_action(
+    *,
+    packaged: bool,
+    ready: bool,
+    installed_status: str,
+    command_prefix: str,
+    install_command: str,
+) -> dict[str, object]:
+    if ready:
+        return {
+            "label": "Run the first voice command",
+            "status": "ready",
+            "instruction": "Click the tray icon once, then say: open browser",
+            "command": None,
+        }
+    if packaged and installed_status != "ok":
+        return {
+            "label": "Fix installed readiness",
+            "status": installed_status or "needs_attention",
+            "instruction": "Run installed smoke and follow the first failed check suggestion.",
+            "command": f"{command_prefix} --installed-smoke",
+        }
+    return {
+        "label": "Install the packaged beta",
+        "status": "recommended",
+        "instruction": "Use the setup command from the current GitHub release assets.",
+        "command": install_command,
+    }
 
 
 def _install_command(release_status: dict[str, object]) -> str:

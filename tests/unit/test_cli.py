@@ -903,6 +903,12 @@ def test_cli_getting_started_includes_packaged_install_readiness(monkeypatch, ca
     assert exit_code == 0
     assert payload["status"] == "ready"
     assert payload["headline"] == "Operance packaged install is ready for tray click-to-talk."
+    assert payload["next_action"] == {
+        "label": "Run the first voice command",
+        "status": "ready",
+        "instruction": "Click the tray icon once, then say: open browser",
+        "command": None,
+    }
     assert payload["start_here"][1] == {
         "command": "Click the tray icon, then say: open browser",
         "label": "Use the tray click-to-talk path",
@@ -960,6 +966,7 @@ def test_cli_public_beta_checklist_includes_packaged_readiness(monkeypatch, caps
 
     assert exit_code == 0
     assert payload["status"] == "ready"
+    assert payload["next_action"]["instruction"] == "Click the tray icon once, then say: open browser"
     assert payload["checklist"][1] == {
         "command": "operance --installed-smoke",
         "label": "Verify installed runtime",

@@ -70,6 +70,10 @@ operance --public-beta-checklist
 operance --beta-feedback
 ```
 
+`operance --installed-smoke`, `operance --public-beta-checklist`, and tray
+**Setup and status** now include one explicit next action. When the install is
+ready, the next action is to click the tray icon once and say `open browser`.
+
 Then click the tray icon and say:
 
 ```text
@@ -244,6 +248,9 @@ Operance is ready for a **Fedora KDE Wayland public beta** for outside developer
   supported commands, issue reporting, recent interaction details, update
   checks, and optional always-on listening controls are available from the tray
   menu
+- First-run next action: installed smoke, public beta checklist, and tray
+  setup/status lead with the next user action, such as clicking the tray icon
+  and saying `open browser` when the package is ready
 - Public beta distribution guide: [docs/release/public-beta.md](docs/release/public-beta.md)
 - Packaged release-candidate evidence gate: `./scripts/run_package_evidence_gate.sh`
 - Wake-word and TTS assets remain optional and are not part of the packaged support contract; spoken response text is available even when TTS audio is not configured

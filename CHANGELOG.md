@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added product-facing `next_action` guidance to installed smoke, public beta checklist, and tray setup/status so first-time beta users see one clear next step, such as clicking the tray icon and saying `open browser` when the packaged install is ready.
 - Added a PRD-first planning workflow with `docs/specs/product-prd.md`, a goal-spec GitHub issue template, and stricter PR/agent checks so non-trivial Operance work is tied to product intent, acceptance criteria, documentation impact, and release evidence before implementation.
 - Added command interpretation feedback for typed actions and contextual follow-ups, surfacing `Understood: ...` in status, tray last-interaction details, and transcript JSON, while making missing or ambiguous `it`/`first one` follow-ups return concrete recovery guidance instead of guessing.
 - Restored the click-to-talk `Listening` tray popup to the normal readable notification duration instead of the short retry-notification timeout.

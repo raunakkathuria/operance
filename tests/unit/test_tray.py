@@ -1460,6 +1460,11 @@ def test_format_getting_started_highlights_for_tray_dialog() -> None:
 
     report = {
         "status": "ready",
+        "next_action": {
+            "label": "Run the first voice command",
+            "status": "ready",
+            "instruction": "Click the tray icon once, then say: open browser",
+        },
         "start_here": [{"label": "Show runnable commands", "command": "operance --supported-commands"}],
         "try_commands": [{"group": "Apps", "say": "open browser"}],
         "activation_checklist": [
@@ -1488,7 +1493,7 @@ def test_format_getting_started_highlights_for_tray_dialog() -> None:
 
     assert _format_getting_started_highlights(report) == (
         "Status: ready\n"
-        "Start: Show runnable commands -> operance --supported-commands\n"
+        "Next: Click the tray icon once, then say: open browser\n"
         "Try: open browser\n"
         "First voice test: open browser"
     )

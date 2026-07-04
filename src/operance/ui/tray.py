@@ -834,14 +834,23 @@ def _format_release_update_highlights(status: dict[str, object]) -> str:
 
 def _format_getting_started_highlights(report: dict[str, object]) -> str:
     lines = [f"Status: {report.get('status') or 'unknown'}"]
-    start_here = report.get("start_here")
-    if isinstance(start_here, list) and start_here:
-        first_step = start_here[0]
-        if isinstance(first_step, dict):
-            label = first_step.get("label")
-            command = first_step.get("command")
-            if isinstance(label, str) and isinstance(command, str):
-                lines.append(f"Start: {label} -> {command}")
+    next_action = report.get("next_action")
+    if isinstance(next_action, dict):
+        instruction = next_action.get("instruction")
+        command = next_action.get("command")
+        if isinstance(instruction, str) and instruction:
+            lines.append(f"Next: {instruction}")
+        elif isinstance(command, str) and command:
+            lines.append(f"Next: {command}")
+    if len(lines) == 1:
+        start_here = report.get("start_here")
+        if isinstance(start_here, list) and start_here:
+            first_step = start_here[0]
+            if isinstance(first_step, dict):
+                label = first_step.get("label")
+                command = first_step.get("command")
+                if isinstance(label, str) and isinstance(command, str):
+                    lines.append(f"Start: {label} -> {command}")
 
     try_commands = report.get("try_commands")
     if isinstance(try_commands, list) and try_commands:
