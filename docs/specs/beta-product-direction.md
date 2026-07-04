@@ -156,6 +156,7 @@ Scope:
 - clear tray state and feedback
 - reliable click-to-talk path
 - wake-word feedback and bounded always-on behavior
+- no-command wake cooldowns that avoid repeated false-wake popups
 - understandable first-run setup/status
 - one clear next action after install, readiness, or setup/status checks
 - support bundle and issue-report flow

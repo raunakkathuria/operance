@@ -264,7 +264,7 @@ Operance
 open browser
 ```
 
-The same pattern applies to other commands, such as `go to google.com`, `search the web for linux automation`, or `what time is it`. You can also try one continuous phrase such as `Operance open browser`; the voice loop now feeds the wake frame into command capture and trims short wake-word residue when the command starter is recognized. If you only say `Operance` and no command follows, the tray reports that the wake word was heard and returns to waiting. Click-to-talk remains the recommended beta path when you want the most responsive command capture.
+The same pattern applies to other commands, such as `go to google.com`, `search the web for linux automation`, or `what time is it`. You can also try one continuous phrase such as `Operance open browser`; the voice loop now feeds the wake frame into command capture and trims short wake-word residue when the command starter is recognized. If you only say `Operance` and no command follows, the tray reports that the wake word was heard and returns to waiting. The fallback energy detector is conservative and suppresses repeat wake detection for a short cooldown after a no-command wake, so coughs or brief noise should not stack repeated `I heard Operance` popups. Click-to-talk remains the recommended beta path when you want the most responsive command capture.
 
 Not yet claimed:
 

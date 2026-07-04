@@ -23,6 +23,7 @@ def build_default_wakeword_detector(
         phrase=phrase,
         threshold=threshold,
         cooldown_frames=cooldown_frames,
+        activation_frames=4,
     )
 
 
