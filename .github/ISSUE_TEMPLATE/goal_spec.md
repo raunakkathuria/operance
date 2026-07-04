@@ -58,6 +58,7 @@ adapter safety requirements.
 - [ ] Tray changes are end-user focused.
 - [ ] Specs or docs are updated if behavior changes.
 - [ ] Deferred work is explicit.
+- [ ] Spec/doc sync check is expected to pass or any warning is explained.
 
 ## Test evidence
 

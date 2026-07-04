@@ -11,7 +11,9 @@ release through this loop:
 4. Check architecture impact before touching code.
 5. Implement the smallest runnable change.
 6. Verify with tests and at least one real user-facing command path.
-7. Update specs, public docs, and changelog in the same PR when behavior
+7. Run `python3 scripts/check_spec_sync.py --base origin/main` and address or
+   explain any warning.
+8. Update specs, public docs, and changelog in the same PR when behavior
    changes.
 
 Specs are not meant to become large design documents. They should be short
@@ -54,6 +56,9 @@ Every milestone spec or goal-spec issue should include:
   execution with model output or shell commands.
 - Do not let implementation drift beyond the linked spec or goal issue. Update
   the spec or issue first when scope changes.
+- Use `scripts/check_spec_sync.py` as a pre-PR guardrail. It does not replace
+  judgment or the linked goal-spec issue, but it catches obvious behavior
+  changes that lack changelog or documentation evidence.
 
 ## Current Canonical Specs
 

@@ -122,6 +122,7 @@ Before opening a pull request, run:
 
 ```bash
 .venv/bin/python -m pytest
+python3 scripts/check_spec_sync.py --base origin/main
 ```
 
 GitHub Actions also runs the same test suite plus minimal CLI smoke checks on
@@ -156,6 +157,8 @@ A good pull request for this repo should:
 - describe the user-visible behavior or developer workflow change
 - link the PRD section, milestone spec section, or goal-spec issue for larger
   product and architecture changes
+- include the output of `python3 scripts/check_spec_sync.py --base origin/main`
+  for behavior-changing work
 - list the exact verification commands you ran
 - note doc updates in `README.md`, `docs/requirements/linux.md`, and
   `CHANGELOG.md` when applicable

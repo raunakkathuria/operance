@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added `scripts/check_spec_sync.py` plus contributor, PR-template, and agent workflow guidance so behavior-changing work has a local pre-PR check for changelog and documentation/spec evidence.
 - Expanded time-command grammar so natural variants such as `what is the time`, `what's the time`, `tell me what time it is`, and `show me the time` route to the same `time.now` action as `what time is it`.
 - Fixed click-to-talk result popups so successful command responses such as local time still appear even when an existing always-on/status notification is active.
 - Separated model-backed wake-word mode from the built-in experimental sound-trigger fallback in runtime status, tray labels, and no-command feedback, so fallback always-on listening no longer claims that a wake phrase was heard; `Hey Ops` is documented as the preferred future public wake phrase once model-backed detection is available.

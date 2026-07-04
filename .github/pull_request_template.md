@@ -15,6 +15,7 @@ Link the relevant PRD section, milestone spec section, or goal-spec issue.
 List the exact commands you ran.
 
 - [ ] `.venv/bin/python -m pytest`
+- [ ] `python3 scripts/check_spec_sync.py --base origin/main` for behavior-changing work
 - [ ] `.venv/bin/python -m operance.cli --adapter-conformance` when provider, adapter, registry, or executor surfaces changed
 - [ ] relevant `operance.cli` probe or smoke command
 - [ ] actual user-facing workflow tested when the PR claims runnable behavior
