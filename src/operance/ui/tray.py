@@ -1877,10 +1877,15 @@ def _build_notification(
 
     if _voice_loop_listening_for_command(voice_loop_status):
         phrase = voice_loop_status.last_wake_phrase or "wake_word"
+        message = (
+            "Wake phrase heard. Say your command now."
+            if _voice_loop_uses_model_wake_word(voice_loop_status)
+            else "Sound trigger detected. Say your command now."
+        )
         return TrayNotification(
             level="info",
             title="I'm listening",
-            message="Wake word heard. Say your command now.",
+            message=message,
             event_id=f"voice_loop_listening:{voice_loop_status.wake_detections}:{phrase}",
         )
 
@@ -1965,7 +1970,9 @@ def _resolve_voice_loop_activity(
     if voice_loop_status is None:
         return None
     if voice_loop_status.loop_state == "waiting_for_wake":
-        return "Waiting for wake word"
+        if _voice_loop_uses_model_wake_word(voice_loop_status):
+            return "Waiting for wake phrase"
+        return "Waiting for sound trigger"
     if voice_loop_status.loop_state == "listening_for_command":
         return "Listening for command"
     if voice_loop_status.loop_state == "awaiting_confirmation":
@@ -2103,8 +2110,24 @@ def _voice_loop_control_label(
         voice_loop_status,
         service_active_override=service_active_override,
     ):
+        if _voice_loop_uses_experimental_sound_trigger(voice_loop_status):
+            return "Stop experimental always-on"
         return "Stop always-on listening"
+    if _voice_loop_uses_experimental_sound_trigger(voice_loop_status):
+        return "Start experimental always-on"
     return "Start always-on listening"
+
+
+def _voice_loop_uses_model_wake_word(
+    voice_loop_status: VoiceLoopRuntimeStatusSnapshot | None,
+) -> bool:
+    return voice_loop_status is not None and voice_loop_status.wake_trigger_mode == "wake_word"
+
+
+def _voice_loop_uses_experimental_sound_trigger(
+    voice_loop_status: VoiceLoopRuntimeStatusSnapshot | None,
+) -> bool:
+    return voice_loop_status is not None and voice_loop_status.wake_trigger_mode == "sound_trigger"
 
 
 def _run_voice_loop_service_control(action: str) -> SetupRunResult:
@@ -2271,18 +2294,17 @@ def _drain_click_to_talk_results(
         if not isinstance(response, dict):
             continue
         status = response.get("status")
-        if snapshot.notification is None or status == "no_transcript":
-            _show_tray_message(
-                tray,
-                "Operance",
-                _format_click_to_talk_notification_message(report),
-                _resolve_notification_icon(qsystemtrayicon, _result_level(str(status))),
-                timeout_ms=(
-                    _TRAY_NOTIFICATION_SHORT_MS
-                    if status == "no_transcript"
-                    else _TRAY_NOTIFICATION_DEFAULT_MS
-                ),
-            )
+        _show_tray_message(
+            tray,
+            "Operance",
+            _format_click_to_talk_notification_message(report),
+            _resolve_notification_icon(qsystemtrayicon, _result_level(str(status))),
+            timeout_ms=(
+                _TRAY_NOTIFICATION_SHORT_MS
+                if status == "no_transcript"
+                else _TRAY_NOTIFICATION_DEFAULT_MS
+            ),
+        )
 
 
 def _result_level(status: str) -> str:

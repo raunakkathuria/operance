@@ -50,8 +50,9 @@ architecture has live, tested implementations for those operating systems.
 - The tray must remain the primary end-user surface and avoid raw developer
   diagnostics by default.
 - Click-to-talk must remain the most reliable beta interaction path.
-- Always-on listening must be wake-word gated and visibly acknowledge wake or
-  no-command states.
+- Always-on listening must clearly distinguish model-backed wake-word mode from
+  the experimental sound-trigger fallback and visibly acknowledge trigger or
+  no-command states without overstating what was recognized.
 - Setup, readiness, supported commands, issue reporting, and support capture
   must be discoverable from product surfaces.
 - New command families must preserve confirmation gates, auditability, and

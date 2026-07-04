@@ -313,7 +313,60 @@ def test_live_voice_session_times_out_wake_without_command(tmp_path: Path) -> No
     assert result["responses"] == []
     assert result["final_state"] == RuntimeState.IDLE.value
     assert snapshot.last_response_status == "no_command"
-    assert snapshot.last_response_text == "I heard Operance, but no command followed."
+    assert snapshot.wake_trigger_mode == "sound_trigger"
+    assert snapshot.last_response_text == "Sound trigger detected, but no command followed."
+
+
+def test_live_voice_session_model_wake_reports_phrase_when_no_command_follows(tmp_path: Path) -> None:
+    from operance.audio.capture import AudioFrame
+    from operance.voice import build_voice_loop_runtime_status_snapshot, run_live_voice_session
+    from operance.wakeword import WakeWordDetection
+    from operance.wakeword.openwakeword import OpenWakeWordDetector
+
+    env = {
+        "OPERANCE_DATA_DIR": str(tmp_path / "data"),
+        "OPERANCE_DESKTOP_DIR": str(tmp_path / "Desktop"),
+    }
+
+    class FakeCaptureSource:
+        def frames(self, *, max_frames: int | None = None):
+            frame_total = max_frames if max_frames is not None else 130
+            for _ in range(frame_total):
+                yield AudioFrame(sample_rate_hz=16000, channels=1, sample_count=4, pcm_s16le=b"\x00\x00" * 4)
+
+    class FakeOpenWakeWordDetector(OpenWakeWordDetector):
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def process_frame(self, frame) -> WakeWordDetection | None:
+            self.calls += 1
+            if self.calls == 2:
+                return WakeWordDetection(phrase="Hey Ops", confidence=0.88)
+            return None
+
+    class SilentSpeechTranscriber:
+        def process_frame(self, frame):
+            return None
+
+        def finish(self) -> list[object]:
+            return []
+
+        def close(self) -> None:
+            return None
+
+    result = run_live_voice_session(
+        FakeCaptureSource(),
+        FakeOpenWakeWordDetector(),
+        lambda: SilentSpeechTranscriber(),
+        max_frames=130,
+        env=env,
+    )
+    snapshot = build_voice_loop_runtime_status_snapshot(env=env)
+
+    assert result["wake_detections"][0]["phrase"] == "Hey Ops"
+    assert snapshot.wake_trigger_mode == "wake_word"
+    assert snapshot.last_response_status == "no_command"
+    assert snapshot.last_response_text == "I heard Hey Ops, but no command followed."
 
 
 def test_live_voice_session_suppresses_repeated_wake_after_no_command_timeout(tmp_path: Path) -> None:

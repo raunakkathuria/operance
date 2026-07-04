@@ -31,10 +31,11 @@ KDE Wayland with the packaged tray-first workflow.
 Supported user-facing contract:
 
 - Click-to-talk is the most reliable interaction path.
-- Optional always-on listening is wake-word gated.
-- Always-on listening gives visible feedback when the wake word is heard.
-- If no command follows the wake word, Operance reports that and returns to
-  wake waiting.
+- Optional always-on listening clearly distinguishes model-backed wake-word mode
+  from the experimental sound-trigger fallback.
+- Always-on listening gives visible feedback when a trigger is detected.
+- If no command follows the trigger, Operance reports that and returns to
+  waiting without claiming phrase recognition in sound-trigger mode.
 - Commands execute through typed actions, validation, policy, and adapters.
 - Local AI planning is opt-in and must still produce typed actions that pass
   validation and policy.

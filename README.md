@@ -256,7 +256,7 @@ Operance is ready for a **Fedora KDE Wayland public beta** for outside developer
 - Wake-word and TTS assets remain optional and are not part of the packaged support contract; spoken response text is available even when TTS audio is not configured
 - Windows and macOS are architecture targets only; their current providers are scaffolds, not supported runtimes
 
-Always-on listening is wake-word gated. For the current beta, the most reliable pattern is two steps:
+Always-on listening is optional and experimental unless a model-backed wake-word asset is configured. For the current beta, the most reliable path is still click-to-talk. If you start the always-on loop with the built-in energy fallback, treat it as a sound trigger and use two steps:
 
 ```text
 Operance
@@ -264,7 +264,7 @@ Operance
 open browser
 ```
 
-The same pattern applies to other commands, such as `go to google.com`, `search the web for linux automation`, or `what time is it`. You can also try one continuous phrase such as `Operance open browser`; the voice loop now feeds the wake frame into command capture and trims short wake-word residue when the command starter is recognized. If you only say `Operance` and no command follows, the tray reports that the wake word was heard and returns to waiting. The fallback energy detector is conservative and suppresses repeat wake detection for a short cooldown after a no-command wake, so coughs or brief noise should not stack repeated `I heard Operance` popups. Click-to-talk remains the recommended beta path when you want the most responsive command capture.
+The same pattern applies to other commands, such as `go to google.com`, `search the web for linux automation`, or `what time is it`. You can also try one continuous phrase such as `Operance open browser`; the voice loop feeds the trigger frame into command capture and trims short wake residue when the command starter is recognized. If the energy fallback triggers and no command follows, the tray reports `Sound trigger detected, but no command followed.` and returns to waiting. A future model-backed public wake phrase is planned as `Hey Ops`, but the current package does not claim that phrase as supported until a model-backed detector is configured. Click-to-talk remains the recommended beta path when you want the most responsive command capture.
 
 Not yet claimed:
 
@@ -685,7 +685,7 @@ Wayland session:
 ./scripts/run_installed_desktop_smoke.sh
 ```
 
-The packaged tray is click-to-talk first, with optional always-on listening controls for the voice-loop service. In always-on mode, say `Operance`, pause briefly, then say the command. You can also try `Operance open browser` as one phrase; the wake-word-gated path now feeds the wake frame into STT and trims short leading wake-word residue before known command starters, so transcripts like `Operants, open browser` can still run as `open browser`. When the wake word is detected, the tray shows `I'm listening` so you know the next phrase is being captured; after a final transcript runs, the result notification replaces that listening acknowledgement. If no command follows, the tray reports `I heard Operance, but no command followed.` and returns to wake waiting. Tray notifications stay visible long enough to read, and click-to-talk remains the fastest manual path. A missing continuous voice-loop runtime status file is expected unless the background wake-word loop has been started separately, and it should not block click-to-talk result notifications. Spoken response text is recorded in the last-interaction report; audio playback still requires configured TTS assets.
+The packaged tray is click-to-talk first, with optional always-on controls for the voice-loop service. Without a model-backed wake-word asset, the always-on loop uses an experimental sound trigger, not true phrase recognition. In that fallback mode, say `Operance`, pause briefly, then say the command, or try one continuous phrase such as `Operance open browser`; the trigger path feeds the trigger frame into STT and trims short leading wake residue before known command starters, so transcripts like `Operants, open browser` can still run as `open browser`. When a trigger is detected, the tray shows `I'm listening`; if no command follows, it reports `Sound trigger detected, but no command followed.` When a model-backed wake-word detector is configured, phrase-aware feedback is allowed, and `Hey Ops` is the preferred future public wake phrase. Tray notifications stay visible long enough to read, and click-to-talk remains the fastest manual path. A missing continuous voice-loop runtime status file is expected unless the background loop has been started separately, and it should not block click-to-talk result notifications. Spoken response text is recorded in the last-interaction report; audio playback still requires configured TTS assets.
 
 When testing from a source checkout without rebuilding or reinstalling the RPM, run the source tray directly. In source-checkout mode, the tray starts and stops a repo-local `python -m operance.cli --voice-loop` child process with the same environment instead of controlling the packaged systemd voice-loop service, so click-to-talk and always-on status use the same data directory.
 
