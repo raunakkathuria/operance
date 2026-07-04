@@ -13,6 +13,7 @@ class StatusSnapshot:
     last_transcript: str | None
     last_response: str | None
     last_command_status: str | None
+    last_command_interpretation: str | None
     last_plan_source: str | None
     last_routing_reason: str | None
     last_planner_error: str | None
@@ -42,6 +43,7 @@ class StatusSnapshot:
             "last_transcript": self.last_transcript,
             "last_response": self.last_response,
             "last_command_status": self.last_command_status,
+            "last_command_interpretation": self.last_command_interpretation,
             "last_plan_source": self.last_plan_source,
             "last_routing_reason": self.last_routing_reason,
             "last_planner_error": self.last_planner_error,

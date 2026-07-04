@@ -164,6 +164,8 @@ Scope:
   `unmute`, and confirmation-gated close/delete operations
 - safe target resolver for apps, URLs, known folders, files, and windows
 - adapter-owned OS resolution
+- command interpretation feedback so users can see what a contextual or typed
+  command resolved to before treating it as magic
 - product documentation that explains behavior from a user perspective
 
 Current accepted safe-command slice:

@@ -22,6 +22,7 @@ def test_daemon_status_snapshot_reports_last_command_context(tmp_path: Path) -> 
     assert snapshot.last_transcript == "open firefox"
     assert snapshot.last_response == "Launched firefox"
     assert snapshot.last_command_status == "success"
+    assert snapshot.last_command_interpretation == "Launch app or URL: firefox"
     assert snapshot.last_plan_source == "deterministic"
     assert snapshot.last_routing_reason == "deterministic_match"
     assert snapshot.last_planner_error is None
@@ -30,6 +31,7 @@ def test_daemon_status_snapshot_reports_last_command_context(tmp_path: Path) -> 
         {"role": "user", "content": "open firefox"},
         {"role": "assistant", "content": "Launched firefox"},
     ]
+    assert snapshot.to_dict()["last_command_interpretation"] == "Launch app or URL: firefox"
     assert snapshot.undo_available is False
     assert snapshot.last_undo_tool is None
     assert snapshot.completed_commands == 1

@@ -112,6 +112,7 @@ def test_cli_process_transcript_prints_response_payload(capsys) -> None:
     assert payload["transcript"] == "open firefox"
     assert payload["response"] == "Launched firefox"
     assert payload["status"] == "success"
+    assert payload["interpretation"] == "Launch app or URL: firefox"
     assert payload["simulated"] is True
 
 

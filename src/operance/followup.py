@@ -35,6 +35,7 @@ class FollowupContext:
 class FollowupMatch:
     plan: ActionPlan | None = None
     response: tuple[str, str] | None = None
+    interpretation: str | None = None
 
 
 FOLLOWUP_COMMAND_SPECS: tuple[FollowupCommandSpec, ...] = (
@@ -71,11 +72,24 @@ def match_followup_command(
         return None
 
     if context is None or not context.references:
-        return FollowupMatch(response=("I do not have an actionable previous result.", "unmatched"))
+        return FollowupMatch(
+            response=(
+                "I do not know what that refers to. Try list files in downloads or show open windows first.",
+                "unmatched",
+            ),
+            interpretation="Follow-up needs a previous file or window result.",
+        )
 
     references = _references_for_action(context.references, action_kind)
     if not references:
-        return FollowupMatch(response=(f"I cannot {action_kind} the previous result.", "unmatched"))
+        return FollowupMatch(
+            response=(
+                f"The previous result from {context.source_transcript!r} cannot be used with {transcript!r}. "
+                "Use file follow-ups after file results, or window follow-ups after window results.",
+                "unmatched",
+            ),
+            interpretation=f"No {action_kind} target in previous result.",
+        )
 
     index = _reference_index(normalized, len(references))
     if index is None:
@@ -84,9 +98,11 @@ def match_followup_command(
         else:
             return FollowupMatch(
                 response=(
-                    f"I found multiple previous results. Say {action_kind} the first one.",
+                    f"I found {len(references)} previous results from {context.source_transcript!r}. "
+                    f"Say {action_kind} the first one or {action_kind} the last one.",
                     "unmatched",
-                )
+                ),
+                interpretation="Follow-up needs a specific previous result.",
             )
 
     reference = references[index]
@@ -95,7 +111,8 @@ def match_followup_command(
             source=PlanSource.DETERMINISTIC,
             original_text=transcript,
             actions=[TypedAction(tool=reference.tool, args=dict(reference.args))],
-        )
+        ),
+        interpretation=_reference_interpretation(action_kind, reference),
     )
 
 
@@ -136,3 +153,14 @@ def _reference_index(normalized: str, reference_count: int) -> int | None:
 def _normalize(text: str) -> str:
     normalized = re.sub(r"[^a-z0-9]+", " ", text.lower())
     return " ".join(normalized.split())
+
+
+def _reference_interpretation(action_kind: str, reference: FollowupReference) -> str:
+    if action_kind == "open" and reference.kind == "file":
+        location = reference.args.get("location")
+        if isinstance(location, str) and location:
+            return f"Open {location} item: {reference.label}"
+        return f"Open previous item: {reference.label}"
+    if action_kind == "switch to" and reference.kind == "window":
+        return f"Switch to window: {reference.label}"
+    return f"{action_kind.capitalize()} previous result: {reference.label}"

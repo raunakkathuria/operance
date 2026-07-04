@@ -266,6 +266,7 @@ def test_daemon_opens_first_file_result_from_followup_context(tmp_path: Path) ->
     daemon.start()
     daemon.emit_wake_detected("operance")
     daemon.emit_transcript("list files in downloads", confidence=0.93, is_final=True)
+    assert daemon.status_snapshot().last_command_interpretation == "List files in downloads"
     daemon.complete_response_cycle()
     daemon.emit_wake_detected("operance")
     daemon.emit_transcript("open the first one", confidence=0.93, is_final=True)
@@ -276,6 +277,7 @@ def test_daemon_opens_first_file_result_from_followup_context(tmp_path: Path) ->
     assert planned_events[-1].plan.actions[0].args == {"location": "downloads", "name": "alpha.txt"}
     snapshot = daemon.status_snapshot()
     assert snapshot.last_routing_reason == "context_followup_match"
+    assert snapshot.last_command_interpretation == "Open downloads item: alpha.txt"
 
 
 def test_daemon_opens_single_metadata_result_from_followup_context(tmp_path: Path) -> None:
@@ -300,6 +302,75 @@ def test_daemon_opens_single_metadata_result_from_followup_context(tmp_path: Pat
     daemon.emit_transcript("open it", confidence=0.93, is_final=True)
 
     assert responses[-1].text == "Opened desktop entry notes.txt"
+
+
+def test_daemon_rejects_ambiguous_file_followup_without_ordinal(tmp_path: Path) -> None:
+    desktop_dir = tmp_path / "Desktop"
+    downloads = desktop_dir / "Downloads"
+    downloads.mkdir(parents=True)
+    (downloads / "alpha.txt").write_text("alpha")
+    (downloads / "beta.txt").write_text("beta")
+    daemon = OperanceDaemon.build_default(
+        {
+            "OPERANCE_DATA_DIR": str(tmp_path / "data"),
+            "OPERANCE_DESKTOP_DIR": str(desktop_dir),
+        }
+    )
+    responses: list[ResponseEvent] = []
+    planned_events: list[ActionPlanEvent] = []
+    daemon.event_bus.subscribe(ResponseEvent, responses.append)
+    daemon.event_bus.subscribe(ActionPlanEvent, planned_events.append)
+
+    daemon.start()
+    daemon.emit_wake_detected("operance")
+    daemon.emit_transcript("list files in downloads", confidence=0.93, is_final=True)
+    daemon.complete_response_cycle()
+    daemon.emit_wake_detected("operance")
+    daemon.emit_transcript("open it", confidence=0.93, is_final=True)
+
+    assert responses[-1].text == (
+        "I found 2 previous results from 'list files in downloads'. "
+        "Say open the first one or open the last one."
+    )
+    assert responses[-1].status == "unmatched"
+    assert planned_events[-1].plan.actions[0].tool == ToolName.FILES_LIST_FOLDER
+    assert daemon.status_snapshot().last_command_interpretation == (
+        "Follow-up needs a specific previous result."
+    )
+
+
+def test_daemon_rejects_window_followup_after_file_context(tmp_path: Path) -> None:
+    desktop_dir = tmp_path / "Desktop"
+    downloads = desktop_dir / "Downloads"
+    downloads.mkdir(parents=True)
+    (downloads / "alpha.txt").write_text("alpha")
+    daemon = OperanceDaemon.build_default(
+        {
+            "OPERANCE_DATA_DIR": str(tmp_path / "data"),
+            "OPERANCE_DESKTOP_DIR": str(desktop_dir),
+        }
+    )
+    responses: list[ResponseEvent] = []
+    planned_events: list[ActionPlanEvent] = []
+    daemon.event_bus.subscribe(ResponseEvent, responses.append)
+    daemon.event_bus.subscribe(ActionPlanEvent, planned_events.append)
+
+    daemon.start()
+    daemon.emit_wake_detected("operance")
+    daemon.emit_transcript("list files in downloads", confidence=0.93, is_final=True)
+    daemon.complete_response_cycle()
+    daemon.emit_wake_detected("operance")
+    daemon.emit_transcript("switch to it", confidence=0.93, is_final=True)
+
+    assert responses[-1].text == (
+        "The previous result from 'list files in downloads' cannot be used with 'switch to it'. "
+        "Use file follow-ups after file results, or window follow-ups after window results."
+    )
+    assert responses[-1].status == "unmatched"
+    assert planned_events[-1].plan.actions[0].tool == ToolName.FILES_LIST_FOLDER
+    assert daemon.status_snapshot().last_command_interpretation == (
+        "No switch to target in previous result."
+    )
 
 
 def test_daemon_switches_to_window_from_followup_context(tmp_path: Path) -> None:
@@ -343,9 +414,14 @@ def test_daemon_rejects_followup_without_previous_context(tmp_path: Path) -> Non
     daemon.emit_wake_detected("operance")
     daemon.emit_transcript("open it", confidence=0.93, is_final=True)
 
-    assert responses[-1].text == "I do not have an actionable previous result."
+    assert responses[-1].text == (
+        "I do not know what that refers to. Try list files in downloads or show open windows first."
+    )
     assert responses[-1].status == "unmatched"
     assert planned_events == []
+    assert daemon.status_snapshot().last_command_interpretation == (
+        "Follow-up needs a previous file or window result."
+    )
 
 
 def test_daemon_clears_followup_context_after_non_awareness_command(tmp_path: Path) -> None:
@@ -372,7 +448,9 @@ def test_daemon_clears_followup_context_after_non_awareness_command(tmp_path: Pa
     daemon.emit_wake_detected("operance")
     daemon.emit_transcript("open it", confidence=0.93, is_final=True)
 
-    assert responses[-1].text == "I do not have an actionable previous result."
+    assert responses[-1].text == (
+        "I do not know what that refers to. Try list files in downloads or show open windows first."
+    )
     assert responses[-1].status == "unmatched"
 
 

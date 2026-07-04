@@ -68,6 +68,7 @@ class OperanceDaemon:
     last_transcript: str | None = field(default=None, init=False)
     last_response: str | None = field(default=None, init=False)
     last_command_status: str | None = field(default=None, init=False)
+    last_command_interpretation: str | None = field(default=None, init=False)
     last_plan_source: str | None = field(default=None, init=False)
     last_routing_reason: str | None = field(default=None, init=False)
     last_planner_error: str | None = field(default=None, init=False)
@@ -157,6 +158,7 @@ class OperanceDaemon:
             last_transcript=self.last_transcript,
             last_response=self.last_response,
             last_command_status=self.last_command_status,
+            last_command_interpretation=self.last_command_interpretation,
             last_plan_source=self.last_plan_source,
             last_routing_reason=self.last_routing_reason,
             last_planner_error=self.last_planner_error,
@@ -285,6 +287,7 @@ class OperanceDaemon:
         previous_transcript = self.last_transcript
         previous_response = self.last_response
         previous_command_status = self.last_command_status
+        self.last_command_interpretation = None
 
         if self.state_machine.current_state in {RuntimeState.IDLE, RuntimeState.WAKE_DETECTED}:
             self.state_machine.transition_to(RuntimeState.LISTENING, "capturing transcript")
@@ -346,6 +349,7 @@ class OperanceDaemon:
             followup_match = match_followup_command(text, self.followup_context)
             if followup_match is not None and followup_match.response is not None:
                 response_text, response_status = followup_match.response
+                self.last_command_interpretation = followup_match.interpretation
                 return self._handle_self_status_response(
                     text,
                     total_started_at,
@@ -363,6 +367,7 @@ class OperanceDaemon:
             plan = followup_match.plan if followup_match is not None else self.intent_matcher.match(text)
             if followup_match is not None and plan is not None:
                 self._set_routing_outcome(source=plan.source.value, reason="context_followup_match")
+                self.last_command_interpretation = followup_match.interpretation
             elif plan is None:
                 route_decision = self.planner_routing_policy.decide(
                     transcript=text,
@@ -400,6 +405,7 @@ class OperanceDaemon:
                     self._set_routing_outcome(source=None, reason=route_decision.reason)
             else:
                 self._set_routing_outcome(source=plan.source.value, reason="deterministic_match")
+                self.last_command_interpretation = _plan_interpretation(plan)
             planning_duration_ms = (perf_counter() - planning_started_at) * 1000
 
             if plan is not None:
@@ -1030,6 +1036,59 @@ def _window_followup_reference(window: str) -> FollowupReference:
         tool=ToolName.WINDOWS_SWITCH,
         args={"window": window},
     )
+
+
+def _plan_interpretation(plan: ActionPlan) -> str | None:
+    if len(plan.actions) != 1:
+        return f"Run {len(plan.actions)} typed actions."
+
+    action = plan.actions[0]
+    args = action.args
+    if action.tool == ToolName.APPS_LAUNCH:
+        app = args.get("app")
+        if isinstance(app, str) and app:
+            return f"Launch app or URL: {app}"
+    if action.tool == ToolName.APPS_FOCUS:
+        app = args.get("app")
+        if isinstance(app, str) and app:
+            return f"Focus app: {app}"
+    if action.tool == ToolName.WINDOWS_SWITCH:
+        window = args.get("window")
+        if isinstance(window, str) and window:
+            return f"Switch to window: {window}"
+    if action.tool == ToolName.WINDOWS_LIST:
+        return "List open windows"
+    if action.tool == ToolName.WINDOWS_FIND:
+        window = args.get("window")
+        if isinstance(window, str) and window:
+            return f"Find windows matching: {window}"
+    if action.tool == ToolName.FILES_OPEN:
+        name = args.get("name")
+        location = args.get("location")
+        if isinstance(name, str) and isinstance(location, str):
+            return f"Open {location} item: {name}"
+        if isinstance(location, str):
+            return f"Open {location}"
+    if action.tool == ToolName.FILES_LIST_FOLDER:
+        location = args.get("location")
+        if isinstance(location, str) and location:
+            return f"List files in {location}"
+    if action.tool == ToolName.FILES_FIND:
+        query = args.get("query")
+        location = args.get("location")
+        kind = args.get("kind")
+        if isinstance(query, str) and isinstance(location, str) and isinstance(kind, str):
+            return f"Find {kind}s matching {query} in {location}"
+    if action.tool == ToolName.FILES_GET_INFO:
+        query = args.get("query")
+        location = args.get("location")
+        if isinstance(query, str) and isinstance(location, str):
+            return f"Show details for {query} in {location}"
+    if action.tool == ToolName.FILES_LIST_RECENT_FOLDER:
+        location = args.get("location")
+        if isinstance(location, str) and location:
+            return f"Show recent files in {location}"
+    return f"Run {action.tool.value}."
 
 
 def _adapter_set_is_empty(adapters: AdapterSet) -> bool:
