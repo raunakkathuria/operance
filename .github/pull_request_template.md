@@ -2,6 +2,14 @@
 
 Describe the concrete behavior or workflow change.
 
+## Spec or issue
+
+Link the relevant PRD section, milestone spec section, or goal-spec issue.
+
+- [ ] Linked a goal/spec issue for non-trivial behavior, UX, architecture,
+      packaging, release, or public-doc changes
+- [ ] Small change with no issue needed; explain why:
+
 ## Verification
 
 List the exact commands you ran.

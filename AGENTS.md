@@ -60,8 +60,13 @@ generalize beyond the current tested requirement.
 ## Spec-First Workflow
 
 Use `docs/specs/` as the canonical planning layer for product direction and
-milestone scope. Before implementing a non-trivial feature, either identify the
-existing spec section that governs the work or update/add a spec first.
+milestone scope. `docs/specs/product-prd.md` is the durable product source of
+truth. Milestone specs define current roadmap and release scope. GitHub
+goal-spec issues define execution contracts for non-trivial work.
+
+Before implementing a non-trivial feature, identify the relevant PRD section
+and the milestone spec or goal-spec issue that governs the work. Create or
+update the spec or issue first if it is missing.
 
 Every feature spec or spec update should state:
 
@@ -79,6 +84,9 @@ quietly exceed the spec; update the spec first if scope changes are necessary.
 Older startup documents under `docs/prompt/` and historical planning notes under
 `docs/requirements/` can inform context, but they must not override the current
 specs, README, architecture docs, or runnable behavior.
+
+Tiny typo fixes, release chores, and narrow follow-up corrections may skip a
+goal-spec issue only when the PR explicitly explains why no issue is needed.
 
 ## Product UX Guardrails
 
@@ -126,6 +134,9 @@ Keep `README.md`, `docs/requirements/linux.md`, and `CHANGELOG.md` in sync with 
 
 Before calling a feature complete:
 
+- confirm the work aligns with `docs/specs/product-prd.md`
+- confirm non-trivial work links to a milestone spec section or GitHub
+  goal-spec issue
 - confirm the work follows or updates the relevant `docs/specs/` spec
 - confirm any requirement change is reflected in the spec before implementation
 - confirm the portable core remains decoupled from OS-native adapters
