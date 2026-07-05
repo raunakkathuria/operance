@@ -3632,7 +3632,7 @@ def test_cli_voice_loop_prints_summary_until_command_limit(monkeypatch, capsys) 
 
     class FakeLoopCaptureSource:
         def frames(self, *, max_frames: int | None = None):
-            frame_total = max_frames if max_frames is not None else 10
+            frame_total = max_frames if max_frames is not None else 24
             for _ in range(frame_total):
                 yield _FakeAudioCaptureSource().frames(max_frames=1).__next__()
 

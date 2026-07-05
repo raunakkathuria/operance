@@ -2310,7 +2310,7 @@ def _drain_click_to_talk_results(
 def _result_level(status: str) -> str:
     if status in {"failed", "denied"}:
         return "error"
-    if status in {"unmatched", "no_transcript", "no_command"}:
+    if status in {"unmatched", "no_transcript", "no_command", "incomplete_command"}:
         return "warning"
     return "info"
 

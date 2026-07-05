@@ -36,6 +36,9 @@ Supported user-facing contract:
 - Always-on listening gives visible feedback when a trigger is detected.
 - If no command follows the trigger, Operance reports that and returns to
   waiting without claiming phrase recognition in sound-trigger mode.
+- If only a clipped command fragment is captured after a trigger, Operance
+  reports that the command was incomplete and asks for the full command again
+  instead of guessing.
 - Commands execute through typed actions, validation, policy, and adapters.
 - Local AI planning is opt-in and must still produce typed actions that pass
   validation and policy.
@@ -158,6 +161,7 @@ Scope:
 - reliable click-to-talk path
 - wake-word feedback and bounded always-on behavior
 - no-command wake cooldowns that avoid repeated false-wake popups
+- incomplete-command recovery for clipped always-on captures
 - understandable first-run setup/status
 - one clear next action after install, readiness, or setup/status checks
 - support bundle and issue-report flow

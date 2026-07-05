@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Improved optional always-on recovery by suppressing immediate post-command re-triggers and reporting clipped tail fragments such as `is it?` as incomplete commands with retry guidance instead of generic unmatched-command failures.
 - Added `scripts/check_spec_sync.py` plus contributor, PR-template, and agent workflow guidance so behavior-changing work has a local pre-PR check for changelog and documentation/spec evidence.
 - Expanded time-command grammar so natural variants such as `what is the time`, `what's the time`, `tell me what time it is`, and `show me the time` route to the same `time.now` action as `what time is it`.
 - Fixed click-to-talk result popups so successful command responses such as local time still appear even when an existing always-on/status notification is active.

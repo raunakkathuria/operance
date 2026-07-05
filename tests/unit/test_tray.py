@@ -319,6 +319,41 @@ def test_build_tray_snapshot_reports_always_on_no_command_feedback() -> None:
     }
 
 
+def test_build_tray_snapshot_reports_always_on_incomplete_command_recovery() -> None:
+    from operance.ui import build_tray_snapshot
+
+    snapshot = build_tray_snapshot(
+        _status_snapshot(),
+        voice_loop_status=_voice_loop_status_snapshot(
+            loop_state="waiting_for_wake",
+            wake_detections=4,
+            last_wake_phrase="operance",
+            last_transcript_text="is it?",
+            last_transcript_final=True,
+            last_response_text=(
+                "I only heard part of a command: 'is it?'. "
+                "Say Operance, pause, then the full command."
+            ),
+            last_response_status="incomplete_command",
+        ),
+    )
+
+    payload = snapshot.to_dict()
+
+    assert payload["notification"] == {
+        "event_id": (
+            "voice_loop_response:4:incomplete_command:"
+            "I only heard part of a command: 'is it?'. Say Operance, pause, then the full command."
+        ),
+        "level": "warning",
+        "message": (
+            "Heard: is it?\n"
+            "I only heard part of a command: 'is it?'. Say Operance, pause, then the full command."
+        ),
+        "title": "Operance",
+    }
+
+
 def test_build_tray_snapshot_reports_voice_loop_warning_notification() -> None:
     from operance.ui import build_tray_snapshot
 

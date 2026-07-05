@@ -51,8 +51,9 @@ architecture has live, tested implementations for those operating systems.
   diagnostics by default.
 - Click-to-talk must remain the most reliable beta interaction path.
 - Always-on listening must clearly distinguish model-backed wake-word mode from
-  the experimental sound-trigger fallback and visibly acknowledge trigger or
-  no-command states without overstating what was recognized.
+  the experimental sound-trigger fallback and visibly acknowledge trigger,
+  no-command, and incomplete-command states without overstating what was
+  recognized.
 - Setup, readiness, supported commands, issue reporting, and support capture
   must be discoverable from product surfaces.
 - New command families must preserve confirmation gates, auditability, and
