@@ -21,6 +21,7 @@ from .runtime import VoiceLoopRuntimeStatusWriter
 DEFAULT_CLICK_TO_TALK_MAX_FRAMES = 40
 DEFAULT_ALWAYS_ON_COMMAND_TIMEOUT_FRAMES = 120
 DEFAULT_ALWAYS_ON_NO_COMMAND_COOLDOWN_FRAMES = 80
+DEFAULT_ALWAYS_ON_POST_COMMAND_COOLDOWN_FRAMES = 10
 _NO_COMMAND_AFTER_SOUND_TRIGGER_RESPONSE = "Sound trigger detected, but no command followed."
 
 _LIVE_COMMAND_START_RE = re.compile(
@@ -44,6 +45,16 @@ _WAKE_ONLY_TRANSCRIPTS = {
     "properance",
     "province",
 }
+_CLIPPED_COMMAND_FRAGMENT_RE = re.compile(
+    r"^(?:"
+    r"is it|"
+    r"is this|"
+    r"was it|"
+    r"did it|"
+    r"there"
+    r")$",
+    re.IGNORECASE,
+)
 
 
 def run_live_voice_session(
@@ -382,7 +393,7 @@ def _run_voice_capture_loop(
                     command_listen_started_frame = None
                     current_wake_phrase = None
                     if handled_final:
-                        wake_suppressed_until_frame = None
+                        wake_suppressed_until_frame = _post_command_cooldown_until(frame_index)
                         _complete_voice_response_cycle(daemon)
                         status_writer.update(
                             processed_frames=frame_index,
@@ -417,7 +428,7 @@ def _run_voice_capture_loop(
                 )
                 if segment.is_final:
                     if handled_final:
-                        wake_suppressed_until_frame = None
+                        wake_suppressed_until_frame = _post_command_cooldown_until(processed_frames)
                         _complete_voice_response_cycle(daemon)
                         status_writer.update(
                             processed_frames=processed_frames,
@@ -493,6 +504,18 @@ def _handle_live_transcript_segment(
         )
         return False
 
+    if segment.is_final and _is_probable_clipped_command_fragment(segment.text):
+        _record_incomplete_command_after_wake(
+            daemon,
+            status_writer,
+            frame_index,
+            transcript_text=segment.text,
+            completed_commands=completed_commands,
+            wake_trigger_mode=wake_trigger_mode,
+            wake_phrase=wake_phrase,
+        )
+        return False
+
     daemon.emit_transcript(
         segment.text,
         confidence=segment.confidence,
@@ -534,6 +557,10 @@ def _no_command_cooldown_until(frame_index: int) -> int:
     return frame_index + DEFAULT_ALWAYS_ON_NO_COMMAND_COOLDOWN_FRAMES
 
 
+def _post_command_cooldown_until(frame_index: int) -> int:
+    return frame_index + DEFAULT_ALWAYS_ON_POST_COMMAND_COOLDOWN_FRAMES
+
+
 def _record_no_command_after_wake(
     daemon: OperanceDaemon,
     status_writer: VoiceLoopRuntimeStatusWriter,
@@ -563,6 +590,35 @@ def _record_no_command_after_wake(
     )
 
 
+def _record_incomplete_command_after_wake(
+    daemon: OperanceDaemon,
+    status_writer: VoiceLoopRuntimeStatusWriter,
+    frame_index: int,
+    *,
+    transcript_text: str,
+    completed_commands: int,
+    wake_trigger_mode: str,
+    wake_phrase: str | None,
+) -> None:
+    daemon.cancel_wake_listening(source="voice_loop")
+    status_writer.update(
+        processed_frames=frame_index,
+        last_transcript_text=transcript_text,
+        last_transcript_final=True,
+        last_response_text=_incomplete_command_after_wake_response(
+            transcript_text,
+            wake_trigger_mode=wake_trigger_mode,
+            wake_phrase=wake_phrase,
+        ),
+        last_response_status="incomplete_command",
+        loop_state=_voice_loop_phase(daemon, active_transcriber=None),
+        daemon_state=daemon.state_machine.current_state.value,
+        awaiting_confirmation=daemon.pending_confirmation_plan is not None,
+        completed_commands=completed_commands,
+        wake_trigger_mode=wake_trigger_mode,
+    )
+
+
 def _wake_trigger_mode_for_detector(wakeword_detector: WakeWordDetector) -> str:
     if isinstance(wakeword_detector, OpenWakeWordDetector):
         return "wake_word"
@@ -573,6 +629,19 @@ def _no_command_after_wake_response(*, wake_trigger_mode: str, wake_phrase: str 
     if wake_trigger_mode == "wake_word" and wake_phrase:
         return f"I heard {wake_phrase}, but no command followed."
     return _NO_COMMAND_AFTER_SOUND_TRIGGER_RESPONSE
+
+
+def _incomplete_command_after_wake_response(
+    transcript_text: str,
+    *,
+    wake_trigger_mode: str,
+    wake_phrase: str | None,
+) -> str:
+    retry_prefix = wake_phrase if wake_trigger_mode == "wake_word" and wake_phrase else "Operance"
+    return (
+        f"I only heard part of a command: {transcript_text!r}. "
+        f"Say {retry_prefix}, pause, then the full command."
+    )
 
 
 def _trim_leading_wake_residue(segment):
@@ -599,6 +668,12 @@ def _trim_leading_wake_residue(segment):
 def _is_wake_only_transcript(text: str) -> bool:
     normalized = re.sub(r"[^a-z]+", "", text.lower())
     return normalized in _WAKE_ONLY_TRANSCRIPTS
+
+
+def _is_probable_clipped_command_fragment(text: str) -> bool:
+    normalized = re.sub(r"[?!,.;:]+", "", text.strip().lower())
+    normalized = re.sub(r"\s+", " ", normalized)
+    return bool(_CLIPPED_COMMAND_FRAGMENT_RE.fullmatch(normalized))
 
 
 def _complete_voice_response_cycle(daemon: OperanceDaemon) -> None:
