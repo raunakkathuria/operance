@@ -231,6 +231,9 @@ Non-goals:
 - destructive file management without confirmation and audit
 - raw filesystem paths or file-content search from speech in the current
   read-only discovery slice
+- selected-file or current-selection copy from the active file manager until a
+  provider can expose a reliable typed selected-file capability without
+  shortcut simulation, clipboard scraping, or app-specific guesses
 
 ### Milestone 3: Local AI Assist Mode
 

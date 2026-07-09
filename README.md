@@ -318,6 +318,7 @@ This is still a narrow public beta. The main remaining gaps are broader platform
 - Richer STT and TTS beyond the current optional bounded paths
 - Broader KDE execution coverage and live Windows or macOS adapters beyond the current unverified provider scaffolds
 - Richer tray UI and planner recovery beyond the current bounded implementation
+- Selected-file copy from the active file manager; explicit known-folder copy and contextual copy from prior file results are supported, but current-selection file references need a reliable adapter capability before they are safe to expose
 
 ## Development and Diagnostics
 
