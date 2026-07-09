@@ -769,6 +769,8 @@ def test_cli_supported_commands_available_only_filters_blocked_entries(monkeypat
     assert commands["files.rename"]["requires_confirmation"] is True
     assert commands["files.move"]["usage_pattern"] == "move folder on desktop called <name> to <folder>"
     assert commands["files.move"]["requires_confirmation"] is True
+    assert commands["files.copy"]["usage_pattern"] == "copy file on desktop called <name> to documents"
+    assert commands["files.copy"]["requires_confirmation"] is False
     assert "windows.list" in commands
     assert commands["windows.list"]["usage_pattern"] == "list windows | what apps are open | show open windows"
     assert "windows.find" in commands

@@ -771,6 +771,22 @@ class DeterministicIntentMatcher:
                 requires_confirmation=True,
             )
 
+        copy_entry_match = re.fullmatch(
+            r"copy (file|folder|item) on desktop called (.+) to (desktop|downloads|documents|home)",
+            normalized,
+        )
+        if copy_entry_match:
+            return self._single_action_plan(
+                text,
+                ToolName.FILES_COPY,
+                args={
+                    "location": "desktop",
+                    "name": copy_entry_match.group(2),
+                    "destination_location": copy_entry_match.group(3),
+                },
+                risk_tier=RiskTier.TIER_1,
+            )
+
         return None
 
     def _two_step_launch_plan(self, original_text: str, normalized: str) -> ActionPlan | None:

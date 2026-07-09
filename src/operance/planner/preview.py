@@ -119,6 +119,9 @@ def _describe_action(tool: ToolName, args: dict[str, object]) -> str:
     if tool == ToolName.FILES_MOVE:
         return f"move desktop entry {args['name']!r} to folder {args['destination_folder']!r}"
 
+    if tool == ToolName.FILES_COPY:
+        return f"copy desktop entry {args['name']!r} to {args['destination_location']}"
+
     if tool == ToolName.APPS_FOCUS:
         return f"focus {args['app']}"
 

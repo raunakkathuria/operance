@@ -129,6 +129,8 @@ class FilesAdapter(Protocol):
 
     def move_path(self, path: Path, destination_dir: Path) -> Path: ...
 
+    def copy_path(self, path: Path, destination_location: str) -> Path: ...
+
 
 @dataclass(slots=True)
 class AdapterSet:

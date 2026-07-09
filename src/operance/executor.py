@@ -461,6 +461,24 @@ class ActionExecutor:
                 undo_token=undo_token,
             )
 
+        if tool == ToolName.FILES_COPY:
+            adapter = self._require_adapter(self.adapters.files, tool)
+            location = str(args["location"])
+            if location != "desktop":
+                raise ValueError(f"unsupported folder location: {location}")
+            source_path = adapter.desktop_dir / str(args["name"])
+            if not source_path.exists():
+                raise ValueError(f"desktop entry not found: {source_path.name}")
+            destination_location = str(args["destination_location"])
+            copied_path = adapter.copy_path(source_path, destination_location)
+            undo_token = self.undo_manager.register(lambda: _undo_copied_entry(adapter, copied_path))
+            return ActionResultItem(
+                tool=tool,
+                status="success",
+                message=f"Copied desktop entry {source_path.name} to {destination_location}",
+                undo_token=undo_token,
+            )
+
         raise ValueError(f"unsupported tool: {tool.value}")
 
     @staticmethod
@@ -551,3 +569,12 @@ def _undo_renamed_entry(adapter, path, original_name: str) -> str:
 def _undo_moved_entry(adapter, path, destination_dir) -> str:
     restored_path = adapter.move_path(path, destination_dir)
     return f"Moved desktop entry {restored_path.name} to {destination_dir.name}"
+
+
+def _undo_copied_entry(adapter, path) -> str:
+    name = path.name
+    if path.is_dir():
+        adapter.remove_folder(path)
+    else:
+        adapter.remove_file(path)
+    return f"Removed copied desktop entry {name}"

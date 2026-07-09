@@ -97,6 +97,19 @@ write_transcript_fixture() {
     fi
 }
 
+write_user_dirs_fixture() {
+    local fixture_home="$1"
+
+    echo "+ write ${fixture_home}/.config/user-dirs.dirs"
+    if [[ "${dry_run}" -eq 0 ]]; then
+        mkdir -p "${fixture_home}/.config"
+        cat > "${fixture_home}/.config/user-dirs.dirs" <<'EOF'
+XDG_DOCUMENTS_DIR="$HOME/Documents"
+XDG_DOWNLOAD_DIR="$HOME/Downloads"
+EOF
+    fi
+}
+
 run_live_transcript() {
     local desktop_dir="$1"
     local transcript="$2"
@@ -173,6 +186,8 @@ cd "${repo_root}"
 if [[ "${dry_run}" -eq 1 ]]; then
     run_step 'tmp_dir="$(mktemp -d)"' true
     run_step 'mkdir -p "${tmp_dir}/Desktop"' true
+    run_step 'mkdir -p "${tmp_dir}/Documents" "${tmp_dir}/Downloads"' true
+    write_user_dirs_fixture '${tmp_dir}'
     run_step 'touch "${tmp_dir}/Desktop/operance-recent-smoke.txt"' true
     run_live_transcript '${tmp_dir}/Desktop' "show a notification saying live smoke passed"
     run_live_transcript '${tmp_dir}/Desktop' "show recent files"
@@ -182,6 +197,10 @@ if [[ "${dry_run}" -eq 1 ]]; then
     run_live_confirmation_transcripts '${tmp_dir}/Desktop' '${tmp_dir}/delete-folder.txt' "delete folder on desktop called projects"
     run_step 'test ! -e "${tmp_dir}/Desktop/projects"' true
     run_step 'touch "${tmp_dir}/Desktop/notes.txt"' true
+    run_live_transcript '${tmp_dir}/Desktop' "copy file on desktop called notes.txt to documents"
+    run_step 'test -f "${tmp_dir}/Documents/notes.txt"' true
+    run_step 'test -f "${tmp_dir}/Desktop/notes.txt"' true
+    run_step 'rm -f "${tmp_dir}/Documents/notes.txt"' true
     write_transcript_fixture '${tmp_dir}/delete-file.txt' "delete file on desktop called notes.txt"
     run_live_confirmation_transcripts '${tmp_dir}/Desktop' '${tmp_dir}/delete-file.txt' "delete file on desktop called notes.txt"
     run_step 'test ! -e "${tmp_dir}/Desktop/notes.txt"' true
@@ -207,6 +226,10 @@ fi
 
 desktop_dir="${tmp_dir}/Desktop"
 run_step "mkdir -p ${desktop_dir}" mkdir -p "${desktop_dir}"
+run_step "mkdir -p ${tmp_dir}/Documents ${tmp_dir}/Downloads" mkdir -p "${tmp_dir}/Documents" "${tmp_dir}/Downloads"
+write_user_dirs_fixture "${tmp_dir}"
+export HOME="${tmp_dir}"
+export XDG_CONFIG_HOME="${tmp_dir}/.config"
 run_step "touch ${desktop_dir}/operance-recent-smoke.txt" touch "${desktop_dir}/operance-recent-smoke.txt"
 run_live_transcript "${desktop_dir}" "show a notification saying live smoke passed"
 run_live_transcript "${desktop_dir}" "show recent files"
@@ -219,6 +242,10 @@ run_live_confirmation_transcripts "${desktop_dir}" "${delete_folder_fixture}" "d
 run_step "test ! -e ${desktop_dir}/projects" test ! -e "${desktop_dir}/projects"
 
 run_step "touch ${desktop_dir}/notes.txt" touch "${desktop_dir}/notes.txt"
+run_live_transcript "${desktop_dir}" "copy file on desktop called notes.txt to documents"
+run_step "test -f ${tmp_dir}/Documents/notes.txt" test -f "${tmp_dir}/Documents/notes.txt"
+run_step "test -f ${desktop_dir}/notes.txt" test -f "${desktop_dir}/notes.txt"
+run_step "rm -f ${tmp_dir}/Documents/notes.txt" rm -f "${tmp_dir}/Documents/notes.txt"
 delete_file_fixture="${tmp_dir}/delete-file.txt"
 write_transcript_fixture "${delete_file_fixture}" "delete file on desktop called notes.txt"
 run_live_confirmation_transcripts "${desktop_dir}" "${delete_file_fixture}" "delete file on desktop called notes.txt"

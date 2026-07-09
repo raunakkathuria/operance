@@ -619,6 +619,60 @@ def test_executor_moves_existing_desktop_entry_and_can_undo(tmp_path: Path) -> N
     assert moved.exists() is False
 
 
+def test_executor_copies_existing_desktop_file_and_can_undo(tmp_path: Path) -> None:
+    from operance.adapters.mock import build_mock_adapter_set
+    from operance.executor import ActionExecutor
+
+    desktop_dir = tmp_path / "Desktop"
+    documents = desktop_dir / "Documents"
+    documents.mkdir(parents=True)
+    source = desktop_dir / "notes.txt"
+    source.write_text("notes", encoding="utf-8")
+    adapters = build_mock_adapter_set(desktop_dir=desktop_dir)
+    matcher = DeterministicIntentMatcher()
+    executor = ActionExecutor(adapters=adapters)
+
+    plan = matcher.match("copy file on desktop called notes.txt to documents")
+    assert plan is not None
+
+    result = executor.execute(plan)
+
+    copied = documents / "notes.txt"
+    assert result.results[0].message == "Copied desktop entry notes.txt to documents"
+    assert result.results[0].undo_token is not None
+    assert source.exists() is True
+    assert copied.read_text(encoding="utf-8") == "notes"
+
+    undo_result = executor.undo(result.results[0].undo_token)
+
+    assert undo_result == "Removed copied desktop entry notes.txt"
+    assert source.exists() is True
+    assert copied.exists() is False
+
+
+def test_executor_refuses_to_overwrite_existing_copy_destination(tmp_path: Path) -> None:
+    from operance.adapters.mock import build_mock_adapter_set
+    from operance.executor import ActionExecutor
+
+    desktop_dir = tmp_path / "Desktop"
+    documents = desktop_dir / "Documents"
+    documents.mkdir(parents=True)
+    (desktop_dir / "notes.txt").write_text("source", encoding="utf-8")
+    (documents / "notes.txt").write_text("existing", encoding="utf-8")
+    adapters = build_mock_adapter_set(desktop_dir=desktop_dir)
+    matcher = DeterministicIntentMatcher()
+    executor = ActionExecutor(adapters=adapters)
+
+    plan = matcher.match("copy file on desktop called notes.txt to documents")
+    assert plan is not None
+
+    result = executor.execute(plan)
+
+    assert result.status == "failed"
+    assert result.results[0].message == "destination entry already exists: notes.txt"
+    assert (documents / "notes.txt").read_text(encoding="utf-8") == "existing"
+
+
 def test_executor_opens_named_entry_in_known_folder(tmp_path: Path) -> None:
     from operance.adapters.mock import build_mock_adapter_set
     from operance.executor import ActionExecutor

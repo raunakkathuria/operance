@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added explicit safe `files.copy` support for Desktop entries to known folders such as Documents, with deterministic grammar, validation, no-overwrite adapter behavior, undo cleanup, planner/MCP schemas, supported-command promotion, and controlled live-smoke coverage.
 - Improved optional always-on recovery by suppressing immediate post-command re-triggers and reporting clipped tail fragments such as `is it?` as incomplete commands with retry guidance instead of generic unmatched-command failures.
 - Added `scripts/check_spec_sync.py` plus contributor, PR-template, and agent workflow guidance so behavior-changing work has a local pre-PR check for changelog and documentation/spec evidence.
 - Expanded time-command grammar so natural variants such as `what is the time`, `what's the time`, `tell me what time it is`, and `show me the time` route to the same `time.now` action as `what time is it`.

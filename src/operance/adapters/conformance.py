@@ -143,6 +143,7 @@ ADAPTER_TOOL_CONTRACTS: dict[ToolName, AdapterToolContract] = {
     ToolName.FILES_DELETE_FILE: AdapterToolContract(ToolName.FILES_DELETE_FILE, "files", ("remove_file",)),
     ToolName.FILES_RENAME: AdapterToolContract(ToolName.FILES_RENAME, "files", ("rename_path",)),
     ToolName.FILES_MOVE: AdapterToolContract(ToolName.FILES_MOVE, "files", ("move_path",)),
+    ToolName.FILES_COPY: AdapterToolContract(ToolName.FILES_COPY, "files", ("copy_path",)),
 }
 
 
