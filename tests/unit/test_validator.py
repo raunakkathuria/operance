@@ -29,6 +29,7 @@ def test_default_action_registry_exposes_seed_command_specs() -> None:
     recent_folder_spec = registry.get(ToolName.FILES_LIST_RECENT_FOLDER)
     delete_file_spec = registry.get(ToolName.FILES_DELETE_FILE)
     rename_spec = registry.get(ToolName.FILES_RENAME)
+    copy_spec = registry.get(ToolName.FILES_COPY)
 
     assert launch_spec is not None
     assert launch_spec.required_args == ("app",)
@@ -276,6 +277,15 @@ def test_default_action_registry_exposes_seed_command_specs() -> None:
     assert rename_spec.example_transcripts == ("rename folder on desktop from projects to archive",)
     assert rename_spec.allowed_side_effects == ("rename_desktop_entry",)
     assert rename_spec.undo_summary == "Undo will restore the previous state."
+
+    assert copy_spec is not None
+    assert copy_spec.required_args == ("location", "name", "destination_location")
+    assert copy_spec.risk_tier == RiskTier.TIER_1
+    assert copy_spec.requires_confirmation is False
+    assert copy_spec.undoable is True
+    assert copy_spec.example_transcripts == ("copy file on desktop called notes.txt to documents",)
+    assert copy_spec.allowed_side_effects == ("copy_desktop_entry",)
+    assert copy_spec.undo_summary == "Undo will restore the previous state."
 
 
 def test_validator_normalizes_action_metadata_from_registry() -> None:
@@ -697,6 +707,75 @@ def test_validator_rejects_unsafe_named_known_folder_file_open_args() -> None:
     assert result.valid is False
     assert result.normalized_plan is None
     assert result.errors == ["files.open: name must be a simple desktop entry name"]
+
+
+def test_validator_accepts_safe_file_copy_args() -> None:
+    from operance.registry import build_default_action_registry
+    from operance.validator import PlanValidator
+
+    validator = PlanValidator(registry=build_default_action_registry())
+    plan = ActionPlan(
+        source=PlanSource.DETERMINISTIC,
+        original_text="copy file on desktop called notes.txt to documents",
+        actions=[
+            TypedAction(
+                tool=ToolName.FILES_COPY,
+                args={"location": "desktop", "name": "notes.txt", "destination_location": "documents"},
+            )
+        ],
+    )
+
+    result = validator.validate(plan)
+
+    assert result.valid is True
+    assert result.normalized_plan is not None
+    assert result.errors == []
+
+
+def test_validator_rejects_unsafe_file_copy_args() -> None:
+    from operance.registry import build_default_action_registry
+    from operance.validator import PlanValidator
+
+    validator = PlanValidator(registry=build_default_action_registry())
+    plan = ActionPlan(
+        source=PlanSource.DETERMINISTIC,
+        original_text="copy file on desktop called notes.txt to secrets",
+        actions=[
+            TypedAction(
+                tool=ToolName.FILES_COPY,
+                args={"location": "desktop", "name": "notes.txt", "destination_location": "secrets"},
+            )
+        ],
+    )
+
+    result = validator.validate(plan)
+
+    assert result.valid is False
+    assert result.normalized_plan is None
+    assert result.errors == ["files.copy: destination_location must be one of: desktop, downloads, documents, home"]
+
+
+def test_validator_rejects_unsafe_file_copy_source_name() -> None:
+    from operance.registry import build_default_action_registry
+    from operance.validator import PlanValidator
+
+    validator = PlanValidator(registry=build_default_action_registry())
+    plan = ActionPlan(
+        source=PlanSource.DETERMINISTIC,
+        original_text="copy file on desktop called ../notes.txt to documents",
+        actions=[
+            TypedAction(
+                tool=ToolName.FILES_COPY,
+                args={"location": "desktop", "name": "../notes.txt", "destination_location": "documents"},
+            )
+        ],
+    )
+
+    result = validator.validate(plan)
+
+    assert result.valid is False
+    assert result.normalized_plan is None
+    assert result.errors == ["files.copy: name must be a simple desktop entry name"]
 
 
 def test_validator_rejects_unsafe_file_metadata_queries() -> None:

@@ -67,6 +67,7 @@ class ToolName(StrEnum):
     FILES_DELETE_FILE = "files.delete_file"
     FILES_RENAME = "files.rename"
     FILES_MOVE = "files.move"
+    FILES_COPY = "files.copy"
 
 
 @dataclass(slots=True, frozen=True)

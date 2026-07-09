@@ -1626,3 +1626,28 @@ def test_linux_files_adapter_moves_desktop_entry(tmp_path: Path) -> None:
     assert moved == destination_dir / "projects"
     assert moved.exists() is True
     assert source.exists() is False
+
+
+def test_linux_files_adapter_copies_desktop_file_to_known_folder(tmp_path: Path) -> None:
+    from operance.adapters.linux import LinuxFilesAdapter
+
+    desktop_dir = tmp_path / "Desktop"
+    documents = tmp_path / "Documents"
+    desktop_dir.mkdir()
+    documents.mkdir()
+    source = desktop_dir / "notes.txt"
+    source.write_text("notes", encoding="utf-8")
+    def completed(command: list[str], stdout: str = "") -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(command, 0, stdout=stdout, stderr="")
+
+    adapter = LinuxFilesAdapter(
+        desktop_dir=desktop_dir,
+        run_command=lambda command: completed(command, stdout=f"{documents}\n") if command[-1] == "DOCUMENTS" else completed(command),
+        resolve_executable=lambda name: "/usr/bin/xdg-user-dir" if name == "xdg-user-dir" else None,
+    )
+
+    copied = adapter.copy_path(source, "documents")
+
+    assert copied == documents / "notes.txt"
+    assert copied.read_text(encoding="utf-8") == "notes"
+    assert source.exists() is True

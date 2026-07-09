@@ -366,6 +366,20 @@ from operance.models.actions import PlanSource, RiskTier, ToolName
             RiskTier.TIER_2,
             True,
         ),
+        (
+            "copy file on desktop called notes.txt to documents",
+            ToolName.FILES_COPY,
+            {"location": "desktop", "name": "notes.txt", "destination_location": "documents"},
+            RiskTier.TIER_1,
+            False,
+        ),
+        (
+            "copy folder on desktop called projects to downloads",
+            ToolName.FILES_COPY,
+            {"location": "desktop", "name": "projects", "destination_location": "downloads"},
+            RiskTier.TIER_1,
+            False,
+        ),
     ],
 )
 def test_deterministic_intent_matcher_builds_expected_action_plan(

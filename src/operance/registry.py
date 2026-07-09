@@ -677,6 +677,29 @@ def build_default_action_registry() -> ActionRegistry:
             validate_args=_validate_file_move_args,
         )
     )
+    registry.register(
+        ToolSpec(
+            ToolName.FILES_COPY,
+            "Copy a desktop entry to a known folder",
+            ("location", "name", "destination_location"),
+            input_schema=_object_schema(
+                {
+                    "location": {"type": "string", "enum": ["desktop"]},
+                    "name": {"type": "string"},
+                    "destination_location": {
+                        "type": "string",
+                        "enum": ["desktop", "downloads", "documents", "home"],
+                    },
+                },
+                required=("location", "name", "destination_location"),
+            ),
+            example_transcripts=("copy file on desktop called notes.txt to documents",),
+            risk_tier=RiskTier.TIER_1,
+            undoable=True,
+            allowed_side_effects=("copy_desktop_entry",),
+            validate_args=_validate_file_copy_args,
+        )
+    )
 
     return registry
 
@@ -868,6 +891,14 @@ def _validate_file_move_args(args: dict[str, object]) -> list[str]:
     )
     if not errors and args["name"] == args["destination_folder"]:
         errors.append("destination_folder must differ from name")
+    return errors
+
+
+def _validate_file_copy_args(args: dict[str, object]) -> list[str]:
+    errors = _validate_desktop_entry_args(args, name_fields=("name",))
+    destination = args.get("destination_location")
+    if destination not in {"desktop", "downloads", "documents", "home"}:
+        errors.append("destination_location must be 'desktop', 'downloads', 'documents', or 'home'")
     return errors
 
 

@@ -1605,6 +1605,19 @@ class LinuxFilesAdapter:
             raise ValueError(f"destination entry already exists: {target.name}")
         return path.rename(target)
 
+    def copy_path(self, path: Path, destination_location: str) -> Path:
+        if not path.exists():
+            raise ValueError(f"desktop entry not found: {path.name}")
+        destination_dir = self._resolve_known_location(destination_location)
+        destination_dir.mkdir(parents=True, exist_ok=True)
+        target = destination_dir / path.name
+        if target.exists():
+            raise ValueError(f"destination entry already exists: {target.name}")
+        if path.is_dir():
+            return shutil.copytree(path, target)
+        shutil.copy2(path, target)
+        return target
+
 
 def _file_entry_info(path: Path) -> FileEntryInfo:
     stat_result = path.stat()

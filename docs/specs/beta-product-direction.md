@@ -215,6 +215,9 @@ Current accepted safe-command slice:
 - read-only window awareness accepts phrases such as `what apps are open`, `is
   <app> open`, `find window <title>`, and `show windows matching <title>` while
   staying inside typed `windows.list` and `windows.find` actions
+- explicit Desktop entry copy accepts phrases such as `copy file on desktop
+  called <name> to documents` while staying inside typed `files.copy`, refusing
+  destination overwrites, and letting the adapter resolve known folder targets
 
 Non-goals:
 

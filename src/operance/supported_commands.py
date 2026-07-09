@@ -376,6 +376,7 @@ def _tool_usage_pattern(tool: ToolName) -> str | None:
         ToolName.FILES_DELETE_FILE: "delete file on desktop called <name>",
         ToolName.FILES_RENAME: "rename folder on desktop from <source> to <target>",
         ToolName.FILES_MOVE: "move folder on desktop called <name> to <folder>",
+        ToolName.FILES_COPY: "copy file on desktop called <name> to documents",
         ToolName.FILES_OPEN: (
             "open downloads | open folder downloads | open documents | open desktop | "
             "open file on desktop called <name> | open recent file called <name>"
