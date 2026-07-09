@@ -732,6 +732,29 @@ def test_validator_accepts_safe_file_copy_args() -> None:
     assert result.errors == []
 
 
+def test_validator_accepts_known_folder_file_copy_source() -> None:
+    from operance.registry import build_default_action_registry
+    from operance.validator import PlanValidator
+
+    validator = PlanValidator(registry=build_default_action_registry())
+    plan = ActionPlan(
+        source=PlanSource.DETERMINISTIC,
+        original_text="copy the first one to documents",
+        actions=[
+            TypedAction(
+                tool=ToolName.FILES_COPY,
+                args={"location": "downloads", "name": "notes.txt", "destination_location": "documents"},
+            )
+        ],
+    )
+
+    result = validator.validate(plan)
+
+    assert result.valid is True
+    assert result.normalized_plan is not None
+    assert result.errors == []
+
+
 def test_validator_rejects_unsafe_file_copy_args() -> None:
     from operance.registry import build_default_action_registry
     from operance.validator import PlanValidator

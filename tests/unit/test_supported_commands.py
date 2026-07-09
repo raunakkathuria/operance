@@ -160,6 +160,10 @@ def test_build_supported_command_catalog_can_filter_available_commands_only() ->
     assert commands["operance.followup_open"]["usage_pattern"] == (
         "open it | open the first one | open the last result"
     )
+    assert "operance.followup_copy" in commands
+    assert commands["operance.followup_copy"]["usage_pattern"] == (
+        "copy it to documents | copy the first one to downloads"
+    )
     assert "operance.followup_switch" in commands
     assert commands["operance.followup_switch"]["usage_pattern"] == (
         "switch to it | switch to the first window | switch to the last window"

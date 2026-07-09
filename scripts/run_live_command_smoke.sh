@@ -87,6 +87,34 @@ for index, result in enumerate(results):
 PY
 }
 
+assert_transcript_file_success() {
+    local payload="$1"
+    shift
+
+    "${python_bin}" - "${payload}" "$@" <<'PY'
+import json
+import sys
+
+payload = json.loads(sys.argv[1])
+expected_transcripts = list(sys.argv[2:])
+
+if payload.get("total_transcripts") != len(expected_transcripts):
+    raise SystemExit(f"unexpected transcript count: {payload}")
+
+results = payload.get("results")
+if not isinstance(results, list) or len(results) != len(expected_transcripts):
+    raise SystemExit(f"unexpected transcript results: {payload}")
+
+for index, result in enumerate(results):
+    if result.get("transcript") != expected_transcripts[index]:
+        raise SystemExit(f"unexpected transcript sequence: {payload}")
+    if result.get("status") != "success":
+        raise SystemExit(f"unexpected transcript status sequence: {payload}")
+    if result.get("simulated") is not False:
+        raise SystemExit(f"expected live mode payload, got: {payload}")
+PY
+}
+
 write_transcript_fixture() {
     local fixture_path="$1"
     local command_transcript="$2"
@@ -94,6 +122,16 @@ write_transcript_fixture() {
     echo "+ write ${fixture_path}"
     if [[ "${dry_run}" -eq 0 ]]; then
         printf '%s\nconfirm\n' "${command_transcript}" > "${fixture_path}"
+    fi
+}
+
+write_plain_transcript_fixture() {
+    local fixture_path="$1"
+    shift
+
+    echo "+ write ${fixture_path}"
+    if [[ "${dry_run}" -eq 0 ]]; then
+        printf '%s\n' "$@" > "${fixture_path}"
     fi
 }
 
@@ -151,6 +189,27 @@ run_live_confirmation_transcripts() {
     assert_transcript_sequence_success "$(printf '%s\n' "${output}" | tail -n 1)" "${command_transcript}"
 }
 
+run_live_transcript_file() {
+    local desktop_dir="$1"
+    local fixture_path="$2"
+    shift 2
+    local display="OPERANCE_DEVELOPER_MODE=0 ${python_bin} -m operance.cli --desktop-dir ${desktop_dir} --transcript-file ${fixture_path}"
+
+    echo "+ ${display}"
+    if [[ "${dry_run}" -eq 1 ]]; then
+        return
+    fi
+
+    local output
+    output="$(
+        OPERANCE_DEVELOPER_MODE=0 "${python_bin}" -m operance.cli \
+            --desktop-dir "${desktop_dir}" \
+            --transcript-file "${fixture_path}"
+    )"
+    printf '%s\n' "${output}"
+    assert_transcript_file_success "$(printf '%s\n' "${output}" | tail -n 1)" "$@"
+}
+
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --python)
@@ -201,6 +260,16 @@ if [[ "${dry_run}" -eq 1 ]]; then
     run_step 'test -f "${tmp_dir}/Documents/notes.txt"' true
     run_step 'test -f "${tmp_dir}/Desktop/notes.txt"' true
     run_step 'rm -f "${tmp_dir}/Documents/notes.txt"' true
+    run_step 'touch "${tmp_dir}/Downloads/alpha.txt"' true
+    write_plain_transcript_fixture '${tmp_dir}/copy-followup.txt' \
+        "list files in downloads" \
+        "copy the first one to documents"
+    run_live_transcript_file '${tmp_dir}/Desktop' '${tmp_dir}/copy-followup.txt' \
+        "list files in downloads" \
+        "copy the first one to documents"
+    run_step 'test -f "${tmp_dir}/Documents/alpha.txt"' true
+    run_step 'test -f "${tmp_dir}/Downloads/alpha.txt"' true
+    run_step 'rm -f "${tmp_dir}/Documents/alpha.txt"' true
     write_transcript_fixture '${tmp_dir}/delete-file.txt' "delete file on desktop called notes.txt"
     run_live_confirmation_transcripts '${tmp_dir}/Desktop' '${tmp_dir}/delete-file.txt' "delete file on desktop called notes.txt"
     run_step 'test ! -e "${tmp_dir}/Desktop/notes.txt"' true
@@ -246,6 +315,19 @@ run_live_transcript "${desktop_dir}" "copy file on desktop called notes.txt to d
 run_step "test -f ${tmp_dir}/Documents/notes.txt" test -f "${tmp_dir}/Documents/notes.txt"
 run_step "test -f ${desktop_dir}/notes.txt" test -f "${desktop_dir}/notes.txt"
 run_step "rm -f ${tmp_dir}/Documents/notes.txt" rm -f "${tmp_dir}/Documents/notes.txt"
+
+run_step "touch ${tmp_dir}/Downloads/alpha.txt" touch "${tmp_dir}/Downloads/alpha.txt"
+copy_followup_fixture="${tmp_dir}/copy-followup.txt"
+write_plain_transcript_fixture "${copy_followup_fixture}" \
+    "list files in downloads" \
+    "copy the first one to documents"
+run_live_transcript_file "${desktop_dir}" "${copy_followup_fixture}" \
+    "list files in downloads" \
+    "copy the first one to documents"
+run_step "test -f ${tmp_dir}/Documents/alpha.txt" test -f "${tmp_dir}/Documents/alpha.txt"
+run_step "test -f ${tmp_dir}/Downloads/alpha.txt" test -f "${tmp_dir}/Downloads/alpha.txt"
+run_step "rm -f ${tmp_dir}/Documents/alpha.txt" rm -f "${tmp_dir}/Documents/alpha.txt"
+
 delete_file_fixture="${tmp_dir}/delete-file.txt"
 write_transcript_fixture "${delete_file_fixture}" "delete file on desktop called notes.txt"
 run_live_confirmation_transcripts "${desktop_dir}" "${delete_file_fixture}" "delete file on desktop called notes.txt"

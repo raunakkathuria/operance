@@ -464,18 +464,16 @@ class ActionExecutor:
         if tool == ToolName.FILES_COPY:
             adapter = self._require_adapter(self.adapters.files, tool)
             location = str(args["location"])
-            if location != "desktop":
+            if location not in {"desktop", "downloads", "documents", "home"}:
                 raise ValueError(f"unsupported folder location: {location}")
-            source_path = adapter.desktop_dir / str(args["name"])
-            if not source_path.exists():
-                raise ValueError(f"desktop entry not found: {source_path.name}")
+            source_path = _find_one_known_folder_entry(adapter, location, str(args["name"]))
             destination_location = str(args["destination_location"])
             copied_path = adapter.copy_path(source_path, destination_location)
             undo_token = self.undo_manager.register(lambda: _undo_copied_entry(adapter, copied_path))
             return ActionResultItem(
                 tool=tool,
                 status="success",
-                message=f"Copied desktop entry {source_path.name} to {destination_location}",
+                message=f"Copied {location} entry {source_path.name} to {destination_location}",
                 undo_token=undo_token,
             )
 
@@ -494,6 +492,13 @@ def _undo_created_folder(adapter, folder) -> str:
 
 
 def _find_one_known_folder_entry(adapter, location: str, name: str):
+    direct_matches = [entry for entry in adapter.list_location(location) if entry.name.casefold() == name.casefold()]
+    if len(direct_matches) == 1:
+        return direct_matches[0]
+    if len(direct_matches) > 1:
+        names = "; ".join(entry.name for entry in direct_matches[:5])
+        raise ValueError(f"multiple matches found in {location}: {names}")
+
     matches = adapter.find_entries(location, name, "any")
     exact_matches = [entry for entry in matches if entry.name.casefold() == name.casefold()]
     candidates = exact_matches or matches

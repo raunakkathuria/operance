@@ -207,8 +207,9 @@ Current accepted safe-command slice:
   `how big is <name>`, `when was <name> modified`, and `show recent downloads`
   while reporting metadata only and never reading file contents
 - contextual follow-ups accept phrases such as `open it`, `open the first one`,
-  `switch to it`, and `switch to the first window` after compatible file or
-  window awareness results while resolving only to existing typed actions
+  `copy the first one to documents`, `switch to it`, and `switch to the first
+  window` after compatible file or window awareness results while resolving
+  only to existing typed actions
 - runtime self-status accepts phrases such as `what can I say`, `what did you
   hear`, `are you listening`, `is local AI ready`, and `why did that fail`
   while answering from portable daemon state instead of platform adapters
@@ -218,6 +219,10 @@ Current accepted safe-command slice:
 - explicit Desktop entry copy accepts phrases such as `copy file on desktop
   called <name> to documents` while staying inside typed `files.copy`, refusing
   destination overwrites, and letting the adapter resolve known folder targets
+- contextual file-copy follow-ups reuse typed `files.copy` after file discovery
+  results with phrases such as `copy it to documents` or `copy the first one to
+  downloads`; they stay limited to known-folder source references and
+  known-folder destinations
 
 Non-goals:
 

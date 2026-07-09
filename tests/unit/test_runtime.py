@@ -304,6 +304,81 @@ def test_daemon_opens_single_metadata_result_from_followup_context(tmp_path: Pat
     assert responses[-1].text == "Opened desktop entry notes.txt"
 
 
+def test_daemon_copies_first_file_result_from_followup_context(tmp_path: Path) -> None:
+    desktop_dir = tmp_path / "Desktop"
+    downloads = desktop_dir / "Downloads"
+    documents = desktop_dir / "Documents"
+    downloads.mkdir(parents=True)
+    documents.mkdir()
+    (downloads / "alpha.txt").write_text("alpha")
+    (downloads / "beta.txt").write_text("beta")
+    daemon = OperanceDaemon.build_default(
+        {
+            "OPERANCE_DATA_DIR": str(tmp_path / "data"),
+            "OPERANCE_DESKTOP_DIR": str(desktop_dir),
+        }
+    )
+    responses: list[ResponseEvent] = []
+    planned_events: list[ActionPlanEvent] = []
+    daemon.event_bus.subscribe(ResponseEvent, responses.append)
+    daemon.event_bus.subscribe(ActionPlanEvent, planned_events.append)
+
+    daemon.start()
+    daemon.emit_wake_detected("operance")
+    daemon.emit_transcript("list files in downloads", confidence=0.93, is_final=True)
+    daemon.complete_response_cycle()
+    daemon.emit_wake_detected("operance")
+    daemon.emit_transcript("copy the first one to documents", confidence=0.93, is_final=True)
+
+    assert responses[-1].text == "Copied downloads entry alpha.txt to documents"
+    assert (downloads / "alpha.txt").read_text() == "alpha"
+    assert (documents / "alpha.txt").read_text() == "alpha"
+    assert planned_events[-1].plan.actions[0].tool == ToolName.FILES_COPY
+    assert planned_events[-1].plan.actions[0].args == {
+        "location": "downloads",
+        "name": "alpha.txt",
+        "destination_location": "documents",
+    }
+    snapshot = daemon.status_snapshot()
+    assert snapshot.last_routing_reason == "context_followup_match"
+    assert snapshot.last_command_interpretation == "Copy downloads item alpha.txt to documents"
+
+
+def test_daemon_rejects_ambiguous_copy_followup_without_ordinal(tmp_path: Path) -> None:
+    desktop_dir = tmp_path / "Desktop"
+    downloads = desktop_dir / "Downloads"
+    downloads.mkdir(parents=True)
+    (downloads / "alpha.txt").write_text("alpha")
+    (downloads / "beta.txt").write_text("beta")
+    daemon = OperanceDaemon.build_default(
+        {
+            "OPERANCE_DATA_DIR": str(tmp_path / "data"),
+            "OPERANCE_DESKTOP_DIR": str(desktop_dir),
+        }
+    )
+    responses: list[ResponseEvent] = []
+    planned_events: list[ActionPlanEvent] = []
+    daemon.event_bus.subscribe(ResponseEvent, responses.append)
+    daemon.event_bus.subscribe(ActionPlanEvent, planned_events.append)
+
+    daemon.start()
+    daemon.emit_wake_detected("operance")
+    daemon.emit_transcript("list files in downloads", confidence=0.93, is_final=True)
+    daemon.complete_response_cycle()
+    daemon.emit_wake_detected("operance")
+    daemon.emit_transcript("copy it to documents", confidence=0.93, is_final=True)
+
+    assert responses[-1].text == (
+        "I found 2 previous results from 'list files in downloads'. "
+        "Say copy the first one to documents or copy the last one to documents."
+    )
+    assert responses[-1].status == "unmatched"
+    assert planned_events[-1].plan.actions[0].tool == ToolName.FILES_LIST_FOLDER
+    assert daemon.status_snapshot().last_command_interpretation == (
+        "Follow-up needs a specific previous result."
+    )
+
+
 def test_daemon_rejects_ambiguous_file_followup_without_ordinal(tmp_path: Path) -> None:
     desktop_dir = tmp_path / "Desktop"
     downloads = desktop_dir / "Downloads"
