@@ -680,11 +680,14 @@ def build_default_action_registry() -> ActionRegistry:
     registry.register(
         ToolSpec(
             ToolName.FILES_COPY,
-            "Copy a desktop entry to a known folder",
+            "Copy a known-folder entry to a known folder",
             ("location", "name", "destination_location"),
             input_schema=_object_schema(
                 {
-                    "location": {"type": "string", "enum": ["desktop"]},
+                    "location": {
+                        "type": "string",
+                        "enum": ["desktop", "downloads", "documents", "home"],
+                    },
                     "name": {"type": "string"},
                     "destination_location": {
                         "type": "string",
@@ -895,10 +898,23 @@ def _validate_file_move_args(args: dict[str, object]) -> list[str]:
 
 
 def _validate_file_copy_args(args: dict[str, object]) -> list[str]:
-    errors = _validate_desktop_entry_args(args, name_fields=("name",))
+    errors = _validate_known_folder_entry_args(args, name_fields=("name",))
     destination = args.get("destination_location")
     if destination not in {"desktop", "downloads", "documents", "home"}:
         errors.append("destination_location must be 'desktop', 'downloads', 'documents', or 'home'")
+    return errors
+
+
+def _validate_known_folder_entry_args(
+    args: dict[str, object],
+    *,
+    name_fields: tuple[str, ...],
+) -> list[str]:
+    errors = _validate_known_folder_args(args)
+    for field_name in name_fields:
+        value = args.get(field_name)
+        if not isinstance(value, str) or not _is_simple_desktop_entry_name(value):
+            errors.append(f"{field_name} must be a simple desktop entry name")
     return errors
 
 

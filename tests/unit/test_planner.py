@@ -626,6 +626,26 @@ def test_plan_preview_renders_copy_entry_action() -> None:
     assert preview == "Planned action: copy desktop entry 'notes.txt' to documents."
 
 
+def test_plan_preview_renders_known_folder_copy_action() -> None:
+    from operance.planner.preview import build_plan_preview
+
+    plan = ActionPlan(
+        source=PlanSource.PLANNER,
+        original_text="copy the first one to documents",
+        actions=[
+            TypedAction(
+                tool=ToolName.FILES_COPY,
+                args={"location": "downloads", "name": "notes.txt", "destination_location": "documents"},
+                risk_tier=RiskTier.TIER_1,
+            ),
+        ],
+    )
+
+    preview = build_plan_preview(plan)
+
+    assert preview == "Planned action: copy downloads entry 'notes.txt' to documents."
+
+
 def test_plan_preview_renders_two_step_plan() -> None:
     from operance.planner.preview import build_plan_preview
 

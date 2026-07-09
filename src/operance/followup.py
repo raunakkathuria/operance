@@ -38,6 +38,12 @@ class FollowupMatch:
     interpretation: str | None = None
 
 
+@dataclass(frozen=True, slots=True)
+class FollowupRequest:
+    action_kind: str
+    destination_location: str | None = None
+
+
 FOLLOWUP_COMMAND_SPECS: tuple[FollowupCommandSpec, ...] = (
     FollowupCommandSpec(
         tool="operance.followup_open",
@@ -48,6 +54,15 @@ FOLLOWUP_COMMAND_SPECS: tuple[FollowupCommandSpec, ...] = (
             "open the last result",
         ),
         usage_pattern="open it | open the first one | open the last result",
+    ),
+    FollowupCommandSpec(
+        tool="operance.followup_copy",
+        description="Copy an item from the previous file discovery or metadata result to a known folder.",
+        example_transcripts=(
+            "copy it to documents",
+            "copy the first one to downloads",
+        ),
+        usage_pattern="copy it to documents | copy the first one to downloads",
     ),
     FollowupCommandSpec(
         tool="operance.followup_switch",
@@ -67,9 +82,10 @@ def match_followup_command(
     context: FollowupContext | None,
 ) -> FollowupMatch | None:
     normalized = _normalize(transcript)
-    action_kind = _followup_action_kind(normalized)
-    if action_kind is None:
+    request = _followup_request(normalized)
+    if request is None:
         return None
+    action_kind = request.action_kind
 
     if context is None or not context.references:
         return FollowupMatch(
@@ -96,31 +112,44 @@ def match_followup_command(
         if len(references) == 1:
             index = 0
         else:
+            example_suffix = ""
+            if request.destination_location is not None:
+                example_suffix = f" to {request.destination_location}"
             return FollowupMatch(
                 response=(
                     f"I found {len(references)} previous results from {context.source_transcript!r}. "
-                    f"Say {action_kind} the first one or {action_kind} the last one.",
+                    f"Say {action_kind} the first one{example_suffix} "
+                    f"or {action_kind} the last one{example_suffix}.",
                     "unmatched",
                 ),
                 interpretation="Follow-up needs a specific previous result.",
             )
 
     reference = references[index]
+    args = dict(reference.args)
+    if action_kind == "copy":
+        args["destination_location"] = request.destination_location
     return FollowupMatch(
         plan=ActionPlan(
             source=PlanSource.DETERMINISTIC,
             original_text=transcript,
-            actions=[TypedAction(tool=reference.tool, args=dict(reference.args))],
+            actions=[TypedAction(tool=reference.tool, args=args)],
         ),
-        interpretation=_reference_interpretation(action_kind, reference),
+        interpretation=_reference_interpretation(action_kind, reference, request.destination_location),
     )
 
 
-def _followup_action_kind(normalized: str) -> str | None:
+def _followup_request(normalized: str) -> FollowupRequest | None:
     if re.fullmatch(r"open (it|that|this|the (first|second|third|last) (one|result|item)|first result|second result|third result|last result)", normalized):
-        return "open"
+        return FollowupRequest("open")
+    copy_match = re.fullmatch(
+        r"copy (it|that|this|the (first|second|third|last) (one|result|item)|first result|second result|third result|last result) to (?P<destination>desktop|downloads|documents|home)",
+        normalized,
+    )
+    if copy_match:
+        return FollowupRequest("copy", copy_match.group("destination"))
     if re.fullmatch(r"switch to (it|that|this|the (first|second|third|last) (one|window|result)|first window|second window|third window|last window)", normalized):
-        return "switch to"
+        return FollowupRequest("switch to")
     return None
 
 
@@ -130,6 +159,17 @@ def _references_for_action(
 ) -> tuple[FollowupReference, ...]:
     if action_kind == "open":
         return tuple(reference for reference in references if reference.tool == ToolName.FILES_OPEN)
+    if action_kind == "copy":
+        return tuple(
+            FollowupReference(
+                kind=reference.kind,
+                label=reference.label,
+                tool=ToolName.FILES_COPY,
+                args=dict(reference.args),
+            )
+            for reference in references
+            if reference.tool == ToolName.FILES_OPEN
+        )
     if action_kind == "switch to":
         return tuple(reference for reference in references if reference.tool == ToolName.WINDOWS_SWITCH)
     return ()
@@ -155,12 +195,21 @@ def _normalize(text: str) -> str:
     return " ".join(normalized.split())
 
 
-def _reference_interpretation(action_kind: str, reference: FollowupReference) -> str:
+def _reference_interpretation(
+    action_kind: str,
+    reference: FollowupReference,
+    destination_location: str | None = None,
+) -> str:
     if action_kind == "open" and reference.kind == "file":
         location = reference.args.get("location")
         if isinstance(location, str) and location:
             return f"Open {location} item: {reference.label}"
         return f"Open previous item: {reference.label}"
+    if action_kind == "copy" and reference.kind == "file":
+        location = reference.args.get("location")
+        if isinstance(location, str) and location and destination_location:
+            return f"Copy {location} item {reference.label} to {destination_location}"
+        return f"Copy previous item: {reference.label}"
     if action_kind == "switch to" and reference.kind == "window":
         return f"Switch to window: {reference.label}"
     return f"{action_kind.capitalize()} previous result: {reference.label}"

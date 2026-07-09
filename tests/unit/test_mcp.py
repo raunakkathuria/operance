@@ -543,7 +543,7 @@ def test_mcp_server_exposes_tool_input_schemas() -> None:
     assert tools["files.copy"]["input_schema"] == {
         "type": "object",
         "properties": {
-            "location": {"type": "string", "enum": ["desktop"]},
+            "location": {"type": "string", "enum": ["desktop", "downloads", "documents", "home"]},
             "name": {"type": "string"},
             "destination_location": {"type": "string", "enum": ["desktop", "downloads", "documents", "home"]},
         },
