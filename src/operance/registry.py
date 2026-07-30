@@ -25,6 +25,7 @@ class ToolSpec:
     undoable: bool = False
     allowed_side_effects: tuple[str, ...] = ()
     undo_summary: str | None = None
+    usage_pattern: str | None = None
     validate_args: ValidatorFn | None = None
 
     def __post_init__(self) -> None:
@@ -78,6 +79,11 @@ def build_default_action_registry() -> ActionRegistry:
                 "open firefox and load localhost:3000",
             ),
             allowed_side_effects=("launch_app", "open_url"),
+            usage_pattern=(
+            "open browser | open the browser | open google.com | go to <website> | "
+            "search google for <query> | search the web for <query> | open <app name> | "
+            "open <app> and load <website>"
+        ),
         )
     )
     registry.register(
@@ -88,6 +94,7 @@ def build_default_action_registry() -> ActionRegistry:
             input_schema=_object_schema({"app": {"type": "string"}}, required=("app",)),
             example_transcripts=("focus firefox",),
             allowed_side_effects=("focus_app_window",),
+            usage_pattern="focus <app name>",
         )
     )
     registry.register(
@@ -100,6 +107,7 @@ def build_default_action_registry() -> ActionRegistry:
             risk_tier=RiskTier.TIER_2,
             requires_confirmation=True,
             allowed_side_effects=("quit_app", "close_app_windows"),
+            usage_pattern="quit <app name>",
         )
     )
     registry.register(
@@ -107,6 +115,7 @@ def build_default_action_registry() -> ActionRegistry:
             ToolName.WINDOWS_LIST,
             "List open windows",
             example_transcripts=("list windows",),
+            usage_pattern="list windows | what apps are open | show open windows",
         )
     )
     registry.register(
@@ -121,6 +130,7 @@ def build_default_action_registry() -> ActionRegistry:
                 "show windows matching firefox",
             ),
             validate_args=_validate_window_query_args,
+            usage_pattern="is <app> open | find window <title> | show windows matching <title>",
         )
     )
     registry.register(
@@ -131,6 +141,7 @@ def build_default_action_registry() -> ActionRegistry:
             input_schema=_object_schema({"window": {"type": "string"}}, required=("window",)),
             example_transcripts=("switch to window firefox",),
             allowed_side_effects=("focus_window",),
+            usage_pattern="switch to window <title> | switch to <title> window",
         )
     )
     registry.register(
@@ -447,6 +458,7 @@ def build_default_action_registry() -> ActionRegistry:
             ),
             example_transcripts=("show a notification saying build complete",),
             allowed_side_effects=("show_notification",),
+            usage_pattern="show a notification saying <message>",
         )
     )
     registry.register(
@@ -459,6 +471,7 @@ def build_default_action_registry() -> ActionRegistry:
                 required=("modified_since",),
             ),
             example_transcripts=("show recent files",),
+            usage_pattern="show recent files",
         )
     )
     registry.register(
@@ -481,6 +494,7 @@ def build_default_action_registry() -> ActionRegistry:
                 "what is in downloads",
             ),
             validate_args=_validate_known_folder_args,
+            usage_pattern="list files in downloads | show files in documents | what is in downloads",
         )
     )
     registry.register(
@@ -506,6 +520,7 @@ def build_default_action_registry() -> ActionRegistry:
                 "search documents for invoice",
             ),
             validate_args=_validate_file_find_args,
+            usage_pattern="find file named <name> | find folder named <name> | search documents for <name>",
         )
     )
     registry.register(
@@ -530,6 +545,7 @@ def build_default_action_registry() -> ActionRegistry:
                 "when was notes.txt modified",
             ),
             validate_args=_validate_file_find_args,
+            usage_pattern="show details for <name> | how big is <name> | when was <name> modified",
         )
     )
     registry.register(
@@ -552,6 +568,7 @@ def build_default_action_registry() -> ActionRegistry:
                 "recent documents",
             ),
             validate_args=_validate_known_folder_args,
+            usage_pattern="show recent downloads | show recent files in downloads",
         )
     )
     registry.register(
@@ -576,6 +593,10 @@ def build_default_action_registry() -> ActionRegistry:
             ),
             allowed_side_effects=("open_known_folder", "open_desktop_entry"),
             validate_args=_validate_file_open_args,
+            usage_pattern=(
+            "open downloads | open folder downloads | open documents | open desktop | "
+            "open file on desktop called <name> | open recent file called <name>"
+        ),
         )
     )
     registry.register(
@@ -595,6 +616,7 @@ def build_default_action_registry() -> ActionRegistry:
             undoable=True,
             allowed_side_effects=("create_desktop_folder",),
             validate_args=lambda args: _validate_desktop_entry_args(args, name_fields=("name",)),
+            usage_pattern="create folder on desktop called <name>",
         )
     )
     registry.register(
@@ -614,6 +636,7 @@ def build_default_action_registry() -> ActionRegistry:
             requires_confirmation=True,
             allowed_side_effects=("delete_desktop_folder",),
             validate_args=lambda args: _validate_desktop_entry_args(args, name_fields=("name",)),
+            usage_pattern="delete folder on desktop called <name>",
         )
     )
     registry.register(
@@ -633,6 +656,7 @@ def build_default_action_registry() -> ActionRegistry:
             requires_confirmation=True,
             allowed_side_effects=("delete_desktop_file",),
             validate_args=lambda args: _validate_desktop_entry_args(args, name_fields=("name",)),
+            usage_pattern="delete file on desktop called <name>",
         )
     )
     registry.register(
@@ -654,6 +678,7 @@ def build_default_action_registry() -> ActionRegistry:
             undoable=True,
             allowed_side_effects=("rename_desktop_entry",),
             validate_args=_validate_file_rename_args,
+            usage_pattern="rename folder on desktop from <source> to <target>",
         )
     )
     registry.register(
@@ -675,6 +700,7 @@ def build_default_action_registry() -> ActionRegistry:
             undoable=True,
             allowed_side_effects=("move_desktop_entry",),
             validate_args=_validate_file_move_args,
+            usage_pattern="move folder on desktop called <name> to <folder>",
         )
     )
     registry.register(
@@ -701,6 +727,7 @@ def build_default_action_registry() -> ActionRegistry:
             undoable=True,
             allowed_side_effects=("copy_desktop_entry",),
             validate_args=_validate_file_copy_args,
+            usage_pattern="copy file on desktop called <name> to documents",
         )
     )
 
