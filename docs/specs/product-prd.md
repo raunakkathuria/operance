@@ -61,6 +61,9 @@ architecture has live, tested implementations for those operating systems.
 - Local skill packs must only match on the platforms they declare, must report
   phrase conflicts between packs, and must never prevent startup when one pack
   is malformed.
+- Status, audit, and metrics surfaces must reflect commands from every
+  invocation surface, including MCP, and must identify which surface a command
+  came from.
 
 ## Non-Goals
 

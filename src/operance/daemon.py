@@ -988,6 +988,51 @@ class OperanceDaemon:
             planner_error=planner_error,
         )
 
+    def record_external_command_outcome(
+        self,
+        *,
+        transcript: str,
+        tool: str | None,
+        status: str,
+        message: str,
+        plan_source: str,
+        total_duration_ms: float,
+        matched: bool = True,
+        routing_reason: str | None = None,
+    ) -> None:
+        """Record a command outcome from a non-voice surface such as MCP.
+
+        Non-voice surfaces do not enter the voice state machine, so this updates
+        shared last-command state, the audit trail, and metrics without
+        transitioning RuntimeState. Routing fields are replaced rather than kept,
+        so a previous voice command cannot leak its routing reason or planner
+        error into this entry. Callers that own a routing outcome, such as a
+        planner-runtime reset, pass it explicitly.
+        """
+
+        self.last_transcript = transcript
+        self.last_response = message
+        self.last_command_status = status
+        self.last_plan_source = plan_source
+        self.last_routing_reason = routing_reason
+        self.last_planner_error = None
+        self._append_audit_entry(
+            transcript=transcript,
+            status=status,
+            tool=tool,
+            response_text=message,
+        )
+        self.metrics.record(
+            CommandMetrics(
+                transcript=transcript,
+                matched=matched,
+                total_duration_ms=total_duration_ms,
+                planning_duration_ms=0.0,
+                execution_duration_ms=None,
+                response_duration_ms=0.0,
+            )
+        )
+
     def _append_audit_entry(
         self,
         *,
