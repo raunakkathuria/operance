@@ -63,6 +63,7 @@ HOST_SERVICE_VOICE_LOOP = "voice_loop"
 class PlatformProvider(Protocol):
     provider_id: str
     display_name: str
+    platform_family: str
     check_metadata: tuple[CheckMetadata, ...]
     release_verification_target: str
     release_verified_tools: frozenset[ToolName]

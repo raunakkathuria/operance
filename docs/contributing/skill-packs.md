@@ -70,6 +70,25 @@ export OPERANCE_SKILL_PACKS="./browser.json:./skills"
 
 Directories load `*.json` files in sorted order.
 
+## Platforms, Collisions, and Load Failures
+
+`platforms` is enforced. A pack that lists platforms only matches when the
+current host is one of them, using the platform family reported by the active
+provider: `linux`, `windows`, or `macos`. Omit `platforms` for a pack that should
+work on every host. `operance --skills` marks each pack `active` for the current
+host and reports how many are inactive, so a pack that never matches is visible
+rather than silently ignored.
+
+Phrases must be unique within a pack, and a phrase claimed by two different packs
+is reported as a warning in `operance --skills`. The pack that loads first wins,
+following the `OPERANCE_SKILL_PACKS` order and sorted filenames within a
+directory.
+
+A pack that cannot be read or validated is skipped with a warning instead of
+stopping startup, so one malformed file cannot prevent the daemon, tray, or MCP
+server from running. Use `operance --skill-validate <path>` to fail loudly on a
+single pack while authoring it.
+
 ## Safety Rules
 
 Every action in a skill pack must use an existing `ToolName` from

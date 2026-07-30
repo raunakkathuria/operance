@@ -38,6 +38,7 @@ MACOS_CHECK_METADATA = (
 class MacOSDesktopPlatformProvider:
     provider_id: str = "macos_desktop"
     display_name: str = "macOS desktop"
+    platform_family: str = "macos"
     check_metadata: tuple[CheckMetadata, ...] = MACOS_CHECK_METADATA
     release_verification_target: str = "macos_desktop_unverified"
     release_verified_tools: frozenset[ToolName] = frozenset()

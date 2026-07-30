@@ -10,6 +10,7 @@ from typing import Iterable, Mapping
 
 from ..launch_targets import normalize_explicit_url_target
 from ..models.actions import ActionPlan, PlanSource, ToolName, TypedAction
+from ..platforms import get_platform_provider
 from ..registry import build_default_action_registry
 from ..validator import PlanValidator
 
@@ -61,27 +62,44 @@ class SkillPack:
 @dataclass(slots=True, frozen=True)
 class SkillLibrary:
     packs: tuple[SkillPack, ...]
+    platform_family: str | None = None
+    warnings: tuple[str, ...] = ()
 
     def match(self, text: str) -> SkillCommand | None:
         normalized = normalize_skill_phrase(text)
         for pack in self.packs:
+            if not self.pack_applies(pack):
+                continue
             for command in pack.commands:
                 if normalized in command.phrases:
                     return command
         return None
 
+    def pack_applies(self, pack: SkillPack) -> bool:
+        """A pack applies when it declares no platforms or names the current one."""
+
+        if not pack.platforms or self.platform_family is None:
+            return True
+        return self.platform_family in pack.platforms
+
     def to_dict(self) -> dict[str, object]:
-        command_count = sum(len(pack.commands) for pack in self.packs)
-        phrase_count = sum(len(command.phrases) for pack in self.packs for command in pack.commands)
+        active_packs = [pack for pack in self.packs if self.pack_applies(pack)]
+        command_count = sum(len(pack.commands) for pack in active_packs)
+        phrase_count = sum(len(command.phrases) for pack in active_packs for command in pack.commands)
         return {
-            "status": "ok",
+            "status": "warn" if self.warnings else "ok",
             "summary": {
-                "pack_count": len(self.packs),
+                "pack_count": len(active_packs),
                 "command_count": command_count,
                 "phrase_count": phrase_count,
+                "inactive_pack_count": len(self.packs) - len(active_packs),
+                "platform_family": self.platform_family,
             },
             "safety_contract": _safety_contract(),
-            "packs": [pack.to_dict() for pack in self.packs],
+            "warnings": list(self.warnings),
+            "packs": [
+                {**pack.to_dict(), "active": self.pack_applies(pack)} for pack in self.packs
+            ],
         }
 
 
@@ -101,11 +119,31 @@ def build_skill_library_from_paths(
     paths: Iterable[Path],
     *,
     include_builtins: bool = True,
+    strict: bool = False,
+    system_name: str | None = None,
 ) -> SkillLibrary:
+    """Load skill packs, skipping unreadable packs unless strict is requested.
+
+    A malformed pack must not stop the daemon, tray, or MCP server from starting,
+    so by default each failure becomes a warning and the remaining packs load.
+    """
+
     packs: list[SkillPack] = list(build_default_skill_library().packs) if include_builtins else []
+    warnings: list[str] = []
     for path in paths:
-        packs.extend(_load_skill_packs_from_path(path))
-    return SkillLibrary(tuple(packs))
+        for pack_path in _expand_skill_pack_paths(path):
+            try:
+                packs.append(load_skill_pack_from_path(pack_path))
+            except (SkillValidationError, OSError) as exc:
+                if strict:
+                    raise
+                warnings.append(f"{pack_path}: skipped: {exc}")
+    warnings.extend(_phrase_collision_warnings(packs))
+    return SkillLibrary(
+        packs=tuple(packs),
+        platform_family=get_platform_provider(system_name=system_name).platform_family,
+        warnings=tuple(warnings),
+    )
 
 
 def load_skill_library_from_mappings(mappings: Iterable[Mapping[str, object]]) -> SkillLibrary:
@@ -361,11 +399,31 @@ def _required_phrase_list(
     return phrases
 
 
-def _load_skill_packs_from_path(path: Path) -> list[SkillPack]:
+def _expand_skill_pack_paths(path: Path) -> list[Path]:
     expanded = path.expanduser()
     if expanded.is_dir():
-        return [load_skill_pack_from_path(child) for child in sorted(expanded.glob("*.json"))]
-    return [load_skill_pack_from_path(expanded)]
+        return sorted(expanded.glob("*.json"))
+    return [expanded]
+
+
+def _phrase_collision_warnings(packs: Iterable[SkillPack]) -> list[str]:
+    """Report phrases claimed by more than one pack, where the first load wins."""
+
+    claimed_by: dict[str, str] = {}
+    warnings: list[str] = []
+    for pack in packs:
+        for command in pack.commands:
+            for phrase in command.phrases:
+                owner = claimed_by.get(phrase)
+                if owner is None:
+                    claimed_by[phrase] = pack.skill_id
+                    continue
+                if owner != pack.skill_id:
+                    warnings.append(
+                        f"phrase {phrase!r} is claimed by skill packs {owner} and "
+                        f"{pack.skill_id}; {owner} wins because it loaded first"
+                    )
+    return warnings
 
 
 def _safety_contract() -> dict[str, object]:
