@@ -128,6 +128,11 @@ python3 scripts/check_spec_sync.py --base origin/main
 GitHub Actions also runs the same test suite plus minimal CLI smoke checks on
 pushes and pull requests through `.github/workflows/ci.yml`.
 
+The spec/doc sync check is enforced there too. Pull requests run it against the
+pull request's base commit, so a behavior change that ships without changelog and
+documentation evidence fails CI rather than relying on contributors remembering
+to run it. Running it locally first keeps that failure out of the pull request.
+
 For a quick safe baseline on a new machine or before filing a bug, run:
 
 ```bash

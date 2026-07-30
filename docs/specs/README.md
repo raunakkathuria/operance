@@ -58,7 +58,10 @@ Every milestone spec or goal-spec issue should include:
   the spec or issue first when scope changes.
 - Use `scripts/check_spec_sync.py` as a pre-PR guardrail. It does not replace
   judgment or the linked goal-spec issue, but it catches obvious behavior
-  changes that lack changelog or documentation evidence.
+  changes that lack changelog or documentation evidence. CI runs the same check
+  on every pull request against that pull request's base commit, so it is
+  enforced rather than advisory. A missing `docs/specs/` update stays a warning,
+  because not every behavior change needs a spec edit.
 
 ## Current Canonical Specs
 

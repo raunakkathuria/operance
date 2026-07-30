@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Enforced the spec and documentation sync gate in CI. It was documented in five places and tested, but no automation ran it, so a behavior change without changelog or documentation evidence could merge. Pull requests now run `scripts/check_spec_sync.py` against the pull request's base commit, and a test asserts the workflow keeps invoking it.
+
 - Made tool dispatch registry-driven where the behavior is declarative: 21 tools whose execution is a single adapter call now declare that call on their adapter contract instead of carrying a hand-written executor branch, cutting the executor from 45 branches to 24. User-facing usage patterns moved onto the registry spec, and the duplicated Linux tool-category sets now exist once. A new coverage test fails if a registered tool has no adapter contract, is unreachable in the executor, has no preview text, or is confirmation-gated without declaring affected resources. No command behavior changes.
 
 - Fixed MCP tool calls being invisible to runtime status and metrics: `operance://runtime/status` reported zero completed commands right after a successful MCP execution, and audit entries recorded no plan source. MCP outcomes now flow through one shared daemon path that records last-command state, audit entries with an `mcp` plan source, and measured command metrics, and no longer inherit a previous voice command's planner routing reason or error. MCP still does not enter the voice state machine, so `current_state` stays accurate for a non-voice surface.

@@ -93,3 +93,16 @@ def test_spec_sync_warns_when_behavior_change_has_docs_but_no_spec_file() -> Non
         "No docs/specs/ file changed. Confirm the linked goal-spec issue covers scope, "
         "or update a spec when product behavior changed.",
     )
+
+
+def test_ci_workflow_runs_the_spec_sync_gate() -> None:
+    """The gate is only useful if automation runs it, not just contributors."""
+
+    workflow = (
+        Path(__file__).resolve().parents[2] / ".github" / "workflows" / "ci.yml"
+    ).read_text(encoding="utf-8")
+
+    assert "spec-sync:" in workflow
+    assert "scripts/check_spec_sync.py" in workflow
+    assert "fetch-depth: 0" in workflow
+    assert "github.event.pull_request.base.sha" in workflow
