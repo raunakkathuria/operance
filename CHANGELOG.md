@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added blocking lint and type checking to CI for a codebase that had neither. Ruff runs bug-tier rules over source, tests, and scripts; mypy runs over the package with existing type debt captured as an explicit, shrinkable per-module list rather than a blanket disable. This immediately caught a real latent bug: `audio/linux.py` annotated a return type as `Iterable[AudioFrame]` without importing `Iterable`, so `typing.get_type_hints()` on that method raised `NameError`. Also fixed the executor's adapter accessor and the blocked adapter set so both type-check, taking mypy from 146 errors in 17 files to a clean run with 87 of 102 files enforced.
+
 - Expanded window-management grammar so minimize, maximize, restore, and close accept natural phrasing such as `minimize firefox`, `minimize the firefox window`, `restore firefox`, `unminimize firefox`, and `close the firefox window`, alongside the original `<verb> window <title>` form and British `minimise`/`maximise` spellings. `close firefox` stays unmatched on purpose because it is ambiguous between closing a window and quitting the app. These tools now also declare usage patterns for help output, and `operance --installed-smoke` lists the manual window checks needed to capture their live Fedora evidence. Promotion into the release-verified subset still waits on that evidence.
 
 - Enforced the spec and documentation sync gate in CI. It was documented in five places and tested, but no automation ran it, so a behavior change without changelog or documentation evidence could merge. Pull requests now run `scripts/check_spec_sync.py` against the pull request's base commit, and a test asserts the workflow keeps invoking it.

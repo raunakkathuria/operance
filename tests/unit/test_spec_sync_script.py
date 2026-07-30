@@ -106,3 +106,28 @@ def test_ci_workflow_runs_the_spec_sync_gate() -> None:
     assert "scripts/check_spec_sync.py" in workflow
     assert "fetch-depth: 0" in workflow
     assert "github.event.pull_request.base.sha" in workflow
+
+
+def test_ci_workflow_runs_lint_and_type_checks() -> None:
+    """Static checks are only useful if CI blocks on them."""
+
+    workflow = (
+        Path(__file__).resolve().parents[2] / ".github" / "workflows" / "ci.yml"
+    ).read_text(encoding="utf-8")
+
+    assert "static-checks:" in workflow
+    assert "ruff check" in workflow
+    assert "mypy" in workflow
+    assert "continue-on-error" not in workflow
+
+
+def test_mypy_debt_list_does_not_grow() -> None:
+    """The per-module ignore list is debt. It may shrink, never grow."""
+
+    pyproject = (Path(__file__).resolve().parents[2] / "pyproject.toml").read_text(encoding="utf-8")
+    section = pyproject.split("[[tool.mypy.overrides]]", 1)[1]
+    ignored = [line for line in section.splitlines() if line.strip().startswith('"operance.')]
+
+    assert len(ignored) <= 15, (
+        "New modules must type-check. Fix the errors instead of extending the ignore list."
+    )

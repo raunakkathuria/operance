@@ -70,7 +70,6 @@ from .ui import (
     build_setup_snapshot,
     run_setup_app,
     build_tray_snapshot,
-    run_setup_action,
     run_setup_actions,
     run_tray_app,
 )

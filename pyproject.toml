@@ -26,7 +26,7 @@ classifiers = [
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0"]
+dev = ["pytest>=8.0", "ruff>=0.16", "mypy>=1.11"]
 ui = ["PySide6"]
 voice = ["moonshine-voice", "openwakeword", "kokoro-onnx", "soundfile"]
 
@@ -42,3 +42,41 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+# Bug-tier rules only for now: pyflakes plus the pycodestyle errors that
+# indicate real problems. Style and import-order rules are deliberately not
+# enabled yet, because turning them on rewrites nearly every file at once.
+select = ["E4", "E7", "E9", "F"]
+
+[tool.mypy]
+python_version = "3.12"
+files = ["src/operance"]
+ignore_missing_imports = true
+
+# Existing type debt, checked module by module so the list can shrink instead of
+# hiding behind a blanket disable. Do not add to this list: new modules and new
+# code in clean modules must type-check. See issue #88.
+[[tool.mypy.overrides]]
+module = [
+    "operance.audio.linux",
+    "operance.cli",
+    "operance.daemon",
+    "operance.mcp.server",
+    "operance.models.base",
+    "operance.platforms",
+    "operance.platforms.linux",
+    "operance.project_info",
+    "operance.stt.moonshine",
+    "operance.support_snapshot",
+    "operance.supported_commands",
+    "operance.ui.setup",
+    "operance.ui.tray",
+    "operance.voice.live",
+    "operance.voice.service",
+]
+ignore_errors = true

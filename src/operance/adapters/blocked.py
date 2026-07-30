@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Callable
+from typing import Any, Callable, cast
 
 from .base import AdapterSet
 
@@ -37,7 +37,9 @@ class BlockedAdapter:
 
 
 def build_blocked_adapter_set(*, blocker: str) -> AdapterSet:
-    adapter = BlockedAdapter(blocker)
+    # BlockedAdapter satisfies every adapter protocol through __getattr__, which a
+    # static checker cannot see, so the shared instance is cast once here.
+    adapter = cast(Any, BlockedAdapter(blocker))
     return AdapterSet(
         apps=adapter,
         windows=adapter,

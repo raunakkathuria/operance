@@ -93,7 +93,6 @@ def test_daemon_emits_action_plan_event_for_final_known_transcript(tmp_path: Pat
 
 
 def test_daemon_emits_action_result_event_for_final_known_transcript(tmp_path: Path) -> None:
-    config = AppConfig.from_env({"OPERANCE_DATA_DIR": str(tmp_path / "data")})
     daemon = OperanceDaemon.build_default(
         {
             "OPERANCE_DATA_DIR": str(tmp_path / "data"),
@@ -1276,7 +1275,6 @@ def test_daemon_rejects_invalid_plan_from_matcher(tmp_path: Path) -> None:
 
 
 def test_daemon_stops_before_execution_when_confirmation_is_required(tmp_path: Path) -> None:
-    from operance.policy import ExecutionPolicy
 
     class TierTwoValidator:
         def validate(self, plan: ActionPlan) -> ValidationResult:
