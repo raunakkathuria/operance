@@ -189,6 +189,13 @@ The current runtime path is:
 This keeps one shared safety and execution model even when invocation surfaces
 change.
 
+The runtime state machine models the voice interaction lifecycle, so non-voice
+surfaces do not enter it. MCP tool calls record their outcome through
+`OperanceDaemon.record_external_command_outcome`, which updates last-command
+state, the audit trail, and command metrics without transitioning
+`RuntimeState`. Those calls are audited with the `mcp` plan source so audit and
+status can tell an external client call apart from a local planner decision.
+
 ## 6. Voice and planner boundaries
 
 Voice and planner work should follow the same rule:

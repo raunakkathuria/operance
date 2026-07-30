@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from copy import deepcopy
 import json
+from time import perf_counter
 from typing import Mapping
 
-from ..audit import AuditEntry
 from ..confirmation import build_confirmation_metadata
 from ..daemon import OperanceDaemon
 from ..models.actions import ActionPlan, PlanSource, ToolName, TypedAction
@@ -15,6 +15,10 @@ from ..ui.setup import run_setup_action
 from ..voice import build_voice_loop_runtime_status_snapshot
 from ..voice.config import build_voice_loop_config_snapshot
 from ..voice.service import build_voice_loop_service_snapshot
+
+# Audit/status plan source for commands that arrive over MCP. The ActionPlan
+# itself stays PlanSource.PLANNER so it keeps the stricter two-action cap.
+MCP_PLAN_SOURCE = "mcp"
 
 _CONTROL_TOOLS = (
     {
@@ -253,6 +257,7 @@ class MCPServer:
         }
 
     def call_tool(self, name: str, args: Mapping[str, object] | None = None) -> dict[str, object]:
+        started_at = perf_counter()
         if name == "operance.confirm_pending":
             return self._resolve_pending_confirmation(confirm=True)
 
@@ -276,6 +281,8 @@ class MCPServer:
                 tool_name=name,
                 status="not_found",
                 message=message,
+                started_at=started_at,
+                matched=False,
             )
             return {
                 "status": "not_found",
@@ -294,6 +301,7 @@ class MCPServer:
         if not validation_result.valid or validation_result.normalized_plan is None:
             message = "; ".join(validation_result.errors) or "Command validation failed."
             self._record_outcome(
+                started_at=started_at,
                 transcript=transcript,
                 tool_name=name,
                 status="denied",
@@ -306,6 +314,7 @@ class MCPServer:
         if policy_decision.action == "deny":
             message = f"Command denied: {policy_decision.reason}"
             self._record_outcome(
+                started_at=started_at,
                 transcript=transcript,
                 tool_name=name,
                 status="denied",
@@ -321,6 +330,7 @@ class MCPServer:
                 timeout_seconds=self.daemon.config.runtime.confirmation_timeout_seconds,
             )
             self._record_outcome(
+                started_at=started_at,
                 transcript=transcript,
                 tool_name=name,
                 status=status,
@@ -346,6 +356,7 @@ class MCPServer:
             result = self.daemon.executor.execute(normalized_plan)
         except ValueError as exc:
             self._record_outcome(
+                started_at=started_at,
                 transcript=transcript,
                 tool_name=name,
                 status="failed",
@@ -361,6 +372,7 @@ class MCPServer:
             else None
         )
         self._record_outcome(
+            started_at=started_at,
             transcript=transcript,
             tool_name=name,
             status=status,
@@ -378,17 +390,23 @@ class MCPServer:
         tool_name: str,
         status: str,
         message: str,
+        started_at: float | None = None,
+        matched: bool = True,
+        routing_reason: str | None = None,
     ) -> None:
-        self.daemon.last_transcript = transcript
-        self.daemon.last_response = message
-        self.daemon.last_command_status = status
-        self.daemon.audit_store.append(
-            AuditEntry(
-                transcript=transcript,
-                status=status,
-                tool=tool_name,
-                response_text=message,
-            )
+        """Record an MCP outcome through the daemon's shared outcome path."""
+
+        self.daemon.record_external_command_outcome(
+            transcript=transcript,
+            tool=tool_name,
+            status=status,
+            message=message,
+            plan_source=MCP_PLAN_SOURCE,
+            total_duration_ms=(
+                (perf_counter() - started_at) * 1000 if started_at is not None else 0.0
+            ),
+            matched=matched,
+            routing_reason=routing_reason,
         )
 
     def _resolve_pending_confirmation(self, *, confirm: bool) -> dict[str, object]:
@@ -546,6 +564,7 @@ class MCPServer:
             tool_name="operance.reset_planner_runtime",
             status="success",
             message=message,
+            routing_reason=self.daemon.last_routing_reason,
         )
         return {
             "status": "success",
