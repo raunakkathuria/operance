@@ -29,6 +29,7 @@ UNSUPPORTED_ADAPTER_BLOCKER = (
 class UnsupportedPlatformProvider:
     provider_id: str = "unsupported_platform"
     display_name: str = "Unsupported platform"
+    platform_family: str = "unsupported"
     check_metadata: tuple[CheckMetadata, ...] = (
         CheckMetadata(
             name="linux_platform",

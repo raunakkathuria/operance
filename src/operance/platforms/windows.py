@@ -38,6 +38,7 @@ WINDOWS_CHECK_METADATA = (
 class WindowsDesktopPlatformProvider:
     provider_id: str = "windows_desktop"
     display_name: str = "Windows desktop"
+    platform_family: str = "windows"
     check_metadata: tuple[CheckMetadata, ...] = WINDOWS_CHECK_METADATA
     release_verification_target: str = "windows_desktop_unverified"
     release_verified_tools: frozenset[ToolName] = frozenset()

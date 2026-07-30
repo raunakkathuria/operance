@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Hardened skill-pack loading: the declared `platforms` list is now enforced against the active provider's platform family so a pack for another host no longer matches, phrases claimed by two packs are reported as warnings with a documented first-pack-wins order, and a malformed or unreadable pack is skipped with a warning instead of stopping the daemon, tray, or MCP server from starting. `operance --skills` now reports warnings plus which packs are active for the current host, and `operance --skill-validate` still fails loudly on a single pack.
+
 - Moved host service-manager commands behind the platform provider, so installed smoke, support-bundle log capture, tray voice-loop controls, and the voice-loop config helper no longer build `systemctl`, `journalctl`, or shell argv inside shared modules. Services are addressed semantically and providers translate them into native unit names, with an explicit unsupported-platform message when a host has no service manager. The architecture boundary test now rejects service-manager argv in shared modules.
 
 - Fixed platforms without a native desktop adapter reporting simulated success for live desktop commands. Windows, macOS, and unsupported-host providers now build a blocked adapter set instead of the developer-mode mock adapters, so commands fail with the platform's real blocker message through both the daemon and MCP paths. Linux behavior and explicit developer-mode simulation are unchanged.

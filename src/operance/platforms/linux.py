@@ -174,6 +174,7 @@ _HOST_SERVICE_CONTROL_ACTIONS_WITH_NOW = frozenset({"enable", "disable"})
 class LinuxKdeWaylandPlatformProvider:
     provider_id: str = "linux_kde_wayland"
     display_name: str = "Linux KDE Wayland"
+    platform_family: str = "linux"
     check_metadata: tuple[CheckMetadata, ...] = LINUX_CHECK_METADATA
     release_verification_target: str = CURRENT_RELEASE_VERIFICATION_TARGET
     release_verified_tools: frozenset[ToolName] = CURRENT_RELEASE_VERIFIED_TOOLS

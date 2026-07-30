@@ -58,6 +58,9 @@ architecture has live, tested implementations for those operating systems.
   must be discoverable from product surfaces.
 - New command families must preserve confirmation gates, auditability, and
   adapter-owned native execution.
+- Local skill packs must only match on the platforms they declare, must report
+  phrase conflicts between packs, and must never prevent startup when one pack
+  is malformed.
 
 ## Non-Goals
 
