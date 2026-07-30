@@ -354,35 +354,10 @@ def _help_examples(domains: list[object], *, limit: int = 6) -> list[str]:
 
 
 def _tool_usage_pattern(tool: ToolName) -> str | None:
-    patterns = {
-        ToolName.APPS_LAUNCH: (
-            "open browser | open the browser | open google.com | go to <website> | "
-            "search google for <query> | search the web for <query> | open <app name> | "
-            "open <app> and load <website>"
-        ),
-        ToolName.APPS_FOCUS: "focus <app name>",
-        ToolName.APPS_QUIT: "quit <app name>",
-        ToolName.WINDOWS_LIST: "list windows | what apps are open | show open windows",
-        ToolName.WINDOWS_FIND: "is <app> open | find window <title> | show windows matching <title>",
-        ToolName.WINDOWS_SWITCH: "switch to window <title> | switch to <title> window",
-        ToolName.NOTIFICATIONS_SHOW: "show a notification saying <message>",
-        ToolName.FILES_LIST_RECENT: "show recent files",
-        ToolName.FILES_LIST_FOLDER: "list files in downloads | show files in documents | what is in downloads",
-        ToolName.FILES_FIND: "find file named <name> | find folder named <name> | search documents for <name>",
-        ToolName.FILES_GET_INFO: "show details for <name> | how big is <name> | when was <name> modified",
-        ToolName.FILES_LIST_RECENT_FOLDER: "show recent downloads | show recent files in downloads",
-        ToolName.FILES_CREATE_FOLDER: "create folder on desktop called <name>",
-        ToolName.FILES_DELETE_FOLDER: "delete folder on desktop called <name>",
-        ToolName.FILES_DELETE_FILE: "delete file on desktop called <name>",
-        ToolName.FILES_RENAME: "rename folder on desktop from <source> to <target>",
-        ToolName.FILES_MOVE: "move folder on desktop called <name> to <folder>",
-        ToolName.FILES_COPY: "copy file on desktop called <name> to documents",
-        ToolName.FILES_OPEN: (
-            "open downloads | open folder downloads | open documents | open desktop | "
-            "open file on desktop called <name> | open recent file called <name>"
-        ),
-    }
-    return patterns.get(tool)
+    """Usage patterns live on the tool spec so one registry entry covers them."""
+
+    spec = build_default_action_registry().get(tool)
+    return spec.usage_pattern if spec is not None else None
 
 
 def _domain_label(domain: str) -> str:

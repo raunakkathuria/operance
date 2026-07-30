@@ -10,10 +10,25 @@ from ..models.actions import ToolName
 
 
 @dataclass(slots=True, frozen=True)
+class AdapterCall:
+    """Declarative dispatch for tools that return the adapter method's message.
+
+    ``args`` names the typed action arguments to pass, in order, with the
+    coercion applied before the call. Tools whose result needs formatting,
+    undo registration, or filesystem resolution keep explicit executor code
+    instead of declaring a call here.
+    """
+
+    method: str
+    args: tuple[tuple[str, str], ...] = ()
+
+
+@dataclass(slots=True, frozen=True)
 class AdapterToolContract:
     tool: ToolName
     adapter: str
     required_methods: tuple[str, ...]
+    call: AdapterCall | None = None
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -59,42 +74,47 @@ class AdapterConformanceReport:
 
 
 ADAPTER_TOOL_CONTRACTS: dict[ToolName, AdapterToolContract] = {
-    ToolName.APPS_LAUNCH: AdapterToolContract(ToolName.APPS_LAUNCH, "apps", ("launch",)),
-    ToolName.APPS_FOCUS: AdapterToolContract(ToolName.APPS_FOCUS, "apps", ("focus",)),
-    ToolName.APPS_QUIT: AdapterToolContract(ToolName.APPS_QUIT, "apps", ("quit",)),
+    ToolName.APPS_LAUNCH: AdapterToolContract(ToolName.APPS_LAUNCH, "apps", ("launch",), call=AdapterCall("launch", (("app", "str"),))),
+    ToolName.APPS_FOCUS: AdapterToolContract(ToolName.APPS_FOCUS, "apps", ("focus",), call=AdapterCall("focus", (("app", "str"),))),
+    ToolName.APPS_QUIT: AdapterToolContract(ToolName.APPS_QUIT, "apps", ("quit",), call=AdapterCall("quit", (("app", "str"),))),
     ToolName.WINDOWS_FIND: AdapterToolContract(ToolName.WINDOWS_FIND, "windows", ("find_windows",)),
     ToolName.WINDOWS_LIST: AdapterToolContract(ToolName.WINDOWS_LIST, "windows", ("list_windows",)),
-    ToolName.WINDOWS_SWITCH: AdapterToolContract(ToolName.WINDOWS_SWITCH, "windows", ("switch",)),
-    ToolName.WINDOWS_MINIMIZE: AdapterToolContract(ToolName.WINDOWS_MINIMIZE, "windows", ("minimize",)),
-    ToolName.WINDOWS_MAXIMIZE: AdapterToolContract(ToolName.WINDOWS_MAXIMIZE, "windows", ("maximize",)),
+    ToolName.WINDOWS_SWITCH: AdapterToolContract(ToolName.WINDOWS_SWITCH, "windows", ("switch",), call=AdapterCall("switch", (("window", "str"),))),
+    ToolName.WINDOWS_MINIMIZE: AdapterToolContract(ToolName.WINDOWS_MINIMIZE, "windows", ("minimize",), call=AdapterCall("minimize", (("window", "str"),))),
+    ToolName.WINDOWS_MAXIMIZE: AdapterToolContract(ToolName.WINDOWS_MAXIMIZE, "windows", ("maximize",), call=AdapterCall("maximize", (("window", "str"),))),
     ToolName.WINDOWS_SET_FULLSCREEN: AdapterToolContract(
         ToolName.WINDOWS_SET_FULLSCREEN,
         "windows",
         ("set_fullscreen",),
+        call=AdapterCall("set_fullscreen", (("window", "str"), ("enabled", "bool"))),
     ),
     ToolName.WINDOWS_SET_KEEP_ABOVE: AdapterToolContract(
         ToolName.WINDOWS_SET_KEEP_ABOVE,
         "windows",
         ("set_keep_above",),
+        call=AdapterCall("set_keep_above", (("window", "str"), ("enabled", "bool"))),
     ),
-    ToolName.WINDOWS_SET_SHADED: AdapterToolContract(ToolName.WINDOWS_SET_SHADED, "windows", ("set_shaded",)),
+    ToolName.WINDOWS_SET_SHADED: AdapterToolContract(ToolName.WINDOWS_SET_SHADED, "windows", ("set_shaded",), call=AdapterCall("set_shaded", (("window", "str"), ("enabled", "bool")))),
     ToolName.WINDOWS_SET_KEEP_BELOW: AdapterToolContract(
         ToolName.WINDOWS_SET_KEEP_BELOW,
         "windows",
         ("set_keep_below",),
+        call=AdapterCall("set_keep_below", (("window", "str"), ("enabled", "bool"))),
     ),
     ToolName.WINDOWS_SET_ON_ALL_DESKTOPS: AdapterToolContract(
         ToolName.WINDOWS_SET_ON_ALL_DESKTOPS,
         "windows",
         ("set_on_all_desktops",),
+        call=AdapterCall("set_on_all_desktops", (("window", "str"), ("enabled", "bool"))),
     ),
-    ToolName.WINDOWS_RESTORE: AdapterToolContract(ToolName.WINDOWS_RESTORE, "windows", ("restore",)),
-    ToolName.WINDOWS_CLOSE: AdapterToolContract(ToolName.WINDOWS_CLOSE, "windows", ("close",)),
-    ToolName.TIME_NOW: AdapterToolContract(ToolName.TIME_NOW, "time", ("now",)),
+    ToolName.WINDOWS_RESTORE: AdapterToolContract(ToolName.WINDOWS_RESTORE, "windows", ("restore",), call=AdapterCall("restore", (("window", "str"),))),
+    ToolName.WINDOWS_CLOSE: AdapterToolContract(ToolName.WINDOWS_CLOSE, "windows", ("close",), call=AdapterCall("close", (("window", "str"),))),
+    ToolName.TIME_NOW: AdapterToolContract(ToolName.TIME_NOW, "time", ("now",), call=AdapterCall("now", ())),
     ToolName.POWER_BATTERY_STATUS: AdapterToolContract(
         ToolName.POWER_BATTERY_STATUS,
         "power",
         ("battery_status",),
+        call=AdapterCall("battery_status", ()),
     ),
     ToolName.AUDIO_GET_VOLUME: AdapterToolContract(ToolName.AUDIO_GET_VOLUME, "audio", ("get_volume",)),
     ToolName.AUDIO_MUTE_STATUS: AdapterToolContract(ToolName.AUDIO_MUTE_STATUS, "audio", ("is_muted",)),
@@ -109,13 +129,14 @@ ADAPTER_TOOL_CONTRACTS: dict[ToolName, AdapterToolContract] = {
         ("copy_selection",),
     ),
     ToolName.CLIPBOARD_PASTE: AdapterToolContract(ToolName.CLIPBOARD_PASTE, "text_input", ("paste",)),
-    ToolName.TEXT_TYPE: AdapterToolContract(ToolName.TEXT_TYPE, "text_input", ("type_text",)),
-    ToolName.KEYS_PRESS: AdapterToolContract(ToolName.KEYS_PRESS, "text_input", ("press_key",)),
-    ToolName.NETWORK_WIFI_STATUS: AdapterToolContract(ToolName.NETWORK_WIFI_STATUS, "network", ("wifi_status",)),
+    ToolName.TEXT_TYPE: AdapterToolContract(ToolName.TEXT_TYPE, "text_input", ("type_text",), call=AdapterCall("type_text", (("text", "str"),))),
+    ToolName.KEYS_PRESS: AdapterToolContract(ToolName.KEYS_PRESS, "text_input", ("press_key",), call=AdapterCall("press_key", (("key", "str"),))),
+    ToolName.NETWORK_WIFI_STATUS: AdapterToolContract(ToolName.NETWORK_WIFI_STATUS, "network", ("wifi_status",), call=AdapterCall("wifi_status", ())),
     ToolName.NETWORK_DISCONNECT_CURRENT: AdapterToolContract(
         ToolName.NETWORK_DISCONNECT_CURRENT,
         "network",
         ("disconnect_current",),
+        call=AdapterCall("disconnect_current", ()),
     ),
     ToolName.NETWORK_SET_WIFI_ENABLED: AdapterToolContract(
         ToolName.NETWORK_SET_WIFI_ENABLED,
@@ -126,8 +147,9 @@ ADAPTER_TOOL_CONTRACTS: dict[ToolName, AdapterToolContract] = {
         ToolName.NETWORK_CONNECT_KNOWN_SSID,
         "network",
         ("connect_known_ssid",),
+        call=AdapterCall("connect_known_ssid", (("ssid", "str"),)),
     ),
-    ToolName.NOTIFICATIONS_SHOW: AdapterToolContract(ToolName.NOTIFICATIONS_SHOW, "notifications", ("show",)),
+    ToolName.NOTIFICATIONS_SHOW: AdapterToolContract(ToolName.NOTIFICATIONS_SHOW, "notifications", ("show",), call=AdapterCall("show", (("title", "str"), ("message", "str")))),
     ToolName.FILES_LIST_RECENT: AdapterToolContract(ToolName.FILES_LIST_RECENT, "files", ("list_recent",)),
     ToolName.FILES_LIST_FOLDER: AdapterToolContract(ToolName.FILES_LIST_FOLDER, "files", ("list_location",)),
     ToolName.FILES_FIND: AdapterToolContract(ToolName.FILES_FIND, "files", ("find_entries",)),

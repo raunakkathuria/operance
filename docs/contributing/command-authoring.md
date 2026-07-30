@@ -29,11 +29,14 @@ skill pack instead of changing core code. See [skill-packs.md](skill-packs.md).
    keep it blocked/unverified if it is not live-tested yet.
 7. Implement the developer-mode behavior in `src/operance/adapters/mock.py` so
    simulated runs and tests exercise the same contract.
-8. Add executor dispatch in `src/operance/executor.py` so the typed action
-   reaches the adapter method.
+8. Add executor dispatch. If the tool simply calls one adapter method and
+   returns its message, declare it on the contract from step 5 with
+   `call=AdapterCall("method", (("arg", "str"),))` and no executor edit is
+   needed. Tools that format results, register undo, or resolve filesystem
+   paths keep an explicit branch in `src/operance/executor.py`.
 9. Add the confirmation/plan preview string in `src/operance/planner/preview.py`.
-10. Add the user-facing usage pattern in `src/operance/supported_commands.py` so
-    the command renders correctly in help and catalog output.
+10. Add the user-facing usage pattern as `usage_pattern=` on the registry spec
+    from step 2, so help and catalog output pick it up automatically.
 11. Update the active platform provider in `src/operance/platforms/` with
     blockers, setup guidance, and release-verification status.
 12. Add unit tests for validation, planner parsing if relevant, executor/adapter
@@ -44,10 +47,14 @@ skill pack instead of changing core code. See [skill-packs.md](skill-packs.md).
     when the behavior is runnable and tested now. Behavior changes also need
     `docs/specs/` evidence; see the spec/doc sync check below.
 
-Steps 1-11 are the source touchpoints measured from the most recent new tool
-(`files.copy`). Adding a tool that needs all of them touches roughly 11 source
-files plus tests and docs, so prefer a skill pack whenever the behavior maps to
-an existing typed action.
+Steps 1-11 are the source touchpoints. A tool whose behavior is a single adapter
+call now skips the executor and supported-command edits, because the contract and
+registry entries cover them. Still prefer a skill pack whenever the behavior maps
+to an existing typed action.
+
+`tests/unit/test_registry_dispatch_coverage.py` fails if a registered tool has no
+adapter contract, is unreachable in the executor, has no preview text, or is
+confirmation-gated without declaring affected resources.
 
 ## Safety Metadata Outside ToolSpec
 

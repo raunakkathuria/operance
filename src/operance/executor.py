@@ -5,8 +5,15 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from .adapters.base import AdapterSet, FileEntryInfo
+from .adapters.conformance import ADAPTER_TOOL_CONTRACTS, AdapterToolContract
 from .models.actions import ActionPlan, ActionResult, ActionResultItem, ToolName
 from .undo import UndoManager
+
+_ARG_COERCIONS = {
+    "str": lambda value: str(value),
+    "bool": lambda value: bool(value),
+    "int": lambda value: int(value),  # type: ignore[arg-type]
+}
 
 
 @dataclass(slots=True)
@@ -34,29 +41,9 @@ class ActionExecutor:
         return self.undo_manager.undo(token)
 
     def _execute_action(self, tool: ToolName, args: dict[str, object]) -> ActionResultItem:
-        if tool == ToolName.APPS_LAUNCH:
-            adapter = self._require_adapter(self.adapters.apps, tool)
-            try:
-                message = adapter.launch(str(args["app"]))
-            except ValueError as exc:
-                return ActionResultItem(tool=tool, status="failed", message=str(exc))
-            return ActionResultItem(tool=tool, status="success", message=message)
-
-        if tool == ToolName.APPS_FOCUS:
-            adapter = self._require_adapter(self.adapters.apps, tool)
-            try:
-                message = adapter.focus(str(args["app"]))
-            except ValueError as exc:
-                return ActionResultItem(tool=tool, status="failed", message=str(exc))
-            return ActionResultItem(tool=tool, status="success", message=message)
-
-        if tool == ToolName.APPS_QUIT:
-            adapter = self._require_adapter(self.adapters.apps, tool)
-            try:
-                message = adapter.quit(str(args["app"]))
-            except ValueError as exc:
-                return ActionResultItem(tool=tool, status="failed", message=str(exc))
-            return ActionResultItem(tool=tool, status="success", message=message)
+        contract = ADAPTER_TOOL_CONTRACTS.get(tool)
+        if contract is not None and contract.call is not None:
+            return self._execute_declared_call(tool, args, contract)
 
         if tool == ToolName.WINDOWS_LIST:
             adapter = self._require_adapter(self.adapters.windows, tool)
@@ -82,64 +69,6 @@ class ActionExecutor:
                 status="success",
                 message=f"Found {len(windows)} {_windows_noun(len(windows))}: {'; '.join(windows[:10])}",
             )
-
-        if tool == ToolName.WINDOWS_SWITCH:
-            adapter = self._require_adapter(self.adapters.windows, tool)
-            message = adapter.switch(str(args["window"]))
-            return ActionResultItem(tool=tool, status="success", message=message)
-
-        if tool == ToolName.WINDOWS_MINIMIZE:
-            adapter = self._require_adapter(self.adapters.windows, tool)
-            message = adapter.minimize(str(args["window"]))
-            return ActionResultItem(tool=tool, status="success", message=message)
-
-        if tool == ToolName.WINDOWS_MAXIMIZE:
-            adapter = self._require_adapter(self.adapters.windows, tool)
-            message = adapter.maximize(str(args["window"]))
-            return ActionResultItem(tool=tool, status="success", message=message)
-
-        if tool == ToolName.WINDOWS_SET_FULLSCREEN:
-            adapter = self._require_adapter(self.adapters.windows, tool)
-            message = adapter.set_fullscreen(str(args["window"]), bool(args["enabled"]))
-            return ActionResultItem(tool=tool, status="success", message=message)
-
-        if tool == ToolName.WINDOWS_SET_KEEP_ABOVE:
-            adapter = self._require_adapter(self.adapters.windows, tool)
-            message = adapter.set_keep_above(str(args["window"]), bool(args["enabled"]))
-            return ActionResultItem(tool=tool, status="success", message=message)
-
-        if tool == ToolName.WINDOWS_SET_SHADED:
-            adapter = self._require_adapter(self.adapters.windows, tool)
-            message = adapter.set_shaded(str(args["window"]), bool(args["enabled"]))
-            return ActionResultItem(tool=tool, status="success", message=message)
-
-        if tool == ToolName.WINDOWS_SET_KEEP_BELOW:
-            adapter = self._require_adapter(self.adapters.windows, tool)
-            message = adapter.set_keep_below(str(args["window"]), bool(args["enabled"]))
-            return ActionResultItem(tool=tool, status="success", message=message)
-
-        if tool == ToolName.WINDOWS_SET_ON_ALL_DESKTOPS:
-            adapter = self._require_adapter(self.adapters.windows, tool)
-            message = adapter.set_on_all_desktops(str(args["window"]), bool(args["enabled"]))
-            return ActionResultItem(tool=tool, status="success", message=message)
-
-        if tool == ToolName.WINDOWS_RESTORE:
-            adapter = self._require_adapter(self.adapters.windows, tool)
-            message = adapter.restore(str(args["window"]))
-            return ActionResultItem(tool=tool, status="success", message=message)
-
-        if tool == ToolName.WINDOWS_CLOSE:
-            adapter = self._require_adapter(self.adapters.windows, tool)
-            message = adapter.close(str(args["window"]))
-            return ActionResultItem(tool=tool, status="success", message=message)
-
-        if tool == ToolName.TIME_NOW:
-            adapter = self._require_adapter(self.adapters.time, tool)
-            return ActionResultItem(tool=tool, status="success", message=adapter.now())
-
-        if tool == ToolName.POWER_BATTERY_STATUS:
-            adapter = self._require_adapter(self.adapters.power, tool)
-            return ActionResultItem(tool=tool, status="success", message=adapter.battery_status())
 
         if tool == ToolName.AUDIO_GET_VOLUME:
             adapter = self._require_adapter(self.adapters.audio, tool)
@@ -217,22 +146,6 @@ class ActionExecutor:
                 return ActionResultItem(tool=tool, status="failed", message=str(exc))
             return ActionResultItem(tool=tool, status="success", message=message)
 
-        if tool == ToolName.TEXT_TYPE:
-            adapter = self._require_adapter(self.adapters.text_input, tool)
-            try:
-                message = adapter.type_text(str(args["text"]))
-            except ValueError as exc:
-                return ActionResultItem(tool=tool, status="failed", message=str(exc))
-            return ActionResultItem(tool=tool, status="success", message=message)
-
-        if tool == ToolName.KEYS_PRESS:
-            adapter = self._require_adapter(self.adapters.text_input, tool)
-            try:
-                message = adapter.press_key(str(args["key"]))
-            except ValueError as exc:
-                return ActionResultItem(tool=tool, status="failed", message=str(exc))
-            return ActionResultItem(tool=tool, status="success", message=message)
-
         if tool == ToolName.AUDIO_SET_VOLUME:
             adapter = self._require_adapter(self.adapters.audio, tool)
             previous_volume = adapter.get_volume()
@@ -249,30 +162,12 @@ class ActionExecutor:
             undo_token = self.undo_manager.register(lambda: adapter.set_muted(previous_muted))
             return ActionResultItem(tool=tool, status="success", message=message, undo_token=undo_token)
 
-        if tool == ToolName.NETWORK_WIFI_STATUS:
-            adapter = self._require_adapter(self.adapters.network, tool)
-            return ActionResultItem(tool=tool, status="success", message=adapter.wifi_status())
-
-        if tool == ToolName.NETWORK_DISCONNECT_CURRENT:
-            adapter = self._require_adapter(self.adapters.network, tool)
-            return ActionResultItem(tool=tool, status="success", message=adapter.disconnect_current())
-
         if tool == ToolName.NETWORK_SET_WIFI_ENABLED:
             adapter = self._require_adapter(self.adapters.network, tool)
             previous_enabled = adapter.is_wifi_enabled()
             message = adapter.set_wifi_enabled(bool(args["enabled"]))
             undo_token = self.undo_manager.register(lambda: adapter.set_wifi_enabled(previous_enabled))
             return ActionResultItem(tool=tool, status="success", message=message, undo_token=undo_token)
-
-        if tool == ToolName.NETWORK_CONNECT_KNOWN_SSID:
-            adapter = self._require_adapter(self.adapters.network, tool)
-            message = adapter.connect_known_ssid(str(args["ssid"]))
-            return ActionResultItem(tool=tool, status="success", message=message)
-
-        if tool == ToolName.NOTIFICATIONS_SHOW:
-            adapter = self._require_adapter(self.adapters.notifications, tool)
-            message = adapter.show(str(args["title"]), str(args["message"]))
-            return ActionResultItem(tool=tool, status="success", message=message)
 
         if tool == ToolName.FILES_LIST_RECENT:
             adapter = self._require_adapter(self.adapters.files, tool)
@@ -478,6 +373,24 @@ class ActionExecutor:
             )
 
         raise ValueError(f"unsupported tool: {tool.value}")
+
+    def _execute_declared_call(
+        self,
+        tool: ToolName,
+        args: dict[str, object],
+        contract: AdapterToolContract,
+    ) -> ActionResultItem:
+        """Dispatch a tool whose contract declares its adapter call."""
+
+        call = contract.call
+        assert call is not None
+        adapter = self._require_adapter(getattr(self.adapters, contract.adapter), tool)
+        call_args = [_ARG_COERCIONS[kind](args[name]) for name, kind in call.args]
+        try:
+            message = getattr(adapter, call.method)(*call_args)
+        except ValueError as exc:
+            return ActionResultItem(tool=tool, status="failed", message=str(exc))
+        return ActionResultItem(tool=tool, status="success", message=message)
 
     @staticmethod
     def _require_adapter(adapter: object | None, tool: ToolName) -> object:

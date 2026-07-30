@@ -160,6 +160,48 @@ _SETUP_CHECK_LABELS = {
 }
 
 
+_WINDOW_TOOLS = {
+    ToolName.WINDOWS_FIND,
+    ToolName.WINDOWS_LIST,
+    ToolName.WINDOWS_SWITCH,
+    ToolName.WINDOWS_MINIMIZE,
+    ToolName.WINDOWS_MAXIMIZE,
+    ToolName.WINDOWS_SET_FULLSCREEN,
+    ToolName.WINDOWS_SET_KEEP_ABOVE,
+    ToolName.WINDOWS_SET_SHADED,
+    ToolName.WINDOWS_SET_KEEP_BELOW,
+    ToolName.WINDOWS_SET_ON_ALL_DESKTOPS,
+    ToolName.WINDOWS_RESTORE,
+    ToolName.WINDOWS_CLOSE,
+}
+_AUDIO_TOOLS = {
+    ToolName.AUDIO_GET_VOLUME,
+    ToolName.AUDIO_MUTE_STATUS,
+    ToolName.AUDIO_SET_VOLUME,
+    ToolName.AUDIO_SET_MUTED,
+}
+_NETWORK_TOOLS = {
+    ToolName.NETWORK_WIFI_STATUS,
+    ToolName.NETWORK_DISCONNECT_CURRENT,
+    ToolName.NETWORK_SET_WIFI_ENABLED,
+    ToolName.NETWORK_CONNECT_KNOWN_SSID,
+}
+_FILE_TOOLS = {
+    ToolName.FILES_LIST_RECENT,
+    ToolName.FILES_OPEN,
+    ToolName.FILES_CREATE_FOLDER,
+    ToolName.FILES_COPY,
+    ToolName.FILES_DELETE_FOLDER,
+    ToolName.FILES_DELETE_FILE,
+    ToolName.FILES_FIND,
+    ToolName.FILES_GET_INFO,
+    ToolName.FILES_LIST_FOLDER,
+    ToolName.FILES_LIST_RECENT_FOLDER,
+    ToolName.FILES_RENAME,
+    ToolName.FILES_MOVE,
+}
+
+
 _HOST_SERVICE_UNITS = {
     HOST_SERVICE_TRAY: "operance-tray.service",
     HOST_SERVICE_VOICE_LOOP: "operance-voice-loop.service",
@@ -481,56 +523,15 @@ class LinuxKdeWaylandPlatformProvider:
         tool: ToolName,
         steps_by_name: Mapping[str, object],
     ) -> list[str]:
-        window_tools = {
-            ToolName.WINDOWS_FIND,
-            ToolName.WINDOWS_LIST,
-            ToolName.WINDOWS_SWITCH,
-            ToolName.WINDOWS_MINIMIZE,
-            ToolName.WINDOWS_MAXIMIZE,
-            ToolName.WINDOWS_SET_FULLSCREEN,
-            ToolName.WINDOWS_SET_KEEP_ABOVE,
-            ToolName.WINDOWS_SET_SHADED,
-            ToolName.WINDOWS_SET_KEEP_BELOW,
-            ToolName.WINDOWS_SET_ON_ALL_DESKTOPS,
-            ToolName.WINDOWS_RESTORE,
-            ToolName.WINDOWS_CLOSE,
-        }
-        audio_tools = {
-            ToolName.AUDIO_GET_VOLUME,
-            ToolName.AUDIO_MUTE_STATUS,
-            ToolName.AUDIO_SET_VOLUME,
-            ToolName.AUDIO_SET_MUTED,
-        }
-        network_tools = {
-            ToolName.NETWORK_WIFI_STATUS,
-            ToolName.NETWORK_DISCONNECT_CURRENT,
-            ToolName.NETWORK_SET_WIFI_ENABLED,
-            ToolName.NETWORK_CONNECT_KNOWN_SSID,
-        }
-        file_tools = {
-            ToolName.FILES_LIST_RECENT,
-            ToolName.FILES_OPEN,
-            ToolName.FILES_CREATE_FOLDER,
-            ToolName.FILES_COPY,
-            ToolName.FILES_DELETE_FOLDER,
-            ToolName.FILES_DELETE_FILE,
-            ToolName.FILES_FIND,
-            ToolName.FILES_GET_INFO,
-            ToolName.FILES_LIST_FOLDER,
-            ToolName.FILES_LIST_RECENT_FOLDER,
-            ToolName.FILES_RENAME,
-            ToolName.FILES_MOVE,
-        }
-
         if tool == ToolName.TIME_NOW:
             return []
         if tool == ToolName.APPS_LAUNCH:
             return _blockers_for(steps_by_name, "linux_platform", "xdg_open_available")
-        if tool in {ToolName.APPS_FOCUS, ToolName.APPS_QUIT} or tool in window_tools:
+        if tool in {ToolName.APPS_FOCUS, ToolName.APPS_QUIT} or tool in _WINDOW_TOOLS:
             return _blockers_for(steps_by_name, "linux_platform", "kde_wayland_target", "gdbus_available")
         if tool == ToolName.POWER_BATTERY_STATUS:
             return _blockers_for(steps_by_name, "linux_platform", "power_status_available")
-        if tool in audio_tools:
+        if tool in _AUDIO_TOOLS:
             return _blockers_for(steps_by_name, "linux_platform", "audio_cli_available")
         if tool in {ToolName.CLIPBOARD_GET_TEXT, ToolName.CLIPBOARD_SET_TEXT, ToolName.CLIPBOARD_CLEAR}:
             return _blockers_for(
@@ -554,7 +555,7 @@ class LinuxKdeWaylandPlatformProvider:
                 "text_input_cli_available",
                 "wayland_session_accessible",
             )
-        if tool in network_tools:
+        if tool in _NETWORK_TOOLS:
             return _blockers_for(steps_by_name, "linux_platform", "networkmanager_cli_available")
         if tool == ToolName.NOTIFICATIONS_SHOW:
             linux_blockers = _blockers_for(steps_by_name, "linux_platform")
@@ -575,7 +576,7 @@ class LinuxKdeWaylandPlatformProvider:
             if gdbus_step is None or getattr(gdbus_step, "status", None) != "ok":
                 blockers.append("gdbus")
             return blockers
-        if tool in file_tools:
+        if tool in _FILE_TOOLS:
             return _blockers_for(steps_by_name, "linux_platform")
         return _blockers_for(steps_by_name, "linux_platform")
 
@@ -584,52 +585,11 @@ class LinuxKdeWaylandPlatformProvider:
         tool: ToolName,
         steps_by_name: Mapping[str, object],
     ) -> str | None:
-        window_tools = {
-            ToolName.WINDOWS_FIND,
-            ToolName.WINDOWS_LIST,
-            ToolName.WINDOWS_SWITCH,
-            ToolName.WINDOWS_MINIMIZE,
-            ToolName.WINDOWS_MAXIMIZE,
-            ToolName.WINDOWS_SET_FULLSCREEN,
-            ToolName.WINDOWS_SET_KEEP_ABOVE,
-            ToolName.WINDOWS_SET_SHADED,
-            ToolName.WINDOWS_SET_KEEP_BELOW,
-            ToolName.WINDOWS_SET_ON_ALL_DESKTOPS,
-            ToolName.WINDOWS_RESTORE,
-            ToolName.WINDOWS_CLOSE,
-        }
-        audio_tools = {
-            ToolName.AUDIO_GET_VOLUME,
-            ToolName.AUDIO_MUTE_STATUS,
-            ToolName.AUDIO_SET_VOLUME,
-            ToolName.AUDIO_SET_MUTED,
-        }
-        network_tools = {
-            ToolName.NETWORK_WIFI_STATUS,
-            ToolName.NETWORK_DISCONNECT_CURRENT,
-            ToolName.NETWORK_SET_WIFI_ENABLED,
-            ToolName.NETWORK_CONNECT_KNOWN_SSID,
-        }
-        file_tools = {
-            ToolName.FILES_LIST_RECENT,
-            ToolName.FILES_OPEN,
-            ToolName.FILES_CREATE_FOLDER,
-            ToolName.FILES_COPY,
-            ToolName.FILES_DELETE_FOLDER,
-            ToolName.FILES_DELETE_FILE,
-            ToolName.FILES_FIND,
-            ToolName.FILES_GET_INFO,
-            ToolName.FILES_LIST_FOLDER,
-            ToolName.FILES_LIST_RECENT_FOLDER,
-            ToolName.FILES_RENAME,
-            ToolName.FILES_MOVE,
-        }
-
         if tool == ToolName.TIME_NOW:
             return None
         if tool == ToolName.APPS_LAUNCH:
             return _first_recommended(steps_by_name, "linux_platform", "xdg_open_available")
-        if tool in {ToolName.APPS_FOCUS, ToolName.APPS_QUIT} or tool in window_tools:
+        if tool in {ToolName.APPS_FOCUS, ToolName.APPS_QUIT} or tool in _WINDOW_TOOLS:
             return _first_recommended(
                 steps_by_name,
                 "linux_platform",
@@ -638,7 +598,7 @@ class LinuxKdeWaylandPlatformProvider:
             )
         if tool == ToolName.POWER_BATTERY_STATUS:
             return _first_recommended(steps_by_name, "linux_platform", "power_status_available")
-        if tool in audio_tools:
+        if tool in _AUDIO_TOOLS:
             return _first_recommended(steps_by_name, "linux_platform", "audio_cli_available")
         if tool in {ToolName.CLIPBOARD_GET_TEXT, ToolName.CLIPBOARD_SET_TEXT, ToolName.CLIPBOARD_CLEAR}:
             return _first_recommended(
@@ -662,11 +622,11 @@ class LinuxKdeWaylandPlatformProvider:
                 "text_input_cli_available",
                 "wayland_session_accessible",
             )
-        if tool in network_tools:
+        if tool in _NETWORK_TOOLS:
             return _first_recommended(steps_by_name, "linux_platform", "networkmanager_cli_available")
         if tool == ToolName.NOTIFICATIONS_SHOW:
             return _first_recommended(steps_by_name, "linux_platform", "notify_send_available", "gdbus_available")
-        if tool in file_tools:
+        if tool in _FILE_TOOLS:
             return _first_recommended(steps_by_name, "linux_platform")
         return _first_recommended(steps_by_name, "linux_platform")
 
