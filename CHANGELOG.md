@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Expanded window-management grammar so minimize, maximize, restore, and close accept natural phrasing such as `minimize firefox`, `minimize the firefox window`, `restore firefox`, `unminimize firefox`, and `close the firefox window`, alongside the original `<verb> window <title>` form and British `minimise`/`maximise` spellings. `close firefox` stays unmatched on purpose because it is ambiguous between closing a window and quitting the app. These tools now also declare usage patterns for help output, and `operance --installed-smoke` lists the manual window checks needed to capture their live Fedora evidence. Promotion into the release-verified subset still waits on that evidence.
+
 - Enforced the spec and documentation sync gate in CI. It was documented in five places and tested, but no automation ran it, so a behavior change without changelog or documentation evidence could merge. Pull requests now run `scripts/check_spec_sync.py` against the pull request's base commit, and a test asserts the workflow keeps invoking it.
 
 - Made tool dispatch registry-driven where the behavior is declarative: 21 tools whose execution is a single adapter call now declare that call on their adapter contract instead of carrying a hand-written executor branch, cutting the executor from 45 branches to 24. User-facing usage patterns moved onto the registry spec, and the duplicated Linux tool-category sets now exist once. A new coverage test fails if a registered tool has no adapter contract, is unreachable in the executor, has no preview text, or is confirmation-gated without declaring affected resources. No command behavior changes.

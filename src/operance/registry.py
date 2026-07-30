@@ -153,6 +153,7 @@ def build_default_action_registry() -> ActionRegistry:
             example_transcripts=("minimize window firefox",),
             risk_tier=RiskTier.TIER_1,
             allowed_side_effects=("minimize_window",),
+            usage_pattern="minimize <window title> | minimize the <title> window",
         )
     )
     registry.register(
@@ -164,6 +165,7 @@ def build_default_action_registry() -> ActionRegistry:
             example_transcripts=("maximize window firefox",),
             risk_tier=RiskTier.TIER_1,
             allowed_side_effects=("maximize_window",),
+            usage_pattern="maximize <window title> | maximize the <title> window",
         )
     )
     registry.register(
@@ -265,6 +267,7 @@ def build_default_action_registry() -> ActionRegistry:
             example_transcripts=("restore window firefox",),
             risk_tier=RiskTier.TIER_1,
             allowed_side_effects=("restore_window",),
+            usage_pattern="restore <window title> | unminimize <window title>",
         )
     )
     registry.register(
@@ -277,6 +280,7 @@ def build_default_action_registry() -> ActionRegistry:
             risk_tier=RiskTier.TIER_2,
             requires_confirmation=True,
             allowed_side_effects=("close_window",),
+            usage_pattern="close window <title> | close the <title> window",
         )
     )
     registry.register(

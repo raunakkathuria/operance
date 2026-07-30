@@ -270,7 +270,11 @@ class DeterministicIntentMatcher:
                 args={"app": target},
             )
 
-        window_minimize_match = re.fullmatch(r"minimize window (.+)", normalized)
+        window_minimize_match = (
+            re.fullmatch(r"minimize window (.+)", normalized)
+            or re.fullmatch(r"minimi[sz]e (?:the )?(.+) window", normalized)
+            or re.fullmatch(r"minimi[sz]e (?:the )?(.+)", normalized)
+        )
         if window_minimize_match:
             return self._single_action_plan(
                 text,
@@ -279,7 +283,11 @@ class DeterministicIntentMatcher:
                 risk_tier=RiskTier.TIER_1,
             )
 
-        window_maximize_match = re.fullmatch(r"maximize window (.+)", normalized)
+        window_maximize_match = (
+            re.fullmatch(r"maximize window (.+)", normalized)
+            or re.fullmatch(r"maximi[sz]e (?:the )?(.+) window", normalized)
+            or re.fullmatch(r"maximi[sz]e (?:the )?(.+)", normalized)
+        )
         if window_maximize_match:
             return self._single_action_plan(
                 text,
@@ -394,7 +402,11 @@ class DeterministicIntentMatcher:
                 risk_tier=RiskTier.TIER_1,
             )
 
-        window_restore_match = re.fullmatch(r"restore window (.+)", normalized)
+        window_restore_match = (
+            re.fullmatch(r"restore window (.+)", normalized)
+            or re.fullmatch(r"(?:restore|unminimi[sz]e) (?:the )?(.+) window", normalized)
+            or re.fullmatch(r"(?:restore|unminimi[sz]e) (?:the )?(.+)", normalized)
+        )
         if window_restore_match:
             return self._single_action_plan(
                 text,
@@ -403,7 +415,11 @@ class DeterministicIntentMatcher:
                 risk_tier=RiskTier.TIER_1,
             )
 
-        window_close_match = re.fullmatch(r"close window (.+)", normalized)
+        # Closing requires the word "window" so it stays distinct from quitting an
+        # app, which is a different typed action with different consequences.
+        window_close_match = re.fullmatch(r"close window (.+)", normalized) or re.fullmatch(
+            r"close (?:the )?(.+) window", normalized
+        )
         if window_close_match:
             return self._single_action_plan(
                 text,
