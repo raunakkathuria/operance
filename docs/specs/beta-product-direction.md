@@ -226,6 +226,14 @@ Current accepted safe-command slice:
   results with phrases such as `copy it to documents` or `copy the first one to
   downloads`; they stay limited to known-folder source references and
   known-folder destinations
+- window management accepts natural phrasing such as `minimize firefox`,
+  `maximize the firefox window`, `restore firefox`, and `close the firefox
+  window` while staying inside typed `windows.minimize`, `windows.maximize`,
+  `windows.restore`, and confirmation-gated `windows.close` actions. Ambiguous
+  phrasing such as `close firefox` stays unmatched rather than guessing between
+  closing a window and quitting an app. These commands are implemented and unit
+  tested but stay outside the release-verified subset until live Fedora KDE
+  Wayland evidence is captured
 
 Non-goals:
 
