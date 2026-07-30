@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Removed an inaccurate Linux integration-status entry that described legacy pre-rename install detection and a `scripts/migrate_legacy_install.sh` migration path as shipped behavior; no such script or legacy-detection code has ever existed in the repo.
+- Expanded the command-authoring guide with the full set of source touchpoints measured from the most recent new tool, including executor dispatch, mock adapter behavior, plan preview text, and supported-command usage patterns, plus the per-tool safety metadata and confirmation-preview helpers that live outside `ToolSpec`.
 - Added explicit safe `files.copy` support for Desktop entries to known folders such as Documents, with deterministic grammar, validation, no-overwrite adapter behavior, undo cleanup, planner/MCP schemas, supported-command promotion, and controlled live-smoke coverage.
 - Added contextual file-copy follow-ups such as `copy the first one to documents` after file discovery results, reusing typed `files.copy`, known-folder validation, no-overwrite adapter behavior, and transcript-file smoke coverage.
 - Recorded selected-file copy from the active file manager as deferred until a provider can expose a reliable typed selected-file capability without shortcut simulation, clipboard scraping, or app-specific guesses.

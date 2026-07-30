@@ -20,21 +20,49 @@ skill pack instead of changing core code. See [skill-packs.md](skill-packs.md).
    command represents a genuinely new shared capability.
 2. Register the tool in `src/operance/registry.py` with description, schema,
    examples, risk tier, confirmation requirement, side effects, and validation.
-3. Update deterministic intent parsing only when the phrase should work without
-   local AI planner fallback.
+3. Update deterministic intent parsing in `src/operance/intent/deterministic.py`
+   only when the phrase should work without local AI planner fallback.
 4. Add or extend the adapter protocol in `src/operance/adapters/base.py` only if
    the existing adapter SDK does not already expose the needed execution method.
 5. Add the tool-to-adapter contract in `src/operance/adapters/conformance.py`.
 6. Implement the current Linux behavior in `src/operance/adapters/linux.py`, or
    keep it blocked/unverified if it is not live-tested yet.
-7. Update the active platform provider in `src/operance/platforms/` with
-   blockers, setup guidance, and release-verification status.
-8. Add unit tests for validation, planner parsing if relevant, executor/adapter
-   dispatch, provider availability, and user-facing command discovery.
-9. Add live smoke coverage before promoting the command into the release-verified
-   subset.
-10. Update `README.md`, `docs/requirements/linux.md`, and `CHANGELOG.md` only
-    when the behavior is runnable and tested now.
+7. Implement the developer-mode behavior in `src/operance/adapters/mock.py` so
+   simulated runs and tests exercise the same contract.
+8. Add executor dispatch in `src/operance/executor.py` so the typed action
+   reaches the adapter method.
+9. Add the confirmation/plan preview string in `src/operance/planner/preview.py`.
+10. Add the user-facing usage pattern in `src/operance/supported_commands.py` so
+    the command renders correctly in help and catalog output.
+11. Update the active platform provider in `src/operance/platforms/` with
+    blockers, setup guidance, and release-verification status.
+12. Add unit tests for validation, planner parsing if relevant, executor/adapter
+    dispatch, provider availability, and user-facing command discovery.
+13. Add live smoke coverage before promoting the command into the release-verified
+    subset.
+14. Update `README.md`, `docs/requirements/linux.md`, and `CHANGELOG.md` only
+    when the behavior is runnable and tested now. Behavior changes also need
+    `docs/specs/` evidence; see the spec/doc sync check below.
+
+Steps 1-11 are the source touchpoints measured from the most recent new tool
+(`files.copy`). Adding a tool that needs all of them touches roughly 11 source
+files plus tests and docs, so prefer a skill pack whenever the behavior maps to
+an existing typed action.
+
+## Safety Metadata Outside ToolSpec
+
+Two per-tool safety behaviors live in `src/operance/registry.py` rather than in
+the `ToolSpec` entry, so they are easy to miss:
+
+- `derive_action_safety_metadata` applies argument-dependent risk escalation and
+  can force confirmation even when the spec does not require it. Check whether
+  the new command needs an entry.
+- `describe_undo_behavior` supplies the rollback hint shown in confirmation
+  metadata. Add a case when the command is undoable.
+
+Confirmation previews also read `_affected_resources` in
+`src/operance/confirmation.py`. Any command that can reach a confirmation prompt
+needs an entry there, or its preview will list no affected resources.
 
 ## Planner Boundary
 
