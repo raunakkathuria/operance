@@ -147,6 +147,18 @@ When adding a provider or adapter:
 - do not add a tool to `release_verified_tools` unless its adapter contract
   exists and the platform-specific live behavior has been tested
 
+A provider without a native adapter must return
+`build_blocked_adapter_set(blocker=...)` from `src/operance/adapters/blocked.py`
+rather than the mock adapter set. The mock adapters exist for explicit
+developer-mode simulation; returning them from a real provider would report
+simulated success for commands the host cannot actually run. A blocked adapter
+still exposes the adapter method surface, so `--adapter-conformance` can report
+the contract, but every call fails with the provider's blocker message.
+
+Once a native adapter exists, swap `build_adapters` to the real adapter set and
+promote tools into `release_verified_tools` only as their live behavior is
+tested.
+
 ## 7. Practical example
 
 For the scaffolded Windows backend:

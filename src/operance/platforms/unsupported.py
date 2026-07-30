@@ -7,13 +7,19 @@ import platform
 from dataclasses import dataclass
 
 from ..adapters.base import AdapterSet
-from ..adapters.mock import build_mock_adapter_set
+from ..adapters.blocked import build_blocked_adapter_set
 from ..models.actions import ToolName
 from .base import (
     CheckMetadata,
     PlatformSetupAction,
     PlatformSetupBlockedRecommendation,
     PlatformSetupNextStep,
+)
+
+
+UNSUPPORTED_ADAPTER_BLOCKER = (
+    "This platform has no Operance desktop adapter, so live desktop commands "
+    "are blocked. Fedora KDE Plasma Wayland is the current supported target."
 )
 
 
@@ -37,7 +43,7 @@ class UnsupportedPlatformProvider:
     release_verified_tools: frozenset[ToolName] = frozenset()
 
     def build_adapters(self, config) -> AdapterSet:
-        return build_mock_adapter_set(desktop_dir=config.paths.desktop_dir)
+        return build_blocked_adapter_set(blocker=UNSUPPORTED_ADAPTER_BLOCKER)
 
     def build_environment_checks(self) -> list[dict[str, object]]:
         session_type = os.environ.get("XDG_SESSION_TYPE")
