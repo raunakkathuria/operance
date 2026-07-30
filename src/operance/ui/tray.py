@@ -44,7 +44,6 @@ from ..public_beta import build_beta_feedback_guide
 from ..release_channel import build_release_update_status
 from ..status import StatusSnapshot
 from ..stt import SpeechTranscriber, build_default_speech_transcriber
-from ..spoken_response import build_spoken_response_text
 from ..skills import build_skill_library_from_paths
 from ..support_bundle import write_support_bundle_artifact
 from ..support_snapshot import build_support_snapshot, build_support_snapshot_help_text

@@ -122,8 +122,15 @@ Before opening a pull request, run:
 
 ```bash
 .venv/bin/python -m pytest
+.venv/bin/python -m ruff check src tests scripts
+.venv/bin/python -m mypy
 python3 scripts/check_spec_sync.py --base origin/main
 ```
+
+Lint and type checks run in CI and block on failure. Ruff is currently limited to
+bug-tier rules rather than style, and mypy carries an explicit per-module list of
+existing debt in `pyproject.toml`. That list may shrink, never grow: new modules
+and new code in already-clean modules must type-check.
 
 GitHub Actions also runs the same test suite plus minimal CLI smoke checks on
 pushes and pull requests through `.github/workflows/ci.yml`.

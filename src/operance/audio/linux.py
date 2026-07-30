@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import shutil
 import subprocess
-from typing import BinaryIO, Callable, Protocol
+from typing import BinaryIO, Callable, Iterable, Protocol
 
 from .capture import AudioFrame, AudioInputDevice
 

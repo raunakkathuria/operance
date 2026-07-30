@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 from .adapters.base import AdapterSet, FileEntryInfo
 from .adapters.conformance import ADAPTER_TOOL_CONTRACTS, AdapterToolContract
@@ -149,7 +150,7 @@ class ActionExecutor:
         if tool == ToolName.AUDIO_SET_VOLUME:
             adapter = self._require_adapter(self.adapters.audio, tool)
             previous_volume = adapter.get_volume()
-            message = adapter.set_volume(int(args["percent"]))
+            message = adapter.set_volume(int(str(args["percent"])))
             undo_token = self.undo_manager.register(
                 lambda: _undo_volume(adapter, previous_volume)
             )
@@ -393,7 +394,16 @@ class ActionExecutor:
         return ActionResultItem(tool=tool, status="success", message=message)
 
     @staticmethod
-    def _require_adapter(adapter: object | None, tool: ToolName) -> object:
+    def _require_adapter(adapter: object | None, tool: ToolName) -> Any:
+        """Return the adapter for a tool.
+
+        The result is intentionally ``Any``: the concrete adapter is chosen at
+        runtime from a nullable union of ten protocols, and which methods are
+        valid depends on the tool. ``--adapter-conformance`` and
+        ``tests/unit/test_registry_dispatch_coverage.py`` verify the methods
+        actually exist.
+        """
+
         if adapter is None:
             raise ValueError(f"missing adapter for {tool.value}")
         return adapter

@@ -72,7 +72,7 @@ def test_voice_loop_script_loads_optional_args_file(tmp_path: Path) -> None:
     result = _run_voice_loop_script("--dry-run", "--args-file", str(args_file))
 
     assert result.stdout.splitlines() == [
-        f"+ .venv/bin/python -m operance.cli --voice-loop --wakeword-model /tmp/operance.onnx --voice-loop-max-commands 2",
+        "+ .venv/bin/python -m operance.cli --voice-loop --wakeword-model /tmp/operance.onnx --voice-loop-max-commands 2",
     ]
     assert result.stderr == ""
 

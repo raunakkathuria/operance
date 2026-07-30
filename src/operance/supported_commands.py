@@ -147,7 +147,6 @@ def build_supported_command_help_text(catalog: dict[str, object]) -> dict[str, o
         skill_packs = []
 
     available_count = _int_value(summary.get("available_commands"))
-    unverified_count = _int_value(summary.get("unverified_commands"))
     blocked_count = _int_value(summary.get("blocked_commands"))
     confirmation_count = _int_value(summary.get("confirmation_gated_commands"))
 

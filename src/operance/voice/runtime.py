@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime
 import json
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Mapping
 
 from ..config import AppConfig
 from ..models.base import SerializableModel, utc_now
