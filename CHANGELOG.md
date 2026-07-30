@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Moved host service-manager commands behind the platform provider, so installed smoke, support-bundle log capture, tray voice-loop controls, and the voice-loop config helper no longer build `systemctl`, `journalctl`, or shell argv inside shared modules. Services are addressed semantically and providers translate them into native unit names, with an explicit unsupported-platform message when a host has no service manager. The architecture boundary test now rejects service-manager argv in shared modules.
+
 - Fixed platforms without a native desktop adapter reporting simulated success for live desktop commands. Windows, macOS, and unsupported-host providers now build a blocked adapter set instead of the developer-mode mock adapters, so commands fail with the platform's real blocker message through both the daemon and MCP paths. Linux behavior and explicit developer-mode simulation are unchanged.
 - Removed an inaccurate Linux integration-status entry that described legacy pre-rename install detection and a `scripts/migrate_legacy_install.sh` migration path as shipped behavior; no such script or legacy-detection code has ever existed in the repo.
 - Expanded the command-authoring guide with the full set of source touchpoints measured from the most recent new tool, including executor dispatch, mock adapter behavior, plan preview text, and supported-command usage patterns, plus the per-tool safety metadata and confirmation-preview helpers that live outside `ToolSpec`.

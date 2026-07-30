@@ -147,6 +147,22 @@ When adding a provider or adapter:
 - do not add a tool to `release_verified_tools` unless its adapter contract
   exists and the platform-specific live behavior has been tested
 
+Host service management is provider-owned. Shared modules must not build native
+service-manager argv such as `systemctl` or `journalctl`; they ask the provider
+for a command and execute whatever it declares:
+
+- `host_service_state_command(service)` for service inspection
+- `host_service_control_command(service, action=...)` for enable/start/stop/disable
+- `host_service_log_targets(lines=...)` for log capture, including the log name
+- `voice_loop_config_update_command(...)` for the voice-loop config helper
+
+Services are named semantically (`HOST_SERVICE_TRAY`, `HOST_SERVICE_VOICE_LOOP`),
+and the provider translates them into native unit names. A provider with no host
+service manager returns `None` (or an empty tuple of log targets), and shared
+callers degrade with an explicit message instead of failing.
+`tests/unit/test_architecture_boundaries.py` enforces this by rejecting
+service-manager argv literals in shared modules.
+
 A provider without a native adapter must return
 `build_blocked_adapter_set(blocker=...)` from `src/operance/adapters/blocked.py`
 rather than the mock adapter set. The mock adapters exist for explicit

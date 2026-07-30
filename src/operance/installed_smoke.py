@@ -9,6 +9,8 @@ from typing import Any, Mapping
 
 from .config import AppConfig
 from .doctor import build_environment_report
+from .platforms import get_platform_provider
+from .platforms.base import HOST_SERVICE_TRAY
 from .project_info import build_project_identity
 
 
@@ -61,19 +63,23 @@ class InstalledSmokeResult:
 def build_installed_smoke_result(
     *,
     command: str = "operance",
-    systemctl_command: str = "systemctl",
+    systemctl_command: str | None = None,
     desktop_entry_path: Path = DEFAULT_DESKTOP_ENTRY_PATH,
     tray_unit_path: Path = DEFAULT_TRAY_UNIT_PATH,
     voice_loop_unit_path: Path = DEFAULT_VOICE_LOOP_UNIT_PATH,
     env: Mapping[str, str] | None = None,
     report: dict[str, object] | None = None,
     config: AppConfig | None = None,
+    system_name: str | None = None,
 ) -> InstalledSmokeResult:
     config = AppConfig.from_env(env) if config is None else config
     report = build_environment_report() if report is None else report
     build_identity = build_project_identity()
     checks_by_name = _checks_by_name(report)
-    tray_service = _tray_service_properties(command=command, systemctl_command=systemctl_command)
+    tray_service = _tray_service_properties(
+        command=command,
+        service_command=_tray_service_state_command(systemctl_command, system_name=system_name),
+    )
 
     checks: list[InstalledSmokeCheck] = [
         _build_identity_check(build_identity),
@@ -201,23 +207,37 @@ def _required_doctor_checks(checks_by_name: dict[str, dict[str, Any]]) -> list[I
     return checks
 
 
-def _tray_service_properties(*, command: str, systemctl_command: str) -> dict[str, object]:
+def _tray_service_state_command(
+    service_binary: str | None,
+    *,
+    system_name: str | None = None,
+) -> tuple[str, ...] | None:
+    """Resolve the provider's tray service-state command, honouring a binary override."""
+
+    provider = get_platform_provider(system_name=system_name)
+    provider_command = provider.host_service_state_command(HOST_SERVICE_TRAY)
+    if provider_command is None:
+        return None
+    if service_binary is None:
+        return provider_command
+    return (service_binary, *provider_command[1:])
+
+
+def _tray_service_properties(
+    *,
+    command: str,
+    service_command: tuple[str, ...] | None,
+) -> dict[str, object]:
+    if service_command is None:
+        return {
+            "inspectable": False,
+            "command": None,
+            "error": "this platform has no host service manager",
+        }
+    service_binary = service_command[0]
     try:
         completed = subprocess.run(
-            [
-                systemctl_command,
-                "--user",
-                "show",
-                "operance-tray.service",
-                "-p",
-                "LoadState",
-                "-p",
-                "ActiveState",
-                "-p",
-                "FragmentPath",
-                "-p",
-                "ExecStart",
-            ],
+            list(service_command),
             capture_output=True,
             check=False,
             text=True,
@@ -225,13 +245,13 @@ def _tray_service_properties(*, command: str, systemctl_command: str) -> dict[st
     except FileNotFoundError:
         return {
             "inspectable": False,
-            "command": systemctl_command,
-            "error": f"{systemctl_command} not found",
+            "command": service_binary,
+            "error": f"{service_binary} not found",
         }
     if completed.returncode != 0:
         return {
             "inspectable": False,
-            "command": systemctl_command,
+            "command": service_binary,
             "error": _command_detail(completed),
         }
 
@@ -243,7 +263,7 @@ def _tray_service_properties(*, command: str, systemctl_command: str) -> dict[st
 
     return {
         "inspectable": True,
-        "command": systemctl_command,
+        "command": service_binary,
         "expected_command": command,
         "load_state": properties.get("LoadState") or "unknown",
         "active_state": properties.get("ActiveState") or "unknown",

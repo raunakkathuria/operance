@@ -12,6 +12,7 @@ from typing import Mapping
 
 from .config import AppConfig
 from .feedback import build_issue_report_draft
+from .platforms import get_platform_provider
 from .project_info import build_project_identity, project_version
 from .support_snapshot import (
     build_support_snapshot,
@@ -21,10 +22,6 @@ from .support_snapshot import (
 from .voice.runtime import build_voice_loop_runtime_status_snapshot
 
 _DEFAULT_SERVICE_LOG_LINES = 100
-_SUPPORT_BUNDLE_UNITS = (
-    "operance-tray.service",
-    "operance-voice-loop.service",
-)
 
 
 def write_support_bundle_artifact(
@@ -35,6 +32,7 @@ def write_support_bundle_artifact(
     home_dir: str | None = None,
     now: datetime | None = None,
     service_log_lines: int = _DEFAULT_SERVICE_LOG_LINES,
+    system_name: str | None = None,
 ) -> dict[str, object]:
     config = AppConfig.from_env(env)
     timestamp = now if now is not None else datetime.now(timezone.utc)
@@ -60,8 +58,11 @@ def write_support_bundle_artifact(
     }
     warnings: list[str] = []
 
-    for unit_name in _SUPPORT_BUNDLE_UNITS:
-        log_text, warning = _read_user_service_log(unit_name, lines=service_log_lines)
+    for target in get_platform_provider(system_name=system_name).host_service_log_targets(
+        lines=service_log_lines
+    ):
+        unit_name = target.name
+        log_text, warning = _read_user_service_log(unit_name, command=target.command)
         if log_text is not None:
             if redact:
                 log_text = str(redact_support_snapshot(log_text, home_dir=normalized_home))
@@ -121,19 +122,14 @@ def _text_bytes(payload: str) -> bytes:
     return text.encode("utf-8")
 
 
-def _read_user_service_log(unit_name: str, *, lines: int = _DEFAULT_SERVICE_LOG_LINES) -> tuple[str | None, str | None]:
-    command = [
-        "journalctl",
-        "--user",
-        "--unit",
-        unit_name,
-        "-n",
-        str(lines),
-        "--no-pager",
-    ]
+def _read_user_service_log(
+    unit_name: str,
+    *,
+    command: tuple[str, ...],
+) -> tuple[str | None, str | None]:
     try:
         completed = subprocess.run(
-            command,
+            list(command),
             capture_output=True,
             check=False,
             text=True,
@@ -145,7 +141,7 @@ def _read_user_service_log(unit_name: str, *, lines: int = _DEFAULT_SERVICE_LOG_
     stdout = completed.stdout.strip()
     stderr = completed.stderr.strip()
     if completed.returncode != 0:
-        message = stderr or stdout or f"journalctl exited with status {completed.returncode}"
+        message = stderr or stdout or f"{command[0]} exited with status {completed.returncode}"
         return None, message
     if not stdout:
         return None, "no journal output"

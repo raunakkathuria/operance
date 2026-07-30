@@ -1277,6 +1277,12 @@ def test_tray_controller_can_start_voice_loop_service(monkeypatch, tmp_path: Pat
     from operance.ui import TrayController
 
     monkeypatch.setattr("operance.ui.tray.build_project_identity", lambda: {"install_mode": "packaged"})
+    from operance.platforms import get_platform_provider as _real_provider
+
+    monkeypatch.setattr(
+        "operance.ui.tray.get_platform_provider",
+        lambda *args, **kwargs: _real_provider(system_name="Linux"),
+    )
     daemon = OperanceDaemon.build_default(
         {
             "OPERANCE_DATA_DIR": str(tmp_path / "data"),
@@ -1376,6 +1382,12 @@ def test_tray_controller_can_stop_voice_loop_service(monkeypatch, tmp_path: Path
     from operance.ui import TrayController
 
     monkeypatch.setattr("operance.ui.tray.build_project_identity", lambda: {"install_mode": "packaged"})
+    from operance.platforms import get_platform_provider as _real_provider
+
+    monkeypatch.setattr(
+        "operance.ui.tray.get_platform_provider",
+        lambda *args, **kwargs: _real_provider(system_name="Linux"),
+    )
     daemon = OperanceDaemon.build_default(
         {
             "OPERANCE_DATA_DIR": str(tmp_path / "data"),

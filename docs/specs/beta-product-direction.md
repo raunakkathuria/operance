@@ -104,6 +104,7 @@ Platform providers under `src/operance/platforms/` own:
 - setup metadata and actions
 - release-verified command policy
 - platform-specific blockers and next steps
+- host service-manager commands for service state, control, and log capture
 
 Adapters under `src/operance/adapters/` own:
 

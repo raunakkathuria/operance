@@ -5,12 +5,14 @@ from __future__ import annotations
 import os
 import platform
 from dataclasses import dataclass
+from pathlib import Path
 
 from ..adapters.base import AdapterSet
 from ..adapters.blocked import build_blocked_adapter_set
 from ..models.actions import ToolName
 from .base import (
     CheckMetadata,
+    HostServiceLogTarget,
     PlatformSetupAction,
     PlatformSetupBlockedRecommendation,
     PlatformSetupNextStep,
@@ -116,4 +118,26 @@ class UnsupportedPlatformProvider:
         tool: ToolName,
         steps_by_name: dict[str, object],
     ) -> str | None:
+        return None
+
+    def host_service_state_command(self, service: str) -> tuple[str, ...] | None:
+        return None
+
+    def host_service_control_command(
+        self,
+        service: str,
+        *,
+        action: str,
+    ) -> tuple[str, ...] | None:
+        return None
+
+    def host_service_log_targets(self, *, lines: int) -> tuple[HostServiceLogTarget, ...]:
+        return ()
+
+    def voice_loop_config_update_command(
+        self,
+        *,
+        wakeword_threshold: float,
+        repo_root: Path,
+    ) -> tuple[str, ...] | None:
         return None
