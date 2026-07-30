@@ -2715,6 +2715,13 @@ def test_cli_wakeword_calibration_can_apply_suggested_threshold(monkeypatch, cap
             "suggested_threshold": 0.83,
         }
 
+    from operance.platforms import get_platform_provider as _real_provider
+
+    monkeypatch.setattr(
+        "operance.cli.get_platform_provider",
+        lambda *args, **kwargs: _real_provider(system_name="Linux"),
+    )
+
     def fake_subprocess_run(argv, **kwargs):
         assert argv == [
             "bash",
@@ -2753,6 +2760,13 @@ def test_cli_wakeword_calibration_fails_when_threshold_update_fails(monkeypatch,
             "base_threshold": base_threshold,
             "suggested_threshold": 0.91,
         }
+
+    from operance.platforms import get_platform_provider as _real_provider
+
+    monkeypatch.setattr(
+        "operance.cli.get_platform_provider",
+        lambda *args, **kwargs: _real_provider(system_name="Linux"),
+    )
 
     def fake_subprocess_run(argv, **kwargs):
         return subprocess.CompletedProcess(argv, 1, stdout="", stderr="permission denied\n")

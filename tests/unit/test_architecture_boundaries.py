@@ -26,6 +26,26 @@ FORBIDDEN_CONCRETE_ADAPTER_IMPORTS = {
     "operance.adapters.darwin",
 }
 
+# Shared modules must not execute host service managers directly. Providers own
+# the native command; these modules may only run provider-declared argv.
+HOST_SERVICE_COMMAND_FREE_PATHS = (
+    "src/operance/installed_smoke.py",
+    "src/operance/support_bundle.py",
+    "src/operance/support_snapshot.py",
+    "src/operance/cli.py",
+    "src/operance/ui/tray.py",
+    "src/operance/ui/setup.py",
+    "src/operance/daemon.py",
+    "src/operance/supported_commands.py",
+)
+
+FORBIDDEN_HOST_SERVICE_BINARIES = {
+    "systemctl",
+    "journalctl",
+    "launchctl",
+    "sc.exe",
+}
+
 
 def test_shared_doctor_does_not_own_linux_host_probes() -> None:
     root = Path(__file__).resolve().parents[2]
@@ -74,6 +94,29 @@ def test_adapter_conformance_module_stays_platform_neutral() -> None:
         imported_module = _imported_module_name(node)
         if imported_module in FORBIDDEN_CONCRETE_ADAPTER_IMPORTS:
             offenders.append(f"{conformance_path.relative_to(root)}:{node.lineno} imports {imported_module}")
+
+    assert offenders == []
+
+
+def test_shared_modules_do_not_build_host_service_command_argv() -> None:
+    root = Path(__file__).resolve().parents[2]
+    offenders: list[str] = []
+
+    for relative_path in HOST_SERVICE_COMMAND_FREE_PATHS:
+        source_file = root / relative_path
+        tree = ast.parse(source_file.read_text(encoding="utf-8"), filename=str(source_file))
+        for node in ast.walk(tree):
+            if not isinstance(node, (ast.List, ast.Tuple)):
+                continue
+            if not node.elts:
+                continue
+            first = node.elts[0]
+            if not isinstance(first, ast.Constant) or not isinstance(first.value, str):
+                continue
+            if first.value in FORBIDDEN_HOST_SERVICE_BINARIES:
+                offenders.append(
+                    f"{source_file.relative_to(root)}:{node.lineno} builds {first.value} argv"
+                )
 
     assert offenders == []
 

@@ -9,6 +9,8 @@ from ..adapters.base import AdapterSet
 from ..models.actions import ToolName
 
 if False:  # pragma: no cover
+    from pathlib import Path
+
     from ..config import AppConfig
 
 
@@ -42,6 +44,20 @@ class PlatformSetupBlockedRecommendation:
 class PlatformSetupNextStep:
     label: str
     command: str
+
+
+@dataclass(slots=True, frozen=True)
+class HostServiceLogTarget:
+    """One host-service log source, named by the provider that owns it."""
+
+    name: str
+    command: tuple[str, ...]
+
+
+# Semantic host-service identifiers. Providers translate these into native
+# service names; shared modules must not use native unit names directly.
+HOST_SERVICE_TRAY = "tray"
+HOST_SERVICE_VOICE_LOOP = "voice_loop"
 
 
 class PlatformProvider(Protocol):
@@ -98,3 +114,21 @@ class PlatformProvider(Protocol):
         tool: ToolName,
         steps_by_name: Mapping[str, object],
     ) -> str | None: ...
+
+    def host_service_state_command(self, service: str) -> tuple[str, ...] | None: ...
+
+    def host_service_control_command(
+        self,
+        service: str,
+        *,
+        action: str,
+    ) -> tuple[str, ...] | None: ...
+
+    def host_service_log_targets(self, *, lines: int) -> tuple[HostServiceLogTarget, ...]: ...
+
+    def voice_loop_config_update_command(
+        self,
+        *,
+        wakeword_threshold: float,
+        repo_root: "Path",
+    ) -> tuple[str, ...] | None: ...

@@ -52,7 +52,7 @@ def test_write_support_bundle_artifact_writes_expected_archive(monkeypatch, tmp_
     )
     monkeypatch.setattr(
         "operance.support_bundle._read_user_service_log",
-        lambda unit_name, *, lines=100: (
+        lambda unit_name, *, command=(): (
             f"{unit_name} /home/test/.config/operance/runtime.log",
             None,
         ),
@@ -73,6 +73,7 @@ def test_write_support_bundle_artifact_writes_expected_archive(monkeypatch, tmp_
         output_path=tmp_path / "operance-support.tar.gz",
         env={"OPERANCE_DATA_DIR": str(tmp_path)},
         home_dir="/home/test",
+        system_name="Linux",
     )
 
     members = _read_bundle_members(tmp_path / "operance-support.tar.gz")
@@ -138,7 +139,7 @@ def test_write_support_bundle_artifact_records_log_warnings(monkeypatch, tmp_pat
         },
     )
 
-    def _read_log(unit_name: str, *, lines: int = 100) -> tuple[str | None, str | None]:
+    def _read_log(unit_name: str, *, command: tuple[str, ...]) -> tuple[str | None, str | None]:
         if unit_name == "operance-tray.service":
             return None, "journalctl unavailable"
         return "voice-loop ok", None
@@ -148,6 +149,7 @@ def test_write_support_bundle_artifact_records_log_warnings(monkeypatch, tmp_pat
     result = write_support_bundle_artifact(
         output_path=tmp_path / "operance-support.tar.gz",
         env={"OPERANCE_DATA_DIR": str(tmp_path)},
+        system_name="Linux",
     )
 
     members = _read_bundle_members(tmp_path / "operance-support.tar.gz")
@@ -188,7 +190,7 @@ def test_write_support_bundle_artifact_uses_versioned_default_filename(monkeypat
     monkeypatch.setattr("operance.support_bundle.project_version", lambda: "1.2.3")
     monkeypatch.setattr(
         "operance.support_bundle._read_user_service_log",
-        lambda unit_name, *, lines=100: (None, "no journal output"),
+        lambda unit_name, *, command=(): (None, "no journal output"),
     )
 
     result = write_support_bundle_artifact(

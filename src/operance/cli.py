@@ -24,6 +24,7 @@ from .config import AppConfig
 from .corpus import run_default_corpus
 from .daemon import OperanceDaemon
 from .doctor import build_environment_report
+from .platforms import get_platform_provider
 from .feedback import build_issue_report_draft
 from .installed_smoke import build_installed_smoke_result
 from .local_ai_coach import build_local_ai_coach
@@ -295,7 +296,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--installed-smoke-systemctl-command",
-        default="systemctl",
+        default=None,
         help=argparse.SUPPRESS,
     )
     parser.add_argument("--replay-file", help="Run a JSONL transcript replay fixture")
@@ -1579,13 +1580,20 @@ def _build_voice_loop_threshold_update_command(threshold: float) -> str:
 
 def _apply_voice_loop_threshold_update(threshold: float) -> dict[str, object]:
     repo_root = Path(__file__).resolve().parents[2]
+    update_command = get_platform_provider().voice_loop_config_update_command(
+        wakeword_threshold=threshold,
+        repo_root=repo_root,
+    )
+    if update_command is None:
+        return {
+            "command": _build_voice_loop_threshold_update_command(threshold),
+            "returncode": None,
+            "status": "failed",
+            "stderr": "This platform does not support voice-loop config updates.",
+            "stdout": "",
+        }
     completed = subprocess.run(
-        [
-            "bash",
-            str(repo_root / "scripts" / "update_voice_loop_user_config.sh"),
-            "--wakeword-threshold",
-            str(threshold),
-        ],
+        list(update_command),
         capture_output=True,
         check=False,
         cwd=repo_root,

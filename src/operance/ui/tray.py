@@ -31,6 +31,8 @@ from ..installed_smoke import (
 )
 from ..local_ai_coach import build_local_ai_coach
 from ..models.events import RuntimeState
+from ..platforms import get_platform_provider
+from ..platforms.base import HOST_SERVICE_VOICE_LOOP
 from ..planner import (
     DEFAULT_PLANNER_READINESS_TRANSCRIPT,
     PlannerServiceClient,
@@ -2131,16 +2133,30 @@ def _voice_loop_uses_experimental_sound_trigger(
 
 
 def _run_voice_loop_service_control(action: str) -> SetupRunResult:
-    systemctl_args = ["systemctl", "--user", action]
-    command_parts = ["systemctl", "--user", action]
-    if action in {"enable", "disable"}:
-        systemctl_args.append("--now")
-        command_parts.append("--now")
-    systemctl_args.append("operance-voice-loop.service")
-    command_parts.append("operance-voice-loop.service")
-    command = " ".join(command_parts)
+    action_id_by_action = {
+        "enable": "enable_voice_loop_service",
+        "start": "start_voice_loop_service",
+        "stop": "stop_voice_loop_service",
+        "disable": "disable_voice_loop_service",
+    }
+    service_command = get_platform_provider().host_service_control_command(
+        HOST_SERVICE_VOICE_LOOP,
+        action=action,
+    )
+    if service_command is None:
+        return SetupRunResult(
+            action_id=action_id_by_action.get(action, f"{action}_voice_loop_service"),
+            label=f"{action.capitalize()} voice-loop user service",
+            command="",
+            status="failed",
+            returncode=None,
+            stdout=None,
+            stderr="This platform has no host service manager for the voice loop.",
+            dry_run=False,
+        )
+    command = " ".join(service_command)
     completed = subprocess.run(
-        systemctl_args,
+        list(service_command),
         capture_output=True,
         check=False,
         text=True,

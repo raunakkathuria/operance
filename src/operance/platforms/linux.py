@@ -16,7 +16,10 @@ from ..adapters.linux import build_linux_adapter_set
 from ..models.actions import ToolName
 from ..project_info import project_version
 from .base import (
+    HOST_SERVICE_TRAY,
+    HOST_SERVICE_VOICE_LOOP,
     CheckMetadata,
+    HostServiceLogTarget,
     PlatformSetupAction,
     PlatformSetupBlockedRecommendation,
     PlatformSetupNextStep,
@@ -155,6 +158,16 @@ _SETUP_CHECK_LABELS = {
     "planner_runtime_enabled": "Planner runtime enabled",
     "planner_endpoint_healthy": "Planner endpoint health",
 }
+
+
+_HOST_SERVICE_UNITS = {
+    HOST_SERVICE_TRAY: "operance-tray.service",
+    HOST_SERVICE_VOICE_LOOP: "operance-voice-loop.service",
+}
+
+_HOST_SERVICE_STATE_PROPERTIES = ("LoadState", "ActiveState", "FragmentPath", "ExecStart")
+
+_HOST_SERVICE_CONTROL_ACTIONS_WITH_NOW = frozenset({"enable", "disable"})
 
 
 @dataclass(slots=True, frozen=True)
@@ -655,6 +668,50 @@ class LinuxKdeWaylandPlatformProvider:
         if tool in file_tools:
             return _first_recommended(steps_by_name, "linux_platform")
         return _first_recommended(steps_by_name, "linux_platform")
+
+    def host_service_state_command(self, service: str) -> tuple[str, ...] | None:
+        unit = _HOST_SERVICE_UNITS.get(service)
+        if unit is None:
+            return None
+        properties: list[str] = []
+        for name in _HOST_SERVICE_STATE_PROPERTIES:
+            properties.extend(("-p", name))
+        return ("systemctl", "--user", "show", unit, *properties)
+
+    def host_service_control_command(
+        self,
+        service: str,
+        *,
+        action: str,
+    ) -> tuple[str, ...] | None:
+        unit = _HOST_SERVICE_UNITS.get(service)
+        if unit is None:
+            return None
+        if action in _HOST_SERVICE_CONTROL_ACTIONS_WITH_NOW:
+            return ("systemctl", "--user", action, "--now", unit)
+        return ("systemctl", "--user", action, unit)
+
+    def host_service_log_targets(self, *, lines: int) -> tuple[HostServiceLogTarget, ...]:
+        return tuple(
+            HostServiceLogTarget(
+                name=unit,
+                command=("journalctl", "--user", "--unit", unit, "-n", str(lines), "--no-pager"),
+            )
+            for unit in _HOST_SERVICE_UNITS.values()
+        )
+
+    def voice_loop_config_update_command(
+        self,
+        *,
+        wakeword_threshold: float,
+        repo_root: Path,
+    ) -> tuple[str, ...] | None:
+        return (
+            "bash",
+            str(repo_root / "scripts" / "update_voice_loop_user_config.sh"),
+            "--wakeword-threshold",
+            str(wakeword_threshold),
+        )
 
 
 def _blockers_for(

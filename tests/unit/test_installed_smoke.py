@@ -64,6 +64,7 @@ def test_installed_smoke_passes_for_packaged_active_tray_service(monkeypatch, tm
         voice_loop_unit_path=voice_loop_unit,
         config=_live_config(),
         report=_report(),
+        system_name="Linux",
     )
 
     payload = result.to_dict()
@@ -100,6 +101,7 @@ def test_installed_smoke_fails_for_developer_mode_and_missing_runtime(tmp_path: 
         config=AppConfig.from_env({"OPERANCE_DEVELOPER_MODE": "1"}),
         report=_report(stt_status="warn"),
         systemctl_command="/missing/systemctl",
+        system_name="Linux",
     )
 
     payload = result.to_dict()
@@ -141,6 +143,7 @@ def test_installed_smoke_warns_when_tray_service_is_inactive(monkeypatch, tmp_pa
         voice_loop_unit_path=voice_loop_unit,
         config=_live_config(),
         report=_report(),
+        system_name="Linux",
     )
 
     assert result.status == "warn"
@@ -181,6 +184,7 @@ def test_installed_smoke_fails_when_user_unit_shadows_packaged_service(monkeypat
         voice_loop_unit_path=voice_loop_unit,
         config=_live_config(),
         report=_report(),
+        system_name="Linux",
     )
 
     payload = result.to_dict()
