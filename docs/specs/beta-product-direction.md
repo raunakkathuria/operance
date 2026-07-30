@@ -49,7 +49,9 @@ Supported user-facing contract:
 Current non-claims:
 
 - No broad Linux desktop support beyond the current verified target.
-- No live Windows or macOS support yet.
+- No live Windows or macOS support yet. Providers without a native adapter block
+  live desktop commands with an explicit platform blocker instead of reporting
+  simulated success, so the runtime agrees with the supported-command catalog.
 - No arbitrary shell execution in the normal path.
 - No autonomous execution that bypasses confirmation gates.
 - No marketplace or hosted service in the current repo scope.

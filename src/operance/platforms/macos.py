@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import Mapping
 
 from ..adapters.base import AdapterSet
-from ..adapters.mock import build_mock_adapter_set
+from ..adapters.blocked import build_blocked_adapter_set
 from ..models.actions import ToolName
 from .base import (
     CheckMetadata,
@@ -16,6 +16,11 @@ from .base import (
     PlatformSetupNextStep,
 )
 
+
+MACOS_ADAPTER_BLOCKER = (
+    "macOS desktop adapter is not implemented yet, so live desktop commands "
+    "are blocked on this platform."
+)
 
 MACOS_CHECK_METADATA = (
     CheckMetadata("macos_platform", "macOS platform", required_for_local_runtime=True),
@@ -36,7 +41,7 @@ class MacOSDesktopPlatformProvider:
     release_verified_tools: frozenset[ToolName] = frozenset()
 
     def build_adapters(self, config) -> AdapterSet:
-        return build_mock_adapter_set(desktop_dir=config.paths.desktop_dir)
+        return build_blocked_adapter_set(blocker=MACOS_ADAPTER_BLOCKER)
 
     def build_environment_checks(self) -> list[dict[str, object]]:
         system_name = platform.system()
