@@ -40,6 +40,23 @@ jobs:
           python -m operance.cli --print-config > /dev/null
           python -m operance.cli --supported-commands > /dev/null
 
+  spec-sync:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source with full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check spec and documentation sync
+        run: python3 scripts/check_spec_sync.py --base "${{ github.event.pull_request.base.sha }}"
+
   packaging-smoke:
     runs-on: ubuntu-latest
     steps:
