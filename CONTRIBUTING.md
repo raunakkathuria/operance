@@ -127,6 +127,17 @@ Before opening a pull request, run:
 python3 scripts/check_spec_sync.py --base origin/main
 ```
 
+If you are changing packaging or release scripts, validate the Fedora path from
+any host, including macOS:
+
+```bash
+bash scripts/run_fedora_container_smoke.sh
+```
+
+`docs/contributing/development-environments.md` explains which verification
+belongs on your own machine, in a Fedora container, and in a Fedora KDE virtual
+machine, and why session-dependent behavior cannot be checked headless.
+
 Lint and type checks run in CI and block on failure. Ruff is currently limited to
 bug-tier rules rather than style, and mypy carries an explicit per-module list of
 existing debt in `pyproject.toml`. That list may shrink, never grow: new modules

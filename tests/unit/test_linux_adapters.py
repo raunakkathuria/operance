@@ -1460,6 +1460,9 @@ def test_linux_files_adapter_lists_known_location_without_hidden_entries(tmp_pat
     commands: list[list[str]] = []
     adapter = LinuxFilesAdapter(
         desktop_dir=desktop_dir,
+        # Resolve the helper explicitly so the test does not depend on
+        # xdg-user-dir being installed on whatever host runs the suite.
+        resolve_executable=lambda name: "/usr/bin/xdg-user-dir" if name == "xdg-user-dir" else None,
         run_command=lambda command: commands.append(command)
         or subprocess.CompletedProcess(command, 0, f"{downloads_dir}\n", ""),
     )
