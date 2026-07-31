@@ -226,6 +226,12 @@ Current accepted safe-command slice:
   results with phrases such as `copy it to documents` or `copy the first one to
   downloads`; they stay limited to known-folder source references and
   known-folder destinations
+- media control accepts common playback phrases such as `pause`, `play music`,
+  `next track`, and `previous song` while staying inside typed
+  `media.play_pause`, `media.next`, and `media.previous` actions. The Linux
+  adapter targets the active MPRIS player rather than any specific app. These
+  commands are implemented and unit tested but stay outside the release-verified
+  subset until live Fedora KDE Wayland evidence is captured
 - window management accepts natural phrasing such as `minimize firefox`,
   `maximize the firefox window`, `restore firefox`, and `close the firefox
   window` while staying inside typed `windows.minimize`, `windows.maximize`,

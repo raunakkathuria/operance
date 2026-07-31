@@ -133,6 +133,37 @@ The current non-goal is:
 - arbitrary third-party tool plugins
 - arbitrary external platform package discovery
 
+## 5a. Adapter protocol surface
+
+`src/operance/adapters/base.py` defines the protocols an OS backend implements.
+A new platform does not need all of them at once: implement the ones whose tools
+you intend to support, and leave the rest of the `AdapterSet` fields as `None`
+so those tools report as unavailable instead of pretending to work.
+
+- `AppsAdapter`: launch, focus, quit
+- `WindowsAdapter`: list, find, switch, minimize, maximize, restore, close, and
+  the fullscreen, keep-above, keep-below, shade, and all-desktops toggles
+- `TimeAdapter`: current time
+- `PowerAdapter`: battery status
+- `AudioAdapter`: volume get and set, mute get and set
+- `ClipboardAdapter`: clipboard text get, set, and clear
+- `TextInputAdapter`: copy selection, paste, type text, press key
+- `NetworkAdapter`: Wi-Fi status and toggle, disconnect, connect to a known SSID
+- `NotificationsAdapter`: show a notification
+- `MediaAdapter`: play or pause, next track, previous track
+- `FilesAdapter`: the desktop directory plus recent-file, known-folder, entry
+  metadata, and create, remove, rename, move, and copy operations
+
+`AdapterSet` in the same module holds one optional field per protocol.
+`src/operance/adapters/conformance.py` maps every tool to the adapter field and
+methods it needs, and `--adapter-conformance` reports which contracts a given
+adapter set satisfies.
+
+Tools whose execution is a single adapter call returning that call's message
+declare it on their contract with `AdapterCall`, so they need no executor branch.
+Tools that format results, register undo, or resolve filesystem paths keep
+explicit executor code.
+
 ## 6. Design constraints
 
 When adding a provider or adapter:

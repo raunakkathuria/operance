@@ -465,6 +465,39 @@ def build_default_action_registry() -> ActionRegistry:
             usage_pattern="show a notification saying <message>",
         )
     )
+
+    registry.register(
+        ToolSpec(
+            ToolName.MEDIA_PLAY_PAUSE,
+            "Toggle play or pause on the active media player",
+            example_transcripts=("pause", "play music", "resume music"),
+            risk_tier=RiskTier.TIER_1,
+            allowed_side_effects=("control_media_playback",),
+            usage_pattern="pause | play | pause music | resume music",
+        )
+    )
+
+    registry.register(
+        ToolSpec(
+            ToolName.MEDIA_NEXT,
+            "Skip to the next track on the active media player",
+            example_transcripts=("next track", "skip song"),
+            risk_tier=RiskTier.TIER_1,
+            allowed_side_effects=("control_media_playback",),
+            usage_pattern="next track | next song | skip song",
+        )
+    )
+
+    registry.register(
+        ToolSpec(
+            ToolName.MEDIA_PREVIOUS,
+            "Go back to the previous track on the active media player",
+            example_transcripts=("previous track", "previous song"),
+            risk_tier=RiskTier.TIER_1,
+            allowed_side_effects=("control_media_playback",),
+            usage_pattern="previous track | previous song | go back a track",
+        )
+    )
     registry.register(
         ToolSpec(
             ToolName.FILES_LIST_RECENT,

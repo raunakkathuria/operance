@@ -50,5 +50,6 @@ def build_blocked_adapter_set(*, blocker: str) -> AdapterSet:
         text_input=adapter,
         network=adapter,
         notifications=adapter,
+        media=adapter,
         files=adapter,
     )
