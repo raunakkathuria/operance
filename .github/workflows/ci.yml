@@ -79,6 +79,30 @@ jobs:
       - name: Check spec and documentation sync
         run: python3 scripts/check_spec_sync.py --base "${{ github.event.pull_request.base.sha }}"
 
+  fedora-package-smoke:
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:41
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: dnf install -y -q python3 python3-pip rpm-build rpmdevtools
+
+      - name: Build the RPM
+        run: bash scripts/build_rpm_package.sh
+
+      - name: Install the RPM and check the packaged command
+        run: |
+          rpm_path="$(find dist/rpm -name 'operance-*.noarch.rpm' | head -1)"
+          test -n "${rpm_path}"
+          dnf install -y -q "./${rpm_path}"
+          operance --version
+          operance --doctor > /dev/null
+          test -f /usr/lib/systemd/user/operance-tray.service
+          test -f /usr/lib/systemd/user/operance-voice-loop.service
+
   packaging-smoke:
     runs-on: ubuntu-latest
     steps:
