@@ -1472,6 +1472,77 @@ class LinuxNotificationsAdapter:
 
 
 @dataclass(slots=True)
+class LinuxMediaAdapter:
+    """Control the active media player over the MPRIS session-bus interface.
+
+    MPRIS is the shared standard that players such as VLC, Spotify, and browsers
+    expose, so this stays player-agnostic rather than special-casing any app.
+    """
+
+    run_command: RunCommand = _default_run_command
+    resolve_executable: ResolveExecutable = _default_resolve_executable
+
+    def play_pause(self) -> str:
+        self._call_player("PlayPause")
+        return "Toggled media playback"
+
+    def next_track(self) -> str:
+        self._call_player("Next")
+        return "Skipped to the next track"
+
+    def previous_track(self) -> str:
+        self._call_player("Previous")
+        return "Went back to the previous track"
+
+    def _call_player(self, method: str) -> None:
+        player = self._active_player()
+        _require_success(
+            self.run_command(
+                [
+                    "gdbus",
+                    "call",
+                    "--session",
+                    "--timeout",
+                    GDBUS_TIMEOUT_SECONDS,
+                    "--dest",
+                    player,
+                    "--object-path",
+                    "/org/mpris/MediaPlayer2",
+                    "--method",
+                    f"org.mpris.MediaPlayer2.Player.{method}",
+                ]
+            ),
+            command_label=f"gdbus mpris {method}",
+        )
+
+    def _active_player(self) -> str:
+        if self.resolve_executable("gdbus") is None:
+            raise ValueError("gdbus is not available for media control")
+        result = _require_success(
+            self.run_command(
+                [
+                    "gdbus",
+                    "call",
+                    "--session",
+                    "--timeout",
+                    GDBUS_TIMEOUT_SECONDS,
+                    "--dest",
+                    "org.freedesktop.DBus",
+                    "--object-path",
+                    "/org/freedesktop/DBus",
+                    "--method",
+                    "org.freedesktop.DBus.ListNames",
+                ]
+            ),
+            command_label="gdbus list names",
+        )
+        players = sorted(re.findall(r"org\.mpris\.MediaPlayer2\.[A-Za-z0-9_.\-]+", result.stdout))
+        if not players:
+            raise ValueError("no media player is currently running")
+        return players[0]
+
+
+@dataclass(slots=True)
 class LinuxFilesAdapter:
     desktop_dir: Path
     max_recent_files: int = 10
@@ -1663,6 +1734,10 @@ def build_linux_adapter_set(
         ),
         network=LinuxNetworkAdapter(run_command=run_command),
         notifications=LinuxNotificationsAdapter(
+            run_command=run_command,
+            resolve_executable=resolve_executable,
+        ),
+        media=LinuxMediaAdapter(
             run_command=run_command,
             resolve_executable=resolve_executable,
         ),

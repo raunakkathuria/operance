@@ -257,6 +257,24 @@ class MockNotificationsAdapter:
 
 
 @dataclass(slots=True)
+class MockMediaAdapter:
+    playing: bool = False
+    track_index: int = 0
+
+    def play_pause(self) -> str:
+        self.playing = not self.playing
+        return "Resumed playback" if self.playing else "Paused playback"
+
+    def next_track(self) -> str:
+        self.track_index += 1
+        return "Skipped to the next track"
+
+    def previous_track(self) -> str:
+        self.track_index -= 1
+        return "Went back to the previous track"
+
+
+@dataclass(slots=True)
 class MockFilesAdapter:
     desktop_dir: Path
     recent_files: list[Path] = field(default_factory=list)
@@ -413,5 +431,6 @@ def build_mock_adapter_set(
         text_input=MockTextInputAdapter(clipboard=clipboard),
         network=MockNetworkAdapter(),
         notifications=MockNotificationsAdapter(),
+        media=MockMediaAdapter(),
         files=MockFilesAdapter(desktop_dir=desktop_dir, recent_files=mock_recent_files),
     )

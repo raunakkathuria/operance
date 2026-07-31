@@ -202,6 +202,12 @@ _FILE_TOOLS = {
 }
 
 
+_MEDIA_TOOLS = {
+    ToolName.MEDIA_PLAY_PAUSE,
+    ToolName.MEDIA_NEXT,
+    ToolName.MEDIA_PREVIOUS,
+}
+
 _HOST_SERVICE_UNITS = {
     HOST_SERVICE_TRAY: "operance-tray.service",
     HOST_SERVICE_VOICE_LOOP: "operance-voice-loop.service",
@@ -557,6 +563,9 @@ class LinuxKdeWaylandPlatformProvider:
             )
         if tool in _NETWORK_TOOLS:
             return _blockers_for(steps_by_name, "linux_platform", "networkmanager_cli_available")
+        if tool in _MEDIA_TOOLS:
+            return _blockers_for(steps_by_name, "linux_platform", "gdbus_available")
+
         if tool == ToolName.NOTIFICATIONS_SHOW:
             linux_blockers = _blockers_for(steps_by_name, "linux_platform")
             if linux_blockers:
@@ -624,6 +633,9 @@ class LinuxKdeWaylandPlatformProvider:
             )
         if tool in _NETWORK_TOOLS:
             return _first_recommended(steps_by_name, "linux_platform", "networkmanager_cli_available")
+        if tool in _MEDIA_TOOLS:
+            return _first_recommended(steps_by_name, "linux_platform", "gdbus_available")
+
         if tool == ToolName.NOTIFICATIONS_SHOW:
             return _first_recommended(steps_by_name, "linux_platform", "notify_send_available", "gdbus_available")
         if tool in _FILE_TOOLS:

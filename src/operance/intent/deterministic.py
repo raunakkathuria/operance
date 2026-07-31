@@ -92,6 +92,52 @@ def _normalize_chain_url_target(verb: str, target: str) -> str | None:
     return explicit_target if is_url_like_target(explicit_target) else None
 
 
+# Media control phrases stay an explicit allow-list rather than a pattern, so a
+# bare word like "play" cannot swallow phrases meant for another command family.
+_MEDIA_PLAY_PAUSE_PHRASES = frozenset(
+    {
+        "pause",
+        "play",
+        "play pause",
+        "pause music",
+        "play music",
+        "pause the music",
+        "play the music",
+        "resume",
+        "resume music",
+        "resume the music",
+        "pause playback",
+        "resume playback",
+    }
+)
+
+_MEDIA_NEXT_PHRASES = frozenset(
+    {
+        "next track",
+        "next song",
+        "skip song",
+        "skip track",
+        "skip this song",
+        "skip this track",
+        "play next track",
+        "play the next song",
+    }
+)
+
+_MEDIA_PREVIOUS_PHRASES = frozenset(
+    {
+        "previous track",
+        "previous song",
+        "last track",
+        "last song",
+        "go back a track",
+        "go back a song",
+        "play previous track",
+        "play the previous song",
+    }
+)
+
+
 @dataclass(slots=True)
 class DeterministicIntentMatcher:
     """Map known transcript strings to a single typed action plan."""
@@ -554,6 +600,30 @@ class DeterministicIntentMatcher:
                     risk_tier=risk_tier,
                     requires_confirmation=requires_confirmation,
                 )
+
+        if normalized in _MEDIA_PLAY_PAUSE_PHRASES:
+            return self._single_action_plan(
+                text,
+                ToolName.MEDIA_PLAY_PAUSE,
+                args={},
+                risk_tier=RiskTier.TIER_1,
+            )
+
+        if normalized in _MEDIA_NEXT_PHRASES:
+            return self._single_action_plan(
+                text,
+                ToolName.MEDIA_NEXT,
+                args={},
+                risk_tier=RiskTier.TIER_1,
+            )
+
+        if normalized in _MEDIA_PREVIOUS_PHRASES:
+            return self._single_action_plan(
+                text,
+                ToolName.MEDIA_PREVIOUS,
+                args={},
+                risk_tier=RiskTier.TIER_1,
+            )
 
         if normalized in {"mute audio", "mute sound", "mute"}:
             return self._single_action_plan(

@@ -102,6 +102,14 @@ class NotificationsAdapter(Protocol):
     def show(self, title: str, message: str) -> str: ...
 
 
+class MediaAdapter(Protocol):
+    def play_pause(self) -> str: ...
+
+    def next_track(self) -> str: ...
+
+    def previous_track(self) -> str: ...
+
+
 class FilesAdapter(Protocol):
     desktop_dir: Path
 
@@ -143,4 +151,5 @@ class AdapterSet:
     text_input: TextInputAdapter | None = None
     network: NetworkAdapter | None = None
     notifications: NotificationsAdapter | None = None
+    media: MediaAdapter | None = None
     files: FilesAdapter | None = None

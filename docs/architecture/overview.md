@@ -69,6 +69,35 @@ Representative modules:
 - `daemon.py`
 - `mcp/`
 - `voice/`
+- `runtime/`
+- `skills/`
+
+### Voice subsystem
+
+The voice path is split so orchestration stays portable while each backend stays
+replaceable:
+
+- `voice/` owns session orchestration: wake handling, capture loops, the
+  repo-local runtime heartbeat, and voice-loop config and service state
+- `audio/` owns microphone capture and playback, selected per host
+- `stt/` owns speech-to-text, currently a Moonshine-backed transcriber
+- `tts/` owns speech synthesis, currently Kokoro-backed
+- `wakeword/` owns wake detection, either a model-backed detector or the
+  built-in experimental sound-trigger fallback
+
+Backends behind `stt/`, `tts/`, and `wakeword/` are portable Python packages
+chosen in `docs/requirements/tech.md`. `audio/` is host-specific, so its backend
+selection belongs behind the platform provider rather than in shared code.
+
+### Runtime and skills
+
+- `runtime/` owns the state machine, the in-memory event bus, and command metrics.
+  The state machine models the voice interaction lifecycle, so non-voice surfaces
+  such as MCP record outcomes without entering it.
+- `skills/` loads declarative JSON skill packs that map exact phrases to existing
+  typed actions. Packs cannot introduce new tools, run shell commands, or bypass
+  validation, policy, or confirmation. See
+  [../contributing/skill-packs.md](../contributing/skill-packs.md).
 - `ui/setup.py`
 
 `doctor.py`, `supported_commands.py`, and `ui/setup.py` should assemble shared
