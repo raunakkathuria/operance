@@ -104,3 +104,32 @@ def test_tool_domains_are_documented_in_the_supported_command_surface() -> None:
     assert missing == [], (
         f"Tool domains missing from docs/requirements/linux.md: {', '.join(missing)}."
     )
+
+
+def test_release_docs_reference_the_tray_regression_checklist() -> None:
+    """The tray's Qt surface has no automated coverage, so the manual pass must be findable."""
+
+    checklist = REPO_ROOT / "docs" / "release" / "tray-regression-checklist.md"
+    assert checklist.exists()
+
+    for doc_name in ("release-plan.md", "fedora-checklist.md"):
+        text = (REPO_ROOT / "docs" / "release" / doc_name).read_text(encoding="utf-8")
+        assert "tray-regression-checklist.md" in text, f"{doc_name} should link the checklist"
+
+
+def test_tray_regression_checklist_covers_the_release_verified_tools() -> None:
+    """Section 2 exists to catch regressions in tools users already rely on."""
+
+    from operance.platforms.linux import CURRENT_RELEASE_VERIFIED_TOOLS
+
+    text = (
+        REPO_ROOT / "docs" / "release" / "tray-regression-checklist.md"
+    ).read_text(encoding="utf-8")
+    missing = sorted(
+        tool.value for tool in CURRENT_RELEASE_VERIFIED_TOOLS if tool.value not in text
+    )
+
+    assert missing == [], (
+        "Release-verified tools with no regression check: "
+        f"{', '.join(missing)}. Add them to section 2 or explain the omission."
+    )
