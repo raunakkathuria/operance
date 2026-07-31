@@ -44,7 +44,9 @@ The public release line has already established:
 - run `./scripts/run_release_readiness_gate.sh --run-package-gate` before tagging
 - run `./scripts/run_package_evidence_gate.sh --bundle-python .venv/bin/python`
   before tagging a packaged Fedora release candidate
-- run a human installed tray plus microphone smoke before tagging
+- run a human installed tray plus microphone smoke before tagging, following
+  [tray-regression-checklist.md](tray-regression-checklist.md); the tray's Qt
+  surface and live command execution are not covered by automated tests
 - run `./scripts/build_release_artifacts.sh --bundle-python .venv/bin/python`
   after validation to prepare GitHub release upload assets
 - publish release notes from the corresponding versioned release-note file

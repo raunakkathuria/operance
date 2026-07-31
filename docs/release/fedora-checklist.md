@@ -157,6 +157,14 @@ Success means all of the following are true:
 
 ---
 
+## 4a. Tray and Live Command Regression
+
+Automated gates do not cover the tray's Qt surface or live command execution.
+Before tagging, work through
+[tray-regression-checklist.md](tray-regression-checklist.md) on a real Fedora KDE
+Plasma Wayland session. Sections 1 and 2 are release blockers; section 3 is
+promotion evidence for new commands.
+
 ## 5. Failure Capture
 
 When the Fedora release gate fails, always capture one artifact before changing
